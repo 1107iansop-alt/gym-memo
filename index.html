@@ -35,7 +35,7 @@
 
     .card { background-color: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--border-color); width: 100%; overflow: hidden; }
     
-    /* カレンダー (はみ出し防止) */
+    /* カレンダー */
     .calendar-container { width: 100%; }
     .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; }
     .cal-btn { background: none; border: none; color: var(--accent-red); font-size: 1.1rem; cursor: pointer; padding: 4px 8px; }
@@ -47,8 +47,9 @@
     .calendar-day.empty { background: transparent; cursor: default; }
 
     .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    .btn { background-color: var(--accent-red); color: white; border: none; border-radius: 14px; padding: 16px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
-    .btn-secondary { background-color: #2c2c2e; color: var(--text-main); }
+    /* 枠内にきれいに収まるようにフォントサイズとパディングを調整 */
+    .btn { background-color: var(--accent-red); color: white; border: none; border-radius: 14px; padding: 14px 10px; font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
+    .btn-secondary { background-color: #2c2c2e; color: var(--text-main); font-size: 0.85rem; }
     
     .empty-state { background-color: var(--card-bg); border-radius: 12px; padding: 30px 20px; text-align: center; color: var(--text-sub); font-size: 0.9rem; margin-bottom: 16px; }
 
@@ -56,13 +57,13 @@
     .workout-day-view { background: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--border-color); }
     .workout-day-title { font-size: 1.05rem; font-weight: bold; color: var(--accent-red); margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
     
-    .history-card { background-color: #252528; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); }
+    .history-card { background-color: #252528; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; }
+    .history-card:hover { background-color: #2f2f33; }
     .history-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .history-part { background: #2c2c2e; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; color: var(--text-sub); }
     .history-set-item { font-size: 0.85rem; color: var(--text-main); margin-top: 3px; }
-    .delete-btn { background: none; border: none; color: #ff453a; font-size: 0.75rem; cursor: pointer; }
+    .delete-btn { background: none; border: none; color: #ff453a; font-size: 0.75rem; cursor: pointer; padding: 4px; }
 
-    /* シェアするボタン */
     .share-btn { width: 100%; background-color: var(--accent-red); color: white; border: none; border-radius: 14px; padding: 16px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 20px; text-align: center; }
 
     /* フッターナビゲーション */
@@ -98,6 +99,11 @@
     .submit-btn { width: 100%; background: var(--accent-red); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 1rem; margin-top: 20px; cursor: pointer; }
     .close-modal { width: 100%; background: #2c2c2e; color: var(--text-main); border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 8px; cursor: pointer; }
     .manage-btn { background: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
+
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .summary-box { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 16px; text-align: center; }
+    .summary-box-title { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; }
+    .summary-box-val { font-size: 1.4rem; font-weight: 800; color: var(--accent-red); }
   </style>
 </head>
 <body>
@@ -123,8 +129,8 @@
     </div>
 
     <div class="btn-grid">
-      <button class="btn" onclick="openModal()">＋ 今日のトレーニング追加</button>
-      <button class="btn btn-secondary" onclick="resetSelectedDateToToday()">今日を表示</button>
+      <button class="btn" onclick="openModal()">+ 今日のトレーニング追加</button>
+      <button class="btn btn-secondary" onclick="openSummaryModal()">月間サマリー</button>
     </div>
 
     <!-- 選択した日付のメニュー表示エリア -->
@@ -237,6 +243,52 @@
     </div>
   </div>
 
+  <!-- 月間サマリーモーダル -->
+  <div class="modal" id="summary-modal">
+    <div class="modal-content">
+      <div id="summary-capture-target" style="padding: 10px; background: var(--card-bg); border-radius: 16px;">
+        <div class="modal-header-nav">
+          <div class="exercise-title-header" id="summary-modal-main-title">2026年 11月 サマリー</div>
+        </div>
+        
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="cal-header">
+            <button class="cal-btn" onclick="changeSummaryMonth(-1)">◀</button>
+            <span id="summary-cal-title">2026年 11月</span>
+            <button class="cal-btn" onclick="changeSummaryMonth(1)">▶</button>
+          </div>
+          <div class="calendar-grid" id="summary-calendar-grid">
+            <div class="calendar-dow">日</div><div class="calendar-dow">月</div><div class="calendar-dow">火</div>
+            <div class="calendar-dow">水</div><div class="calendar-dow">木</div><div class="calendar-dow">金</div>
+            <div class="calendar-dow">土</div>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-box">
+            <div class="summary-box-title">合計筋トレ日数</div>
+            <div class="summary-box-val" id="sum-days">0 日</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-box-title">合計負荷量</div>
+            <div class="summary-box-val" id="sum-ton">0.00 t</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-box-title">合計セット数</div>
+            <div class="summary-box-val" id="sum-sets">0 セット</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-box-title">合計レップ数</div>
+            <div class="summary-box-val" id="sum-reps">0 回</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="download-action-btn" onclick="downloadSummaryImage()" style="width:100%; background:#0a84ff; color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; font-size:0.95rem; margin-top:15px; cursor:pointer;">サマリーを画像保存</button>
+      <button class="close-modal" onclick="closeSummaryModal()" style="margin-top:8px;">閉じる</button>
+    </div>
+  </div>
+
   <!-- 種目・部位管理モーダル -->
   <div class="modal" id="manage-modal">
     <div class="modal-content">
@@ -258,6 +310,8 @@
     let viewMonth = new Date().getMonth();
     let historyViewYear = new Date().getFullYear();
     let historyViewMonth = new Date().getMonth();
+    let summaryViewYear = new Date().getFullYear();
+    let summaryViewMonth = new Date().getMonth();
     let currentSetCount = 0;
     let currentHistoryPart = 'ALL';
 
@@ -278,12 +332,7 @@
       }
     }
 
-    function resetSelectedDateToToday() {
-      selectedDate = todayStr;
-      renderHome();
-    }
-
-    function openModal() {
+    function openModal(targetPart = null, targetExercise = null) {
       document.getElementById('input-date').value = selectedDate;
       document.getElementById('input-memo').value = '';
       document.getElementById('cardio-time').value = '';
@@ -291,7 +340,7 @@
       document.getElementById('cardio-distance').value = '';
       document.getElementById('cardio-cal').value = '';
 
-      updatePartSelectOptions();
+      updatePartSelectOptions(targetPart, targetExercise);
       document.getElementById('record-modal').classList.add('open');
     }
 
@@ -299,7 +348,91 @@
       document.getElementById('record-modal').classList.remove('open');
     }
 
-    function updatePartSelectOptions(selectedPart = null) {
+    function openSummaryModal() {
+      summaryViewYear = viewYear;
+      summaryViewMonth = viewMonth;
+      updateSummaryModalContent();
+      document.getElementById('summary-modal').classList.add('open');
+    }
+
+    function closeSummaryModal() {
+      document.getElementById('summary-modal').classList.remove('open');
+    }
+
+    function changeSummaryMonth(dir) {
+      summaryViewMonth += dir;
+      if (summaryViewMonth > 11) { summaryViewMonth = 0; summaryViewYear++; }
+      if (summaryViewMonth < 0) { summaryViewMonth = 11; summaryViewYear--; }
+      updateSummaryModalContent();
+    }
+
+    function updateSummaryModalContent() {
+      document.getElementById('summary-modal-main-title').textContent = `${summaryViewYear}年 ${summaryViewMonth + 1}月 サマリー`;
+      document.getElementById('summary-cal-title').textContent = `${summaryViewYear}年 ${summaryViewMonth + 1}月`;
+
+      const monthWorkouts = workouts.filter(w => {
+        const d = new Date(w.date);
+        return d.getFullYear() === summaryViewYear && d.getMonth() === summaryViewMonth;
+      });
+
+      let totalTonnage = 0;
+      let activeDaysSet = new Set();
+      let totalSetsCount = 0;
+      let totalRepsCount = 0;
+
+      monthWorkouts.forEach(w => {
+        activeDaysSet.add(w.date);
+        if (w.isCardio) {
+          totalSetsCount++;
+        } else if (w.sets) {
+          w.sets.forEach(s => {
+            totalTonnage += (s.weight * s.reps) / 1000;
+            totalSetsCount++;
+            totalRepsCount += s.reps;
+          });
+        }
+      });
+
+      document.getElementById('sum-days').textContent = `${activeDaysSet.size} 日`;
+      document.getElementById('sum-ton').textContent = `${totalTonnage.toFixed(2)} t`;
+      document.getElementById('sum-sets').textContent = `${totalSetsCount} セット`;
+      document.getElementById('sum-reps').textContent = `${totalRepsCount} 回`;
+
+      const grid = document.getElementById('summary-calendar-grid');
+      const dows = grid.querySelectorAll('.calendar-dow');
+      grid.innerHTML = '';
+      dows.forEach(el => grid.appendChild(el));
+
+      const firstDay = new Date(summaryViewYear, summaryViewMonth, 1).getDay();
+      const lastDate = new Date(summaryViewYear, summaryViewMonth + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'calendar-day empty';
+        grid.appendChild(empty);
+      }
+
+      for (let d = 1; d <= lastDate; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day';
+        cell.textContent = d;
+        const dateStr = `${summaryViewYear}-${String(summaryViewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        if (activeDaysSet.has(dateStr)) cell.classList.add('active');
+        grid.appendChild(cell);
+      }
+    }
+
+    function downloadSummaryImage() {
+      const target = document.getElementById('summary-capture-target');
+      html2canvas(target, { backgroundColor: '#1c1c1e', scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `GYM-MEMO_サマリー_${summaryViewYear}年${summaryViewMonth + 1}月.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    function updatePartSelectOptions(selectedPart = null, selectedExercise = null) {
       const partSelect = document.getElementById('input-part');
       partSelect.innerHTML = '';
       const allParts = getAllParts();
@@ -317,10 +450,10 @@
       if (selectedPart && allParts.includes(selectedPart)) {
         partSelect.value = selectedPart;
       }
-      onPartChange();
+      onPartChange(selectedExercise);
     }
 
-    function onPartChange() {
+    function onPartChange(selectedExercise = null) {
       const partSelect = document.getElementById('input-part');
       if (partSelect.value === '__ADD_NEW_PART__') {
         const newPart = prompt('新しい部位名を入力してください:');
@@ -351,7 +484,12 @@
       customOpt.value = '__ADD_NEW__';
       customOpt.textContent = '＋ 新しい種目を追加...';
       select.appendChild(customOpt);
-      select.selectedIndex = 0;
+
+      if (selectedExercise && (userList.includes(selectedExercise) || selectedExercise === '__ADD_NEW__')) {
+        select.value = selectedExercise;
+      } else {
+        select.selectedIndex = 0;
+      }
 
       const isCardio = (part === '有酸素運動');
       document.getElementById('strength-input-area').style.display = isCardio ? 'none' : 'block';
@@ -372,8 +510,8 @@
             customExercises[part].push(trimmed);
             localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
           }
-          updatePartSelectOptions(part);
-          select.value = trimmed;
+          updatePartSelectOptions(part, trimmed);
+          return;
         } else {
           select.selectedIndex = 0;
         }
@@ -477,7 +615,7 @@
 
       workouts.push(recordData);
       localStorage.setItem('gym_workouts_v2', JSON.stringify(workouts));
-      selectedDate = date; // 登録した日付を選択状態にする
+      selectedDate = date;
       closeModal();
       renderHome();
     }
@@ -507,7 +645,6 @@
     function renderHome() {
       document.getElementById('cal-title').textContent = `${viewYear}年 ${viewMonth + 1}月`;
 
-      // アクティブ日（トレーニングのある日）のセット
       const activeDaysSet = new Set(workouts.map(w => w.date));
 
       const grid = document.getElementById('calendar-grid');
@@ -538,7 +675,6 @@
         grid.appendChild(cell);
       }
 
-      // 選択された日付のメニューをグループ化して表示
       const dayWorkouts = workouts.filter(w => w.date === selectedDate);
       const displayArea = document.getElementById('home-workout-display');
       const shareContainer = document.getElementById('share-btn-container');
@@ -549,15 +685,13 @@
       } else {
         shareContainer.style.display = 'block';
 
-        // 同じ種目ごとにまとめる
         const grouped = {};
         dayWorkouts.forEach(w => {
           if (!grouped[w.exercise]) {
-            grouped[w.exercise] = { part: w.part, sets: [], memo: [], ids: [] };
+            grouped[w.exercise] = { part: w.part, sets: [], memo: [] };
           }
           if (w.sets) grouped[w.exercise].sets.push(...w.sets);
           if (w.memo) grouped[w.exercise].memo.push(w.memo);
-          grouped[w.exercise].ids.push(w.id);
         });
 
         let html = `
@@ -572,10 +706,10 @@
           `).join('');
 
           html += `
-            <div class="history-card">
+            <div class="history-card" onclick="openModal('${item.part}', '${exName}')">
               <div class="history-top">
                 <span class="history-part">${item.part}</span>
-                <button class="delete-btn" onclick="deleteRecordsByExercise('${selectedDate}', '${exName}')">削除</button>
+                <button class="delete-btn" onclick="event.stopPropagation(); deleteRecordsByExercise('${selectedDate}', '${exName}')">削除</button>
               </div>
               <div style="font-weight: 700; font-size: 1rem; margin-bottom: 6px;">${exName}</div>
               ${setsHtml}
@@ -595,7 +729,6 @@
       }
     }
 
-    /* シェアするボタン（本家仕様：画像を生成してスマホの共有シートを開く） */
     function shareCurrentDay() {
       const target = document.getElementById('share-capture-target');
       html2canvas(target, { backgroundColor: '#1c1c1e', scale: 2 }).then(canvas => {
@@ -608,7 +741,6 @@
               text: 'GYM-MEMO 記録'
             }).catch(() => {});
           } else {
-            // 共有非対応環境の場合は直接ダウンロード
             const link = document.createElement('a');
             link.download = `GYM-MEMO_${selectedDate}.png`;
             link.href = canvas.toDataURL();
@@ -618,7 +750,6 @@
       });
     }
 
-    /* 履歴/分析タブ（部位フィルター ＆ カレンダー） */
     function renderHistoryFilterTabs() {
       const container = document.getElementById('filter-tabs-container');
       const parts = ['ALL', ...getAllParts()];
@@ -676,7 +807,6 @@
       }
     }
 
-    /* 管理モーダル */
     function openManageModal() {
       const area = document.getElementById('manage-content-area');
       let html = `<div style="margin-bottom:15px; font-weight:bold; color:var(--accent-red);">【部位リスト】</div>`;
