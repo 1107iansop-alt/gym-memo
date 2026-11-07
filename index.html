@@ -47,7 +47,6 @@
     .calendar-day.empty { background: transparent; cursor: default; }
 
     .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    /* 枠内にきれいに収まるようにフォントサイズとパディングを調整 */
     .btn { background-color: var(--accent-red); color: white; border: none; border-radius: 14px; padding: 14px 10px; font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
     .btn-secondary { background-color: #2c2c2e; color: var(--text-main); font-size: 0.85rem; }
     
@@ -284,7 +283,7 @@
         </div>
       </div>
 
-      <button class="download-action-btn" onclick="downloadSummaryImage()" style="width:100%; background:#0a84ff; color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; font-size:0.95rem; margin-top:15px; cursor:pointer;">サマリーを画像保存</button>
+      <button class="download-action-btn" onclick="shareSummaryImage()" style="width:100%; background:#0a84ff; color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; font-size:0.95rem; margin-top:15px; cursor:pointer;">サマリーを画像保存</button>
       <button class="close-modal" onclick="closeSummaryModal()" style="margin-top:8px;">閉じる</button>
     </div>
   </div>
@@ -422,13 +421,25 @@
       }
     }
 
-    function downloadSummaryImage() {
+    /* 月間サマリーの画像保存もシェア機能（標準共有シート）に対応 */
+    function shareSummaryImage() {
       const target = document.getElementById('summary-capture-target');
       html2canvas(target, { backgroundColor: '#1c1c1e', scale: 2 }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `GYM-MEMO_サマリー_${summaryViewYear}年${summaryViewMonth + 1}月.png`;
-        link.href = canvas.toDataURL();
-        link.click();
+        canvas.toBlob(blob => {
+          const file = new File([blob], `GYM-MEMO_サマリー_${summaryViewYear}年${summaryViewMonth + 1}月.png`, { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+              files: [file],
+              title: `${summaryViewYear}年${summaryViewMonth + 1}月 サマリー`,
+              text: 'GYM-MEMO サマリー'
+            }).catch(() => {});
+          } else {
+            const link = document.createElement('a');
+            link.download = `GYM-MEMO_サマリー_${summaryViewYear}年${summaryViewMonth + 1}月.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+          }
+        });
       });
     }
 
@@ -526,6 +537,7 @@
       }
     }
 
+    /* 過去のすべてのセットをLast Recordとして正しく表示する修正 */
     function loadLastRecord(part, exercise) {
       const matches = workouts.filter(w => w.part === part && w.exercise === exercise);
       const boxDate = document.getElementById('last-record-date');
@@ -536,13 +548,18 @@
         boxContent.innerHTML = '前回の記録はありません';
         return;
       }
+      // 日付の新しい順に並び替え
       matches.sort((a, b) => new Date(b.date) - new Date(a.date));
       const last = matches[0];
       boxDate.textContent = last.date;
+
       if (last.isCardio) {
         boxContent.innerHTML = `時間: ${last.cardio.time || '-'}分 / 距離: ${last.cardio.distance || '-'}km`;
       } else if (last.sets) {
-        boxContent.innerHTML = last.sets.map((s, idx) => `<div style="margin-top:2px;">Set ${idx + 1}: ${s.weight}kg × ${s.reps} reps</div>`).join('');
+        // 複数セットすべてを一覧表示する
+        boxContent.innerHTML = last.sets.map((s, idx) => 
+          `<div style="margin-top:2px; font-weight:500;">Set ${idx + 1}: ${s.weight} kg × ${s.reps} reps</div>`
+        ).join('');
       }
     }
 
@@ -613,7 +630,15 @@
         recordData.sets = setsData;
       }
 
-      workouts.push(recordData);
+      // 既存の「同日・同種目」の記録がすでにある場合は、新しいセットを追加・合算して1つにまとめる
+      const existingIndex = workouts.findIndex(w => w.date === date && w.part === part && w.exercise === exercise);
+      if (existingIndex !== -1 && !isCardio) {
+        workouts[existingIndex].sets.push(...setsData);
+        if (memo) workouts[existingIndex].memo = memo;
+      } else {
+        workouts.push(recordData);
+      }
+
       localStorage.setItem('gym_workouts_v2', JSON.stringify(workouts));
       selectedDate = date;
       closeModal();
@@ -851,3 +876,4 @@
   </script>
 </body>
 </html>
+、
