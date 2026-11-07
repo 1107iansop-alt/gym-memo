@@ -93,9 +93,10 @@
     .modal-content { background: var(--card-bg); width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 20px 16px 40px 16px; border-top: 1px solid var(--border-color); }
     
     .last-record-box { background: #2c2c2e; border-radius: 12px; padding: 12px; margin-bottom: 20px; font-size: 0.85rem; }
-    .last-record-title { color: #0a84ff; font-weight: bold; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .last-record-title { color: var(--text-sub); font-weight: bold; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
 
-    .copy-last-btn { background: #0a84ff; color: white; border: none; border-radius: 6px; padding: 3px 8px; font-size: 0.7rem; font-weight: bold; cursor: pointer; }
+    /* 「前回履歴コピー」ボタン：当日サマリ等のボタン色に合わせる */
+    .copy-last-btn { background: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 10px; font-size: 0.7rem; font-weight: bold; cursor: pointer; }
 
     .form-group { margin-bottom: 14px; }
     .form-label { font-size: 0.80rem; color: var(--text-sub); margin-bottom: 6px; display: block; }
@@ -209,8 +210,8 @@
 
       <div class="last-record-box" id="last-record-box">
         <div class="last-record-title">
-          <span>Last Record (<span id="last-record-date">----/--/--</span>)</span>
-          <button class="copy-last-btn" id="copy-last-btn" onclick="copyLastRecordData()" style="display:none;">前回の内容をコピー</button>
+          <span>Last Record (<span id="last-record-date" style="color: #ffffff;">----/--/--</span>)</span>
+          <button class="copy-last-btn" id="copy-last-btn" onclick="copyLastRecordData()" style="display:none;">前回履歴コピー</button>
         </div>
         <div id="last-record-content" style="color: var(--text-sub);">前回の記録はありません</div>
       </div>
@@ -300,7 +301,7 @@
         </div>
       </div>
 
-      <button class="download-action-btn" onclick="shareSummaryImage()" style="width:100%; background:#0a84ff; color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; font-size:0.95rem; margin-top:15px; cursor:pointer;">サマリを画像保存</button>
+      <button class="download-action-btn" onclick="shareSummaryMonthImage()" style="width:100%; background:#0a84ff; color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; font-size:0.95rem; margin-top:15px; cursor:pointer;">サマリを画像保存</button>
       <button class="close-modal" onclick="closeSummaryModal()" style="margin-top:8px;">閉じる</button>
     </div>
   </div>
@@ -318,7 +319,7 @@
     let customParts = JSON.parse(localStorage.getItem('gym_custom_parts')) || ['胸', '背中', '脚', '肩', '腕', '腹', '前腕', 'お尻', '有酸素運動', 'その他'];
     let customExercises = JSON.parse(localStorage.getItem('gym_custom_exercises')) || {};
     let workouts = JSON.parse(localStorage.getItem('gym_workouts_v2')) || [];
-    let currentLastRecordData = null; // コピー用の前回の記録保持
+    let currentLastRecordData = null;
     
     function getTodayString() {
       const now = new Date();
@@ -509,8 +510,8 @@
       }
     }
 
-    function shareSummaryImage() {
-      const target = document.getElementById('summary-capture-target');
+    function shareCurrentDay() {
+      const target = document.getElementById('share-capture-target');
       if (!target) {
         alert('当日サマリ（表示中の記録）がありません。');
         return;
@@ -527,6 +528,27 @@
           } else {
             const link = document.createElement('a');
             link.download = `Workout-Log_${selectedDate}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+          }
+        });
+      });
+    }
+
+    function shareSummaryMonthImage() {
+      const target = document.getElementById('summary-capture-target');
+      html2canvas(target, { backgroundColor: '#1c1c1e', scale: 2 }).then(canvas => {
+        canvas.toBlob(blob => {
+          const file = new File([blob], `Workout-Log_月間サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`, { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+              files: [file],
+              title: `${summaryViewYear}年${summaryViewMonth + 1}月 月間サマリ`,
+              text: 'Workout-Log 月間サマリ'
+            }).catch(() => {});
+          } else {
+            const link = document.createElement('a');
+            link.download = `Workout-Log_月間サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`;
             link.href = canvas.toDataURL();
             link.click();
           }
@@ -653,7 +675,6 @@
       }
     }
 
-    // 「前回の内容をコピー」ボタンを押したときに数値セット
     function copyLastRecordData() {
       if (!currentLastRecordData) return;
       if (currentLastRecordData.isCardio) {
@@ -678,7 +699,7 @@
           container.appendChild(div);
           updateRM(currentSetCount);
         });
-        addSetInput(); // 次のセット入力枠を1つ用意
+        addSetInput();
       }
     }
 
