@@ -99,8 +99,6 @@
     .modal.open { display: flex; }
     .modal-content { background: var(--card-bg); width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 20px 16px 40px 16px; border-top: 1px solid var(--border-color); }
     
-    .modal-header-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    
     .last-record-box { background: #2c2c2e; border-radius: 12px; padding: 12px; margin-bottom: 20px; font-size: 0.85rem; }
     .last-record-title { color: #0a84ff; font-weight: bold; margin-bottom: 6px; display: flex; justify-content: space-between; }
 
@@ -207,15 +205,9 @@
   <!-- 記録入力モーダル -->
   <div class="modal" id="record-modal">
     <div class="modal-content">
-      <div class="modal-header-nav" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: center; margin-bottom: 14px;">
-        <div>
-          <span style="font-size: 0.75rem; color: var(--text-sub); display: block; margin-bottom: 2px;">種目名</span>
-          <div id="header-exercise-name" style="font-size: 1.1rem; font-weight: bold; color: var(--accent-red); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">種目を選択</div>
-        </div>
-        <div>
-          <label class="form-label" style="margin-bottom: 2px;">日付</label>
-          <input type="date" id="input-date" class="form-input" style="padding: 8px 10px; font-size: 0.85rem;">
-        </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <span style="font-size: 0.75rem; color: var(--text-sub); display: block; margin-bottom: 2px;">種目名</span>
+        <div id="header-exercise-name" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">種目を選択</div>
       </div>
 
       <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -282,9 +274,7 @@
   <div class="modal" id="summary-modal">
     <div class="modal-content">
       <div id="summary-capture-target" style="padding: 10px; background: var(--card-bg); border-radius: 16px;">
-        <div class="modal-header-nav" style="margin-bottom: 15px;">
-          <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); text-align: center; width: 100%;" id="summary-modal-main-title">2026年 11月 サマリ</div>
-        </div>
+        <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;" id="summary-modal-main-title">2026年 11月 サマリ</div>
         
         <div class="card" style="margin-bottom: 16px;">
           <div class="cal-header">
@@ -373,7 +363,6 @@
     }
 
     function openModal(targetPart = null, targetExercise = null, isEdit = false) {
-      document.getElementById('input-date').value = selectedDate;
       document.getElementById('input-memo').value = '';
       document.getElementById('cardio-time').value = '';
       document.getElementById('cardio-speed').value = '';
@@ -687,12 +676,11 @@
     }
 
     function saveRecord() {
-      const date = document.getElementById('input-date').value;
+      const date = selectedDate; // 選択中のカレンダー日付をそのまま使用
       const part = document.getElementById('input-part').value;
       const exercise = document.getElementById('input-exercise-select').value;
       const memo = document.getElementById('input-memo').value;
 
-      if (!date) { alert('日付を入力してください'); return; }
       if (!exercise || exercise === '__ADD_NEW__') { alert('種目名を選択してください'); return; }
 
       const isCardio = (part === '有酸素運動');
@@ -721,7 +709,6 @@
       workouts.push(recordData);
 
       localStorage.setItem('gym_workouts_v2', JSON.stringify(workouts));
-      selectedDate = date;
       closeModal();
       renderHome();
     }
