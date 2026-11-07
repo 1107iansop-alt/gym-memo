@@ -22,7 +22,8 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-dark);
       color: var(--text-main);
-      padding: max(16px, env(safe-area-inset-top) + 8px) 12px 90px 12px;
+      /* 下部の無駄な余白を減らすため、ボトムパディングを調整 */
+      padding: max(16px, env(safe-area-inset-top) + 8px) 12px calc(70px + env(safe-area-inset-bottom, 0px)) 12px;
       max-width: 500px;
       margin: 0 auto;
       overflow-x: hidden;
@@ -85,14 +86,14 @@
     .delete-btn { background: none; border: none; color: #ff453a; font-size: 0.75rem; cursor: pointer; padding: 4px; }
     .share-btn { width: 100%; background-color: var(--accent-red); color: white; border: none; border-radius: 14px; padding: 16px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 20px; text-align: center; }
 
-    /* フッターナビゲーション */
+    /* フッターナビゲーション（余分な下部スペースを詰めて配置） */
     .footer-nav {
       position: fixed; bottom: 0; left: 0; width: 100%; background: #1c1c1e; border-top: 1px solid var(--border-color);
-      display: grid; grid-template-columns: repeat(2, 1fr); padding: 8px 0 env(safe-area-inset-bottom, 8px) 0; z-index: 50;
+      display: grid; grid-template-columns: repeat(2, 1fr); padding: 6px 0 max(6px, env(safe-area-inset-bottom, 6px)) 0; z-index: 50;
     }
-    .nav-item { background: none; border: none; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; gap: 4px; cursor: pointer; }
+    .nav-item { background: none; border: none; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; gap: 2px; cursor: pointer; }
     .nav-item.active { color: var(--accent-red); }
-    .nav-item span.icon { font-size: 1.2rem; }
+    .nav-item span.icon { font-size: 1.1rem; }
 
     /* モーダル共通 */
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: flex-end; z-index: 100; }
@@ -128,7 +129,6 @@
 <body>
   <header>
     <h1>Workout-Log</h1>
-    <button class="manage-btn" onclick="openManageModal()">種目/部位管理</button>
   </header>
 
   <!-- ホームタブ -->
@@ -150,7 +150,7 @@
           </div>
         </div>
 
-        <!-- 右側：上半分（日数）＆下半分（4行ボタン群） -->
+        <!-- 右側：上半（日数）＆下半（4行ボタン群） -->
         <div class="home-right-col">
           <div class="stats-row">
             <div class="stat-box">
@@ -518,16 +518,16 @@
       const target = document.getElementById('summary-capture-target');
       html2canvas(target, { backgroundColor: '#1c1c1e', scale: 2 }).then(canvas => {
         canvas.toBlob(blob => {
-          const file = new File([blob], `GYM-MEMO_サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`, { type: 'image/png' });
+          const file = new File([blob], `Workout-Log_サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`, { type: 'image/png' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({
               files: [file],
               title: `${summaryViewYear}年${summaryViewMonth + 1}月 サマリ`,
-              text: 'GYM-MEMO サマリ'
+              text: 'Workout-Log サマリ'
             }).catch(() => {});
           } else {
             const link = document.createElement('a');
-            link.download = `GYM-MEMO_サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`;
+            link.download = `Workout-Log_サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`;
             link.href = canvas.toDataURL();
             link.click();
           }
