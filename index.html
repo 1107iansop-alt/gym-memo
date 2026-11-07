@@ -353,7 +353,6 @@
 
       updatePartSelectOptions(targetPart, targetExercise);
       
-      // 編集モード（カードタップ時）のみ既存セットを入力済みにする。「+ 今日のトレーニング追加」のときはisEdit=falseで常にまっさら
       if (isEdit && targetPart && targetExercise) {
         const existing = workouts.find(w => w.date === selectedDate && w.part === targetPart && w.exercise === targetExercise);
         if (existing && existing.sets && existing.sets.length > 0) {
@@ -920,7 +919,11 @@
 
     function openManageModal() {
       const area = document.getElementById('manage-content-area');
-      let html = `<div style="margin-bottom:15px; font-weight:bold; color:var(--accent-red);">【部位リスト】</div>`;
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <div style="font-weight:bold; color:var(--accent-red);">【部位リスト】</div>
+        <button class="manage-btn" style="background:var(--accent-red); color:white;" onclick="addNewPartFromManage()">＋ 部位を追加</button>
+      </div>`;
+
       customParts.forEach((p, idx) => {
         html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:#2c2c2e; padding:8px; border-radius:8px;">
           <span>${p}</span>
@@ -964,6 +967,20 @@
     function closeManageModal() {
       document.getElementById('manage-modal').classList.remove('open');
       renderHome();
+    }
+
+    function addNewPartFromManage() {
+      const newPart = prompt('新しい部位名を入力してください:');
+      if (newPart && newPart.trim() !== '') {
+        const trimmed = newPart.trim();
+        if (!customParts.includes(trimmed)) {
+          customParts.push(trimmed);
+          localStorage.setItem('gym_custom_parts', JSON.stringify(customParts));
+          openManageModal();
+        } else {
+          alert('その部位はすでに存在します。');
+        }
+      }
     }
 
     function movePart(idx, dir) {
