@@ -37,7 +37,7 @@
     
     .home-top-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: center; }
     
-    .calendar-container { display: flex; flex-direction: column; justify-content: center; }
+    .calendar-container { display: flex; flex-direction: column; justify-content: center; width: 100%; }
     .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
     .cal-btn { background: none; border: none; color: var(--accent-red); font-size: 1rem; cursor: pointer; padding: 2px 6px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; width: 100%; }
@@ -166,7 +166,9 @@
   <!-- 履歴タブ -->
   <div id="tab-history" class="tab-content">
     <div class="filter-tabs" id="filter-tabs-container" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:16px;"></div>
-    <div class="card" id="history-card-container">
+    
+    <!-- カレンダーカード（部位を選んでも常に表示） -->
+    <div class="card">
       <div class="cal-header">
         <button class="cal-btn" onclick="changeHistoryMonth(-1)">◀</button>
         <span id="history-cal-title">2026年 11月</span>
@@ -178,7 +180,8 @@
         <div class="calendar-dow">土</div>
       </div>
     </div>
-    <!-- 部位選択時に過去2〜3ヶ月の履歴を表示するエリア -->
+
+    <!-- カレンダーの下に表示される履歴タイムラインエリア -->
     <div id="history-timeline-display"></div>
   </div>
 
@@ -937,51 +940,53 @@
     }
 
     function renderHistoryCalendar() {
-      const historyCardContainer = document.getElementById('history-card-container');
+      document.getElementById('history-cal-title').textContent = `${historyViewYear}年 ${historyViewMonth + 1}月`;
+
+      // 1. カレンダーに表示する対象のワークアウトを絞り込み
+      let targetWorkoutsForCalendar = workouts;
+      if (currentHistoryPart !== 'ALL') {
+        targetWorkoutsForCalendar = workouts.filter(w => w.part === currentHistoryPart);
+      }
+      const activeDaysSet = new Set(targetWorkoutsForCalendar.map(w => w.date));
+
+      const grid = document.getElementById('history-calendar-grid');
+      const dows = grid.querySelectorAll('.calendar-dow');
+      grid.innerHTML = '';
+      dows.forEach(el => grid.appendChild(el));
+
+      const firstDay = new Date(historyViewYear, historyViewMonth, 1).getDay();
+      const lastDate = new Date(historyViewYear, historyViewMonth + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'calendar-day empty';
+        grid.appendChild(empty);
+      }
+
+      for (let d = 1; d <= lastDate; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day';
+        cell.textContent = d;
+        const dateStr = `${historyViewYear}-${String(historyViewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        if (activeDaysSet.has(dateStr)) {
+          cell.classList.add('active');
+          cell.onclick = () => {
+            selectedDate = dateStr;
+            switchTab('home', document.querySelector('.nav-item'));
+            renderHome();
+          };
+        } else {
+          cell.style.opacity = '0.3';
+          cell.style.cursor = 'default';
+        }
+        grid.appendChild(cell);
+      }
+
+      // 2. カレンダーの下に表示するタイムラインの処理
       const timelineDisplay = document.getElementById('history-timeline-display');
-
       if (currentHistoryPart === 'ALL') {
-        historyCardContainer.style.display = 'block';
         timelineDisplay.innerHTML = '';
-        document.getElementById('history-cal-title').textContent = `${historyViewYear}年 ${historyViewMonth + 1}月`;
-
-        const activeDaysSet = new Set(workouts.map(w => w.date));
-        const grid = document.getElementById('history-calendar-grid');
-        const dows = grid.querySelectorAll('.calendar-dow');
-        grid.innerHTML = '';
-        dows.forEach(el => grid.appendChild(el));
-
-        const firstDay = new Date(historyViewYear, historyViewMonth, 1).getDay();
-        const lastDate = new Date(historyViewYear, historyViewMonth + 1, 0).getDate();
-
-        for (let i = 0; i < firstDay; i++) {
-          const empty = document.createElement('div');
-          empty.className = 'calendar-day empty';
-          grid.appendChild(empty);
-        }
-
-        for (let d = 1; d <= lastDate; d++) {
-          const cell = document.createElement('div');
-          cell.className = 'calendar-day';
-          cell.textContent = d;
-          const dateStr = `${historyViewYear}-${String(historyViewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-          if (activeDaysSet.has(dateStr)) {
-            cell.classList.add('active');
-            cell.onclick = () => {
-              selectedDate = dateStr;
-              switchTab('home', document.querySelector('.nav-item'));
-              renderHome();
-            };
-          } else {
-            cell.style.opacity = '0.3';
-            cell.style.cursor = 'default';
-          }
-          grid.appendChild(cell);
-        }
       } else {
-        // 部位が選択されている場合：カレンダーを隠し、直近2〜3ヶ月（過去90日分など）のリストを表示
-        historyCardContainer.style.display = 'none';
-
         const now = new Date();
         const threeMonthsAgo = new Date();
         threeMonthsAgo.setMonth(now.getMonth() - 3);
@@ -992,15 +997,14 @@
           return wDate >= threeMonthsAgo;
         });
 
-        // 日付の新しい順に並び替え
         targetWorkouts.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         if (targetWorkouts.length === 0) {
-          timelineDisplay.innerHTML = `<div class="empty-state">直近3ヶ月以内の「${currentHistoryPart}」の記録はありません。</div>`;
+          timelineDisplay.innerHTML = `<div class="empty-state" style="margin-top: 16px;">直近3ヶ月以内の「${currentHistoryPart}」の記録はありません。</div>`;
           return;
         }
 
-        let html = `<div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-red); margin-bottom: 10px;">■ ${currentHistoryPart} の直近履歴（過去3ヶ月）</div>`;
+        let html = `<div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-red); margin: 16px 0 10px 0;">■ ${currentHistoryPart} の直近履歴（過去3ヶ月）</div>`;
         
         targetWorkouts.forEach(w => {
           let maxEverRM = 0;
