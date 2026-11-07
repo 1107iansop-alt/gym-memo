@@ -83,7 +83,6 @@
     .max-rm-badge { background-color: var(--accent-red); color: white; font-size: 0.55rem; font-weight: bold; padding: 1px 3px; border-radius: 3px; flex-shrink: 0; }
 
     .delete-btn { background: none; border: none; color: #ff453a; font-size: 0.75rem; cursor: pointer; padding: 4px; }
-    .share-btn { width: 100%; background-color: var(--accent-red); color: white; border: none; border-radius: 14px; padding: 16px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 20px; text-align: center; }
 
     /* フッターナビゲーション */
     .footer-nav {
@@ -146,7 +145,7 @@
           </div>
         </div>
 
-        <!-- 右側：上半（日数）＆下半（4行ボタン群） -->
+        <!-- 右側：上半（日数）＆下半（4行ボタン群：指定順） -->
         <div class="home-right-col">
           <div class="stats-row">
             <div class="stat-box">
@@ -161,9 +160,9 @@
 
           <div class="action-btn-list">
             <button class="mini-btn" onclick="openModal()">今日のトレーニング追加</button>
-            <button class="mini-btn mini-btn-secondary" onclick="openManageModal()">部位/種目の管理</button>
+            <button class="mini-btn mini-btn-secondary" onclick="shareCurrentDay()">当日サマリ</button>
             <button class="mini-btn mini-btn-secondary" onclick="openSummaryModal()">月間サマリ</button>
-            <button class="mini-btn mini-btn-secondary" onclick="shareCurrentDay()">シェア</button>
+            <button class="mini-btn mini-btn-secondary" onclick="openManageModal()">部位/種目の管理</button>
           </div>
         </div>
       </div>
@@ -173,7 +172,7 @@
     <div id="home-workout-display"></div>
   </div>
 
-  <!-- 履歴 / 分析タブ -->
+  <!-- 履歴タブ -->
   <div id="tab-history" class="tab-content">
     <div class="filter-tabs" id="filter-tabs-container" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:16px;"></div>
     <div class="card">
@@ -198,25 +197,20 @@
     </button>
     <button class="nav-item" onclick="switchTab('history', this)">
       <span class="icon">📅</span>
-      <span>履歴/分析</span>
+      <span>履歴</span>
     </button>
   </nav>
 
   <!-- 記録入力モーダル -->
   <div class="modal" id="record-modal">
     <div class="modal-content">
-      <div class="form-group" style="margin-bottom: 16px;">
-        <span style="font-size: 0.75rem; color: var(--text-sub); display: block; margin-bottom: 2px;">種目名</span>
-        <div id="header-exercise-name" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">種目を選択</div>
-      </div>
-
       <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div class="form-group">
           <label class="form-label">部位</label>
           <select id="input-part" class="form-select" onchange="onPartChange()"></select>
         </div>
         <div class="form-group">
-          <label class="form-label">種目名 (変更)</label>
+          <label class="form-label">種目名</label>
           <select id="input-exercise-select" class="form-select" onchange="onExerciseChange()"></select>
         </div>
       </div>
@@ -504,19 +498,23 @@
     }
 
     function shareSummaryImage() {
-      const target = document.getElementById('summary-capture-target');
+      const target = document.getElementById('share-capture-target');
+      if (!target) {
+        alert('当日サマリ（表示中の記録）がありません。');
+        return;
+      }
       html2canvas(target, { backgroundColor: '#1c1c1e', scale: 2 }).then(canvas => {
         canvas.toBlob(blob => {
-          const file = new File([blob], `Workout-Log_サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`, { type: 'image/png' });
+          const file = new File([blob], `Workout-Log_${selectedDate}.png`, { type: 'image/png' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({
               files: [file],
-              title: `${summaryViewYear}年${summaryViewMonth + 1}月 サマリ`,
-              text: 'Workout-Log サマリ'
+              title: `${selectedDate} ワークアウト`,
+              text: 'Workout-Log 記録'
             }).catch(() => {});
           } else {
             const link = document.createElement('a');
-            link.download = `Workout-Log_サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`;
+            link.download = `Workout-Log_${selectedDate}.png`;
             link.href = canvas.toDataURL();
             link.click();
           }
@@ -610,7 +608,6 @@
       }
 
       const exerciseName = select.value;
-      document.getElementById('header-exercise-name').textContent = (exerciseName && exerciseName !== '__ADD_NEW__') ? exerciseName : '種目を選択してください';
       loadLastRecord(part, exerciseName);
     }
 
@@ -794,9 +791,10 @@
           if (w.memo) grouped[w.exercise].memo.push(w.memo);
         });
 
+        // 📅絵文字を削除したタイトル表示
         let html = `
           <div class="workout-day-view" id="share-capture-target">
-            <div class="workout-day-title">📅 ${selectedDate} Workout</div>
+            <div class="workout-day-title">${selectedDate} Workout</div>
         `;
 
         for (let exName in grouped) {
@@ -860,31 +858,6 @@
         localStorage.setItem('gym_workouts_v2', JSON.stringify(workouts));
         renderHome();
       }
-    }
-
-    function shareCurrentDay() {
-      const target = document.getElementById('share-capture-target');
-      if (!target) {
-        alert('シェアするトレーニング記録がありません。');
-        return;
-      }
-      html2canvas(target, { backgroundColor: '#1c1c1e', scale: 2 }).then(canvas => {
-        canvas.toBlob(blob => {
-          const file = new File([blob], `Workout-Log_${selectedDate}.png`, { type: 'image/png' });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({
-              files: [file],
-              title: `${selectedDate} ワークアウト`,
-              text: 'Workout-Log 記録'
-            }).catch(() => {});
-          } else {
-            const link = document.createElement('a');
-            link.download = `Workout-Log_${selectedDate}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
-          }
-        });
-      });
     }
 
     function renderHistoryFilterTabs() {
