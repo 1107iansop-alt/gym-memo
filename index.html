@@ -60,7 +60,6 @@
     .history-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .history-part { background: #2c2c2e; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; color: var(--text-sub); }
     
-    /* 綺麗に縦並び・桁揃えするためのグリッドレイアウト */
     .history-set-row { display: grid; grid-template-columns: 24px 75px 12px 65px 1fr; align-items: center; font-size: 0.85rem; color: var(--text-main); margin-top: 4px; }
     .set-num-col { text-align: right; padding-right: 4px; color: var(--text-main); }
     .set-weight-col { text-align: right; }
@@ -137,7 +136,7 @@
 
     <div class="btn-grid">
       <button class="btn" onclick="openModal()">+ 今日のトレーニング追加</button>
-      <button class="btn btn-secondary" onclick="openSummaryModal()">月間サマリー</button>
+      <button class="btn btn-secondary" onclick="openSummaryModal()">月間サマリ</button>
     </div>
 
     <!-- 選択した日付のメニュー表示エリア -->
@@ -250,12 +249,12 @@
     </div>
   </div>
 
-  <!-- 月間サマリーモーダル -->
+  <!-- 月間サマリモーダル -->
   <div class="modal" id="summary-modal">
     <div class="modal-content">
       <div id="summary-capture-target" style="padding: 10px; background: var(--card-bg); border-radius: 16px;">
         <div class="modal-header-nav">
-          <div class="exercise-title-header" id="summary-modal-main-title">2026年 11月 サマリー</div>
+          <div class="exercise-title-header" id="summary-modal-main-title">2026年 11月 サマリ</div>
         </div>
         
         <div class="card" style="margin-bottom: 16px;">
@@ -282,11 +281,11 @@
           </div>
           <div class="summary-box">
             <div class="summary-box-title">合計セット数</div>
-            <div class="summary-box-val" id="sum-sets">0 セット</div>
+            <div class="summary-box-val" id="sum-sets">0 sets</div>
           </div>
           <div class="summary-box">
             <div class="summary-box-title">合計レップ数</div>
-            <div class="summary-box-val" id="sum-reps">0 回</div>
+            <div class="summary-box-val" id="sum-reps">0 reps</div>
           </div>
         </div>
 
@@ -296,7 +295,7 @@
         </div>
       </div>
 
-      <button class="download-action-btn" onclick="shareSummaryImage()" style="width:100%; background:#0a84ff; color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; font-size:0.95rem; margin-top:15px; cursor:pointer;">サマリーを画像保存</button>
+      <button class="download-action-btn" onclick="shareSummaryImage()" style="width:100%; background:#0a84ff; color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; font-size:0.95rem; margin-top:15px; cursor:pointer;">サマリを画像保存</button>
       <button class="close-modal" onclick="closeSummaryModal()" style="margin-top:8px;">閉じる</button>
     </div>
   </div>
@@ -344,7 +343,7 @@
       }
     }
 
-    function openModal(targetPart = null, targetExercise = null) {
+    function openModal(targetPart = null, targetExercise = null, isEdit = false) {
       document.getElementById('input-date').value = selectedDate;
       document.getElementById('input-memo').value = '';
       document.getElementById('cardio-time').value = '';
@@ -354,7 +353,8 @@
 
       updatePartSelectOptions(targetPart, targetExercise);
       
-      if (targetPart && targetExercise) {
+      // 編集モード（カードタップ時）のみ既存セットを入力済みにする。「+ 今日のトレーニング追加」のときはisEdit=falseで常にまっさら
+      if (isEdit && targetPart && targetExercise) {
         const existing = workouts.find(w => w.date === selectedDate && w.part === targetPart && w.exercise === targetExercise);
         if (existing && existing.sets && existing.sets.length > 0) {
           const container = document.getElementById('set-inputs-container');
@@ -375,6 +375,8 @@
           });
           addSetInput();
         }
+      } else {
+        initSetInputs();
       }
 
       document.getElementById('record-modal').classList.add('open');
@@ -403,7 +405,7 @@
     }
 
     function updateSummaryModalContent() {
-      document.getElementById('summary-modal-main-title').textContent = `${summaryViewYear}年 ${summaryViewMonth + 1}月 サマリー`;
+      document.getElementById('summary-modal-main-title').textContent = `${summaryViewYear}年 ${summaryViewMonth + 1}月 サマリ`;
       document.getElementById('summary-cal-title').textContent = `${summaryViewYear}年 ${summaryViewMonth + 1}月`;
 
       const monthWorkouts = workouts.filter(w => {
@@ -441,8 +443,8 @@
 
       document.getElementById('sum-days').textContent = `${activeDaysSet.size} 日`;
       document.getElementById('sum-ton').textContent = `${totalTonnage.toFixed(2)} t`;
-      document.getElementById('sum-sets').textContent = `${totalSetsCount} セット`;
-      document.getElementById('sum-reps').textContent = `${totalRepsCount} 回`;
+      document.getElementById('sum-sets').textContent = `${totalSetsCount} sets`;
+      document.getElementById('sum-reps').textContent = `${totalRepsCount} reps`;
 
       const partsListEl = document.getElementById('summary-parts-list');
       const partsKeys = Object.keys(partStats);
@@ -488,16 +490,16 @@
       const target = document.getElementById('summary-capture-target');
       html2canvas(target, { backgroundColor: '#1c1c1e', scale: 2 }).then(canvas => {
         canvas.toBlob(blob => {
-          const file = new File([blob], `GYM-MEMO_サマリー_${summaryViewYear}年${summaryViewMonth + 1}月.png`, { type: 'image/png' });
+          const file = new File([blob], `GYM-MEMO_サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`, { type: 'image/png' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({
               files: [file],
-              title: `${summaryViewYear}年${summaryViewMonth + 1}月 サマリー`,
-              text: 'GYM-MEMO サマリー'
+              title: `${summaryViewYear}年${summaryViewMonth + 1}月 サマリ`,
+              text: 'GYM-MEMO サマリ'
             }).catch(() => {});
           } else {
             const link = document.createElement('a');
-            link.download = `GYM-MEMO_サマリー_${summaryViewYear}年${summaryViewMonth + 1}月.png`;
+            link.download = `GYM-MEMO_サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`;
             link.href = canvas.toDataURL();
             link.click();
           }
@@ -593,10 +595,6 @@
       const exerciseName = select.value;
       document.getElementById('header-exercise-name').textContent = (exerciseName && exerciseName !== '__ADD_NEW__') ? exerciseName : '種目を選択してください';
       loadLastRecord(part, exerciseName);
-
-      if (part !== '有酸素運動' && document.getElementById('set-inputs-container').children.length === 0) {
-        initSetInputs();
-      }
     }
 
     function loadLastRecord(part, exercise) {
@@ -782,7 +780,6 @@
         for (let exName in grouped) {
           const item = grouped[exName];
           
-          // この種目のこれまでの全履歴から最高推定1RMを計算
           let allExWorkouts = workouts.filter(w => w.exercise === exName && !w.isCardio);
           let maxEverRM = 0;
           allExWorkouts.forEach(w => {
@@ -792,7 +789,6 @@
             });
           });
 
-          // このカード内の各セットの推定1RMを計算し、最大値を特定
           let setRMs = item.sets.map(s => s.weight * (1 + s.reps / 30));
           let maxCardRM = setRMs.length > 0 ? Math.max(...setRMs) : 0;
           let displayCardRM = Math.max(maxCardRM, maxEverRM);
@@ -818,7 +814,7 @@
           }).join('');
 
           html += `
-            <div class="history-card" onclick="openModal('${item.part}', '${exName}')">
+            <div class="history-card" onclick="openModal('${item.part}', '${exName}', true)">
               <div class="history-top">
                 <span class="history-part">${item.part}</span>
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -1058,4 +1054,3 @@
   </script>
 </body>
 </html>
-
