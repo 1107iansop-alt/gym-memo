@@ -551,7 +551,6 @@
             customExercises[part].push(trimmed);
             localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
           }
-          // 修正：追加された種目を確実に反映して選択状態にする
           updatePartSelectOptions(part, trimmed);
           return;
         } else {
@@ -658,10 +657,8 @@
         recordData.sets = setsData;
       }
 
-      // 修正：既存の同日・同種目がある場合はセットを確実に合算する（複数あっても最初のものにまとめる）
       const existingRecords = workouts.filter(w => w.date === date && w.part === part && w.exercise === exercise);
       if (existingRecords.length > 0 && !isCardio) {
-        // 先頭のレコードに新しいセットを追加合算し、残りは重複排除
         const firstRec = existingRecords[0];
         firstRec.sets.push(...recordData.sets);
         if (memo) firstRec.memo = memo;
@@ -864,6 +861,7 @@
       }
     }
 
+    /* 種目・部位管理モーダル（部位ごとの追加種目リストを正しく表示・管理できるように修正） */
     function openManageModal() {
       const area = document.getElementById('manage-content-area');
       let html = `<div style="margin-bottom:15px; font-weight:bold; color:var(--accent-red);">【部位リスト】</div>`;
@@ -876,6 +874,28 @@
           </div>
         </div>`;
       });
+
+      html += `<div style="margin:20px 0 15px 0; font-weight:bold; color:var(--accent-red);">【追加した種目リスト】</div>`;
+      let hasExercises = false;
+      for (let part in customExercises) {
+        if (customExercises[part] && customExercises[part].length > 0) {
+          hasExercises = true;
+          html += `<div style="font-size:0.8rem; color:var(--text-sub); margin-top:8px; margin-bottom:4px;">■ ${part}</div>`;
+          customExercises[part].forEach((ex, exIdx) => {
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; background:#2c2c2e; padding:6px 10px; border-radius:8px;">
+              <span style="font-size:0.85rem;">${ex}</span>
+              <div>
+                <button class="manage-btn" onclick="renameExercise('${part}', ${exIdx})">修正</button>
+                <button class="manage-btn" style="color:#ff453a; margin-left:4px;" onclick="deleteExercise('${part}', ${exIdx})">削除</button>
+              </div>
+            </div>`;
+          });
+        }
+      }
+      if (!hasExercises) {
+        html += `<div style="font-size:0.85rem; color:var(--text-sub);">追加された種目はまだありません。</div>`;
+      }
+
       area.innerHTML = html;
       document.getElementById('manage-modal').classList.add('open');
     }
@@ -889,8 +909,14 @@
       const oldName = customParts[idx];
       const newName = prompt('部位名を修正してください:', oldName);
       if (newName && newName.trim() !== '') {
-        customParts[idx] = newName.trim();
+        const trimmed = newName.trim();
+        customParts[idx] = trimmed;
+        if (customExercises[oldName]) {
+          customExercises[trimmed] = customExercises[oldName];
+          delete customExercises[oldName];
+        }
         localStorage.setItem('gym_custom_parts', JSON.stringify(customParts));
+        localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
         openManageModal();
       }
     }
@@ -899,7 +925,28 @@
       const target = customParts[idx];
       if (confirm(`部位「${target}」を削除しますか？`)) {
         customParts.splice(idx, 1);
+        delete customExercises[target];
         localStorage.setItem('gym_custom_parts', JSON.stringify(customParts));
+        localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+        openManageModal();
+      }
+    }
+
+    function renameExercise(part, exIdx) {
+      const oldName = customExercises[part][exIdx];
+      const newName = prompt('種目名を修正してください:', oldName);
+      if (newName && newName.trim() !== '') {
+        customExercises[part][exIdx] = newName.trim();
+        localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+        openManageModal();
+      }
+    }
+
+    function deleteExercise(part, exIdx) {
+      const target = customExercises[part][exIdx];
+      if (confirm(`種目「${target}」を削除しますか？`)) {
+        customExercises[part].splice(exIdx, 1);
+        localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
         openManageModal();
       }
     }
