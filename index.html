@@ -281,6 +281,11 @@
             <div class="summary-box-val" id="sum-reps">0 回</div>
           </div>
         </div>
+
+        <div id="summary-parts-breakdown" style="background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 14px; margin-bottom: 10px;">
+          <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 10px; color: var(--accent-red);">■ 部位別集計</div>
+          <div id="summary-parts-list" style="font-size: 0.85rem; color: var(--text-sub);">集計データはありません</div>
+        </div>
       </div>
 
       <button class="download-action-btn" onclick="shareSummaryImage()" style="width:100%; background:#0a84ff; color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; font-size:0.95rem; margin-top:15px; cursor:pointer;">サマリーを画像保存</button>
@@ -378,16 +383,26 @@
       let activeDaysSet = new Set();
       let totalSetsCount = 0;
       let totalRepsCount = 0;
+      let partStats = {};
 
       monthWorkouts.forEach(w => {
         activeDaysSet.add(w.date);
+        if (!partStats[w.part]) {
+          partStats[w.part] = { days: new Set(), sets: 0, tonnage: 0 };
+        }
+        partStats[w.part].days.add(w.date);
+
         if (w.isCardio) {
           totalSetsCount++;
+          partStats[w.part].sets++;
         } else if (w.sets) {
           w.sets.forEach(s => {
-            totalTonnage += (s.weight * s.reps) / 1000;
+            const ton = (s.weight * s.reps) / 1000;
+            totalTonnage += ton;
             totalSetsCount++;
             totalRepsCount += s.reps;
+            partStats[w.part].sets++;
+            partStats[w.part].tonnage += ton;
           });
         }
       });
@@ -396,6 +411,22 @@
       document.getElementById('sum-ton').textContent = `${totalTonnage.toFixed(2)} t`;
       document.getElementById('sum-sets').textContent = `${totalSetsCount} セット`;
       document.getElementById('sum-reps').textContent = `${totalRepsCount} 回`;
+
+      const partsListEl = document.getElementById('summary-parts-list');
+      const partsKeys = Object.keys(partStats);
+      if (partsKeys.length === 0) {
+        partsListEl.innerHTML = '集計データはありません';
+      } else {
+        let pHtml = '';
+        partsKeys.forEach(p => {
+          const st = partStats[p];
+          pHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:6px; border-bottom:1px solid #2c2c2e; padding-bottom:4px;">
+            <span style="color:var(--text-main); font-weight:600;">${p}</span>
+            <span>セット: ${st.sets} / 負荷: ${st.tonnage.toFixed(2)}t</span>
+          </div>`;
+        });
+        partsListEl.innerHTML = pHtml;
+      }
 
       const grid = document.getElementById('summary-calendar-grid');
       const dows = grid.querySelectorAll('.calendar-dow');
@@ -421,7 +452,6 @@
       }
     }
 
-    /* 月間サマリーの画像保存もシェア機能（標準共有シート）に対応 */
     function shareSummaryImage() {
       const target = document.getElementById('summary-capture-target');
       html2canvas(target, { backgroundColor: '#1c1c1e', scale: 2 }).then(canvas => {
@@ -474,7 +504,7 @@
             customParts.push(trimmed);
             localStorage.setItem('gym_custom_parts', JSON.stringify(customParts));
           }
-          updatePartSelectOptions(trimmed);
+          updatePartSelectOptions(trimmed, selectedExercise);
           return;
         } else {
           partSelect.selectedIndex = 0;
@@ -521,6 +551,7 @@
             customExercises[part].push(trimmed);
             localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
           }
+          // 修正：追加された種目を確実に反映して選択状態にする
           updatePartSelectOptions(part, trimmed);
           return;
         } else {
@@ -537,7 +568,6 @@
       }
     }
 
-    /* 過去のすべてのセットをLast Recordとして正しく表示する修正 */
     function loadLastRecord(part, exercise) {
       const matches = workouts.filter(w => w.part === part && w.exercise === exercise);
       const boxDate = document.getElementById('last-record-date');
@@ -548,7 +578,6 @@
         boxContent.innerHTML = '前回の記録はありません';
         return;
       }
-      // 日付の新しい順に並び替え
       matches.sort((a, b) => new Date(b.date) - new Date(a.date));
       const last = matches[0];
       boxDate.textContent = last.date;
@@ -556,7 +585,6 @@
       if (last.isCardio) {
         boxContent.innerHTML = `時間: ${last.cardio.time || '-'}分 / 距離: ${last.cardio.distance || '-'}km`;
       } else if (last.sets) {
-        // 複数セットすべてを一覧表示する
         boxContent.innerHTML = last.sets.map((s, idx) => 
           `<div style="margin-top:2px; font-weight:500;">Set ${idx + 1}: ${s.weight} kg × ${s.reps} reps</div>`
         ).join('');
@@ -630,11 +658,15 @@
         recordData.sets = setsData;
       }
 
-      // 既存の「同日・同種目」の記録がすでにある場合は、新しいセットを追加・合算して1つにまとめる
-      const existingIndex = workouts.findIndex(w => w.date === date && w.part === part && w.exercise === exercise);
-      if (existingIndex !== -1 && !isCardio) {
-        workouts[existingIndex].sets.push(...setsData);
-        if (memo) workouts[existingIndex].memo = memo;
+      // 修正：既存の同日・同種目がある場合はセットを確実に合算する（複数あっても最初のものにまとめる）
+      const existingRecords = workouts.filter(w => w.date === date && w.part === part && w.exercise === exercise);
+      if (existingRecords.length > 0 && !isCardio) {
+        // 先頭のレコードに新しいセットを追加合算し、残りは重複排除
+        const firstRec = existingRecords[0];
+        firstRec.sets.push(...recordData.sets);
+        if (memo) firstRec.memo = memo;
+        workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
+        workouts.push(firstRec);
       } else {
         workouts.push(recordData);
       }
@@ -876,4 +908,3 @@
   </script>
 </body>
 </html>
-、
