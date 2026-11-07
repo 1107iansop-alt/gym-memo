@@ -36,7 +36,6 @@
     .card { background-color: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--border-color); width: 100%; overflow: hidden; }
     
     /* カレンダー */
-    .calendar-container { width: 100%; }
     .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; }
     .cal-btn { background: none; border: none; color: var(--accent-red); font-size: 1.1rem; cursor: pointer; padding: 4px 8px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 0.75rem; width: 100%; }
@@ -60,9 +59,18 @@
     .history-card:hover { background-color: #2f2f33; }
     .history-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .history-part { background: #2c2c2e; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; color: var(--text-sub); }
-    .history-set-item { font-size: 0.85rem; color: var(--text-main); margin-top: 3px; }
-    .delete-btn { background: none; border: none; color: #ff453a; font-size: 0.75rem; cursor: pointer; padding: 4px; }
+    
+    /* 綺麗に縦並び・桁揃えするためのグリッドレイアウト */
+    .history-set-row { display: grid; grid-template-columns: 24px 75px 12px 65px 1fr; align-items: center; font-size: 0.85rem; color: var(--text-main); margin-top: 4px; }
+    .set-num-col { text-align: right; padding-right: 4px; color: var(--text-main); }
+    .set-weight-col { text-align: right; }
+    .set-x-col { text-align: center; color: var(--text-sub); }
+    .set-reps-col { text-align: right; padding-right: 8px; }
+    .set-rm-col { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-sub); }
 
+    .max-rm-badge { background-color: var(--accent-red); color: white; font-size: 0.65rem; font-weight: bold; padding: 1px 4px; border-radius: 4px; display: inline-block; }
+
+    .delete-btn { background: none; border: none; color: #ff453a; font-size: 0.75rem; cursor: pointer; padding: 4px; }
     .share-btn { width: 100%; background-color: var(--accent-red); color: white; border: none; border-radius: 14px; padding: 16px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 20px; text-align: center; }
 
     /* フッターナビゲーション */
@@ -346,7 +354,6 @@
 
       updatePartSelectOptions(targetPart, targetExercise);
       
-      // すでに記録がある場合は既存のセットを入力済みの状態にする
       if (targetPart && targetExercise) {
         const existing = workouts.find(w => w.date === selectedDate && w.part === targetPart && w.exercise === targetExercise);
         if (existing && existing.sets && existing.sets.length > 0) {
@@ -366,7 +373,6 @@
             container.appendChild(div);
             updateRM(currentSetCount);
           });
-          // さらに追加するための空セットを1行足す
           addSetInput();
         }
       }
@@ -610,9 +616,11 @@
       if (last.isCardio) {
         boxContent.innerHTML = `時間: ${last.cardio.time || '-'}分 / 距離: ${last.cardio.distance || '-'}km`;
       } else if (last.sets) {
-        boxContent.innerHTML = last.sets.map((s, idx) => 
-          `<div style="margin-top:2px; font-weight:500;">Set ${idx + 1}: ${s.weight} kg × ${s.reps} reps</div>`
-        ).join('');
+        boxContent.innerHTML = last.sets.map((s, idx) => {
+          const wStr = Number(s.weight).toFixed(1);
+          const rm = Math.round(s.weight * (1 + s.reps / 30));
+          return `<div style="margin-top:2px; font-weight:500;">Set ${idx + 1}: ${wStr} kg × ${s.reps} reps (1RM:${rm}kg)</div>`;
+        }).join('');
       }
     }
 
@@ -683,7 +691,6 @@
         recordData.sets = setsData;
       }
 
-      // 上書き保存（既存の同日・同種目は一旦削除して最新のセット一覧を保存する）
       workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
       workouts.push(recordData);
 
@@ -774,15 +781,50 @@
 
         for (let exName in grouped) {
           const item = grouped[exName];
-          let setsHtml = item.sets.map((s, idx) => `
-            <div class="history-set-item">${idx + 1}&nbsp;&nbsp;&nbsp;${s.weight} kg × ${s.reps} reps</div>
-          `).join('');
+          
+          // この種目のこれまでの全履歴から最高推定1RMを計算
+          let allExWorkouts = workouts.filter(w => w.exercise === exName && !w.isCardio);
+          let maxEverRM = 0;
+          allExWorkouts.forEach(w => {
+            w.sets.forEach(s => {
+              const rm = s.weight * (1 + s.reps / 30);
+              if (rm > maxEverRM) maxEverRM = rm;
+            });
+          });
+
+          // このカード内の各セットの推定1RMを計算し、最大値を特定
+          let setRMs = item.sets.map(s => s.weight * (1 + s.reps / 30));
+          let maxCardRM = setRMs.length > 0 ? Math.max(...setRMs) : 0;
+          let displayCardRM = Math.max(maxCardRM, maxEverRM);
+
+          let setsHtml = item.sets.map((s, idx) => {
+            const currentRM = Math.round(s.weight * (1 + s.reps / 30));
+            const isMax = (currentRM >= Math.round(maxCardRM));
+            const wFormatted = Number(s.weight).toFixed(1) + ' kg';
+            const rFormatted = s.reps + ' reps';
+
+            return `
+              <div class="history-set-row">
+                <div class="set-num-col">${idx + 1}</div>
+                <div class="set-weight-col">${wFormatted}</div>
+                <div class="set-x-col">×</div>
+                <div class="set-reps-col">${rFormatted}</div>
+                <div class="set-rm-col">
+                  <span>(1RM:${currentRM}kg)</span>
+                  ${isMax ? '<span class="max-rm-badge">MAX RM</span>' : ''}
+                </div>
+              </div>
+            `;
+          }).join('');
 
           html += `
             <div class="history-card" onclick="openModal('${item.part}', '${exName}')">
               <div class="history-top">
                 <span class="history-part">${item.part}</span>
-                <button class="delete-btn" onclick="event.stopPropagation(); deleteRecordsByExercise('${selectedDate}', '${exName}')">削除</button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:0.8rem; font-weight:bold; color:var(--text-main);">RM : ${Math.round(displayCardRM)}kg</span>
+                  <button class="delete-btn" onclick="event.stopPropagation(); deleteRecordsByExercise('${selectedDate}', '${exName}')">削除</button>
+                </div>
               </div>
               <div style="font-weight: 700; font-size: 1rem; margin-bottom: 6px;">${exName}</div>
               ${setsHtml}
@@ -880,7 +922,6 @@
       }
     }
 
-    /* 種目・部位管理モーダル（並び替え、親部位変更、種目リスト表記に対応） */
     function openManageModal() {
       const area = document.getElementById('manage-content-area');
       let html = `<div style="margin-bottom:15px; font-weight:bold; color:var(--accent-red);">【部位リスト】</div>`;
@@ -1017,3 +1058,4 @@
   </script>
 </body>
 </html>
+
