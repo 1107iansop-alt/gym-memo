@@ -345,6 +345,32 @@
       document.getElementById('cardio-cal').value = '';
 
       updatePartSelectOptions(targetPart, targetExercise);
+      
+      // すでに記録がある場合は既存のセットを入力済みの状態にする
+      if (targetPart && targetExercise) {
+        const existing = workouts.find(w => w.date === selectedDate && w.part === targetPart && w.exercise === targetExercise);
+        if (existing && existing.sets && existing.sets.length > 0) {
+          const container = document.getElementById('set-inputs-container');
+          container.innerHTML = '';
+          currentSetCount = 0;
+          existing.sets.forEach((s) => {
+            currentSetCount++;
+            const div = document.createElement('div');
+            div.className = 'set-row';
+            div.innerHTML = `
+              <div class="set-num">${currentSetCount}</div>
+              <input type="number" step="0.5" class="set-input set-weight" value="${s.weight}" placeholder="kg" oninput="updateRM(${currentSetCount})">
+              <input type="number" class="set-input set-reps" value="${s.reps}" placeholder="回" oninput="updateRM(${currentSetCount})">
+              <div class="set-rm" id="rm-val-${currentSetCount}">-</div>
+            `;
+            container.appendChild(div);
+            updateRM(currentSetCount);
+          });
+          // さらに追加するための空セットを1行足す
+          addSetInput();
+        }
+      }
+
       document.getElementById('record-modal').classList.add('open');
     }
 
@@ -562,7 +588,7 @@
       document.getElementById('header-exercise-name').textContent = (exerciseName && exerciseName !== '__ADD_NEW__') ? exerciseName : '種目を選択してください';
       loadLastRecord(part, exerciseName);
 
-      if (part !== '有酸素運動') {
+      if (part !== '有酸素運動' && document.getElementById('set-inputs-container').children.length === 0) {
         initSetInputs();
       }
     }
@@ -657,16 +683,9 @@
         recordData.sets = setsData;
       }
 
-      const existingRecords = workouts.filter(w => w.date === date && w.part === part && w.exercise === exercise);
-      if (existingRecords.length > 0 && !isCardio) {
-        const firstRec = existingRecords[0];
-        firstRec.sets.push(...recordData.sets);
-        if (memo) firstRec.memo = memo;
-        workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
-        workouts.push(firstRec);
-      } else {
-        workouts.push(recordData);
-      }
+      // 上書き保存（既存の同日・同種目は一旦削除して最新のセット一覧を保存する）
+      workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
+      workouts.push(recordData);
 
       localStorage.setItem('gym_workouts_v2', JSON.stringify(workouts));
       selectedDate = date;
@@ -861,7 +880,7 @@
       }
     }
 
-    /* 種目・部位管理モーダル（部位ごとの追加種目リストを正しく表示・管理できるように修正） */
+    /* 種目・部位管理モーダル（並び替え、親部位変更、種目リスト表記に対応） */
     function openManageModal() {
       const area = document.getElementById('manage-content-area');
       let html = `<div style="margin-bottom:15px; font-weight:bold; color:var(--accent-red);">【部位リスト】</div>`;
@@ -869,13 +888,15 @@
         html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:#2c2c2e; padding:8px; border-radius:8px;">
           <span>${p}</span>
           <div>
-            <button class="manage-btn" onclick="renamePart(${idx})">修正</button>
+            <button class="manage-btn" onclick="movePart(${idx}, -1)">▲</button>
+            <button class="manage-btn" onclick="movePart(${idx}, 1)" style="margin-left:2px;">▼</button>
+            <button class="manage-btn" onclick="renamePart(${idx})" style="margin-left:4px;">修正</button>
             <button class="manage-btn" style="color:#ff453a; margin-left:4px;" onclick="deletePart(${idx})">削除</button>
           </div>
         </div>`;
       });
 
-      html += `<div style="margin:20px 0 15px 0; font-weight:bold; color:var(--accent-red);">【追加した種目リスト】</div>`;
+      html += `<div style="margin:20px 0 15px 0; font-weight:bold; color:var(--accent-red);">【種目リスト】</div>`;
       let hasExercises = false;
       for (let part in customExercises) {
         if (customExercises[part] && customExercises[part].length > 0) {
@@ -885,7 +906,10 @@
             html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; background:#2c2c2e; padding:6px 10px; border-radius:8px;">
               <span style="font-size:0.85rem;">${ex}</span>
               <div>
-                <button class="manage-btn" onclick="renameExercise('${part}', ${exIdx})">修正</button>
+                <button class="manage-btn" onclick="moveExercise('${part}', ${exIdx}, -1)">▲</button>
+                <button class="manage-btn" onclick="moveExercise('${part}', ${exIdx}, 1)" style="margin-left:2px;">▼</button>
+                <button class="manage-btn" onclick="changeExerciseParent('${part}', ${exIdx})" style="margin-left:4px;">移動</button>
+                <button class="manage-btn" onclick="renameExercise('${part}', ${exIdx})" style="margin-left:4px;">修正</button>
                 <button class="manage-btn" style="color:#ff453a; margin-left:4px;" onclick="deleteExercise('${part}', ${exIdx})">削除</button>
               </div>
             </div>`;
@@ -893,7 +917,7 @@
         }
       }
       if (!hasExercises) {
-        html += `<div style="font-size:0.85rem; color:var(--text-sub);">追加された種目はまだありません。</div>`;
+        html += `<div style="font-size:0.85rem; color:var(--text-sub);">登録された種目はまだありません。</div>`;
       }
 
       area.innerHTML = html;
@@ -903,6 +927,44 @@
     function closeManageModal() {
       document.getElementById('manage-modal').classList.remove('open');
       renderHome();
+    }
+
+    function movePart(idx, dir) {
+      const targetIdx = idx + dir;
+      if (targetIdx < 0 || targetIdx >= customParts.length) return;
+      const temp = customParts[idx];
+      customParts[idx] = customParts[targetIdx];
+      customParts[targetIdx] = temp;
+      localStorage.setItem('gym_custom_parts', JSON.stringify(customParts));
+      openManageModal();
+    }
+
+    function moveExercise(part, exIdx, dir) {
+      const list = customExercises[part];
+      const targetIdx = exIdx + dir;
+      if (targetIdx < 0 || targetIdx >= list.length) return;
+      const temp = list[exIdx];
+      list[exIdx] = list[targetIdx];
+      list[targetIdx] = temp;
+      localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+      openManageModal();
+    }
+
+    function changeExerciseParent(oldPart, exIdx) {
+      const exName = customExercises[oldPart][exIdx];
+      const newPart = prompt(`「${exName}」の移動先（新しい部位名）を入力してください:`, oldPart);
+      if (newPart && newPart.trim() !== '' && newPart !== oldPart) {
+        const trimmed = newPart.trim();
+        if (!customParts.includes(trimmed)) {
+          customParts.push(trimmed);
+          localStorage.setItem('gym_custom_parts', JSON.stringify(customParts));
+        }
+        customExercises[oldPart].splice(exIdx, 1);
+        if (!customExercises[trimmed]) customExercises[trimmed] = [];
+        customExercises[trimmed].push(exName);
+        localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+        openManageModal();
+      }
     }
 
     function renamePart(idx) {
