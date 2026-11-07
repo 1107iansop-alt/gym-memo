@@ -55,19 +55,22 @@
     .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
     .btn { background-color: var(--accent-red); color: white; border: none; border-radius: 14px; padding: 16px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .btn-secondary { background-color: #2c2c2e; color: #0a84ff; }
-    .history-head { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; }
+    .history-head { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
     .empty-state { background-color: var(--card-bg); border-radius: 12px; padding: 30px 20px; text-align: center; color: var(--text-sub); font-size: 0.9rem; }
 
-    /* 履歴表示 */
-    .history-card { background-color: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border-color); }
-    .history-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .history-date { font-weight: bold; color: var(--accent-red); font-size: 0.95rem; }
-    .history-part { background: #2c2c2e; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; color: var(--text-sub); }
-    .history-set-item { font-size: 0.85rem; color: var(--text-main); margin-top: 4px; }
-    .delete-btn { background: none; border: none; color: #ff453a; font-size: 0.8rem; cursor: pointer; }
-    .download-card-btn { background: #2c2c2e; border: 1px solid var(--border-color); color: #0a84ff; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
+    /* 日ごとまとめカード */
+    .day-group-card { background-color: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .day-group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+    .day-group-date { font-weight: bold; color: var(--accent-red); font-size: 1.05rem; }
+    .day-download-btn { background: #0a84ff; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
 
-    /* フッターナビゲーション (2つのタブのみ) */
+    .history-card { background-color: #252528; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); }
+    .history-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .history-part { background: #2c2c2e; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; color: var(--text-sub); }
+    .history-set-item { font-size: 0.85rem; color: var(--text-main); margin-top: 3px; }
+    .delete-btn { background: none; border: none; color: #ff453a; font-size: 0.75rem; cursor: pointer; }
+
+    /* フッターナビゲーション */
     .footer-nav {
       position: fixed; bottom: 0; left: 0; width: 100%; background: #1c1c1e; border-top: 1px solid var(--border-color);
       display: grid; grid-template-columns: repeat(2, 1fr); padding: 8px 0 env(safe-area-inset-bottom, 8px) 0; z-index: 50;
@@ -100,18 +103,20 @@
     .submit-btn { width: 100%; background: var(--accent-red); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 1rem; margin-top: 20px; cursor: pointer; }
     .close-modal { width: 100%; background: #2c2c2e; color: var(--text-main); border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 8px; cursor: pointer; }
 
-    /* 月間サマリーモーダル専用デザイン */
     .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
     .summary-box { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 16px; text-align: center; }
     .summary-box-title { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; }
     .summary-box-val { font-size: 1.4rem; font-weight: 800; color: var(--accent-red); }
 
     .download-action-btn { width: 100%; background: #0a84ff; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 15px; cursor: pointer; }
+    
+    .manage-btn { background: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
   </style>
 </head>
 <body>
   <header>
     <h1 id="app-header-title">GYM-MEMO</h1>
+    <button class="manage-btn" onclick="openManageModal()">種目/部位管理</button>
   </header>
 
   <!-- ホームタブ -->
@@ -126,7 +131,6 @@
         <span id="total-sets">総セット数: 0 セット</span>
       </div>
 
-      <!-- ホーム画面用カレンダー -->
       <div class="calendar-container" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
         <div class="cal-header">
           <button class="cal-btn" onclick="changeMonth(-1)">◀</button>
@@ -161,7 +165,7 @@
     </div>
   </div>
 
-  <!-- フッターナビゲーション (ホーム / 履歴・分析 の2つのみ) -->
+  <!-- フッターナビゲーション -->
   <nav class="footer-nav">
     <button class="nav-item active" onclick="switchTab('home', this)">
       <span class="icon">🏠</span>
@@ -245,7 +249,7 @@
     </div>
   </div>
 
-  <!-- 月間サマリーモーダル (画像保存対応) -->
+  <!-- 月間サマリーモーダル -->
   <div class="modal" id="summary-modal">
     <div class="modal-content">
       <div id="summary-capture-target" style="padding: 10px; background: var(--card-bg); border-radius: 16px;">
@@ -253,7 +257,6 @@
           <div class="exercise-title-header" id="summary-modal-main-title">2026年 11月 サマリー</div>
         </div>
         
-        <!-- サマリー内カレンダー -->
         <div class="card" style="margin-bottom: 16px;">
           <div class="cal-header">
             <button class="cal-btn" onclick="changeSummaryMonth(-1)">◀</button>
@@ -289,6 +292,15 @@
 
       <button class="download-action-btn" onclick="downloadSummaryImage()">📷 サマリーを画像保存</button>
       <button class="close-modal" onclick="closeSummaryModal()">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 種目・部位管理モーダル (削除・修正用) -->
+  <div class="modal" id="manage-modal">
+    <div class="modal-content">
+      <div class="exercise-title-header" style="margin-bottom: 15px;">種目・部位の管理</div>
+      <div id="manage-content-area" style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 20px;"></div>
+      <button class="close-modal" onclick="closeManageModal()">閉じる</button>
     </div>
   </div>
 
@@ -420,7 +432,7 @@
             customExercises[part].push(trimmed);
             localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
           }
-          onPartChange();
+          updatePartSelectOptions(part);
           select.value = trimmed;
         } else {
           select.selectedIndex = 0;
@@ -549,6 +561,91 @@
       }
     }
 
+    /* 管理モーダル (部位・種目の修正・削除) */
+    function openManageModal() {
+      const area = document.getElementById('manage-content-area');
+      let html = `<div style="margin-bottom:15px; font-weight:bold; color:var(--accent-red);">【部位リスト】</div>`;
+      customParts.forEach((p, idx) => {
+        html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:#2c2c2e; padding:8px; border-radius:8px;">
+          <span>${p}</span>
+          <div>
+            <button class="manage-btn" onclick="renamePart(${idx})">修正</button>
+            <button class="manage-btn" style="color:#ff453a; margin-left:4px;" onclick="deletePart(${idx})">削除</button>
+          </div>
+        </div>`;
+      });
+
+      html += `<div style="margin:20px 0 15px 0; font-weight:bold; color:var(--accent-red);">【種目リスト】</div>`;
+      for (let part in customExercises) {
+        if (customExercises[part].length > 0) {
+          html += `<div style="font-size:0.8rem; color:var(--text-sub); margin-top:6px;">■ ${part}</div>`;
+          customExercises[part].forEach((ex, idx) => {
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; background:#2c2c2e; padding:6px 8px; border-radius:8px;">
+              <span style="font-size:0.85rem;">${ex}</span>
+              <div>
+                <button class="manage-btn" onclick="renameExercise('${part}', ${idx})">修正</button>
+                <button class="manage-btn" style="color:#ff453a; margin-left:4px;" onclick="deleteExercise('${part}', ${idx})">削除</button>
+              </div>
+            </div>`;
+          });
+        }
+      }
+
+      area.innerHTML = html;
+      document.getElementById('manage-modal').classList.add('open');
+    }
+
+    function closeManageModal() {
+      document.getElementById('manage-modal').classList.remove('open');
+      render();
+    }
+
+    function renamePart(idx) {
+      const oldName = customParts[idx];
+      const newName = prompt('部位名を修正してください:', oldName);
+      if (newName && newName.trim() !== '') {
+        const trimmed = newName.trim();
+        customParts[idx] = trimmed;
+        if (customExercises[oldName]) {
+          customExercises[trimmed] = customExercises[oldName];
+          delete customExercises[oldName];
+        }
+        localStorage.setItem('gym_custom_parts', JSON.stringify(customParts));
+        localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+        openManageModal();
+      }
+    }
+
+    function deletePart(idx) {
+      const target = customParts[idx];
+      if (confirm(`部位「${target}」を削除しますか？`)) {
+        customParts.splice(idx, 1);
+        delete customExercises[target];
+        localStorage.setItem('gym_custom_parts', JSON.stringify(customParts));
+        localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+        openManageModal();
+      }
+    }
+
+    function renameExercise(part, idx) {
+      const oldName = customExercises[part][idx];
+      const newName = prompt('種目名を修正してください:', oldName);
+      if (newName && newName.trim() !== '') {
+        customExercises[part][idx] = newName.trim();
+        localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+        openManageModal();
+      }
+    }
+
+    function deleteExercise(part, idx) {
+      const target = customExercises[part][idx];
+      if (confirm(`種目「${target}」を削除しますか？`)) {
+        customExercises[part].splice(idx, 1);
+        localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+        openManageModal();
+      }
+    }
+
     function changeMonth(dir) {
       viewMonth += dir;
       if (viewMonth > 11) { viewMonth = 0; viewYear++; }
@@ -644,7 +741,6 @@
       document.getElementById('summary-modal').classList.remove('open');
     }
 
-    /* 画像ダウンロード関数 */
     function downloadSummaryImage() {
       const target = document.getElementById('summary-capture-target');
       html2canvas(target, { backgroundColor: '#1c1c1e' }).then(canvas => {
@@ -655,11 +751,12 @@
       });
     }
 
-    function downloadCardImage(cardId, dateStr, exerciseName) {
-      const target = document.getElementById(`card-${cardId}`);
+    /* その日やった全メニューをまとめて画像保存する関数 */
+    function downloadDayGroupImage(dateStr) {
+      const target = document.getElementById(`day-group-${dateStr}`);
       html2canvas(target, { backgroundColor: '#1c1c1e' }).then(canvas => {
         const link = document.createElement('a');
-        link.download = `GYM-MEMO_${dateStr}_${exerciseName}.png`;
+        link.download = `GYM-MEMO_${dateStr}_トレーニングメニュー.png`;
         link.href = canvas.toDataURL();
         link.click();
       });
@@ -722,27 +819,48 @@
 
     function renderHistoryList() {
       const sorted = [...workouts].sort((a, b) => new Date(b.date) - new Date(a.date));
-      
+      const filtered = currentFilterPart === 'ALL' ? sorted : sorted.filter(w => w.part === currentFilterPart);
+
+      // ホーム画面用 (直近5件の個別表示)
       const homeArea = document.getElementById('home-history-area');
       const recent = sorted.slice(0, 5);
       if (recent.length === 0) {
         homeArea.innerHTML = `<div class="empty-state">記録はまだありません。</div>`;
       } else {
-        homeArea.innerHTML = recent.map(w => renderCardHTML(w)).join('');
+        homeArea.innerHTML = recent.map(w => renderSingleCardHTML(w)).join('');
       }
 
+      // 履歴/分析画面用 (日付ごとにグループ化して、その日の全メニューをまとめて画像保存できるようにする)
       const historyArea = document.getElementById('history-area');
-      const filtered = currentFilterPart === 'ALL' ? sorted : sorted.filter(w => w.part === currentFilterPart);
-
       if (filtered.length === 0) {
         historyArea.innerHTML = `<div class="empty-state">該当する記録はありません。</div>`;
         return;
       }
 
-      historyArea.innerHTML = filtered.map(w => renderCardHTML(w)).join('');
+      // 日付ごとにグルーピング
+      const grouped = {};
+      filtered.forEach(w => {
+        if (!grouped[w.date]) grouped[w.date] = [];
+        grouped[w.date].push(w);
+      });
+
+      let groupHtml = '';
+      for (let dateStr in grouped) {
+        let itemsHtml = grouped[dateStr].map(w => renderSingleCardHTML(w)).join('');
+        groupHtml += `
+          <div class="day-group-card" id="day-group-${dateStr}">
+            <div class="day-group-header">
+              <span class="day-group-date">📅 ${dateStr}</span>
+              <button class="day-download-btn" onclick="downloadDayGroupImage('${dateStr}')">📷 この日の全メニューを画像保存</button>
+            </div>
+            ${itemsHtml}
+          </div>
+        `;
+      }
+      historyArea.innerHTML = groupHtml;
     }
 
-    function renderCardHTML(w) {
+    function renderSingleCardHTML(w) {
       let contentHtml = '';
       if (w.isCardio) {
         const c = w.cardio || {};
@@ -755,20 +873,14 @@
       }
 
       return `
-        <div class="history-card" id="card-${w.id}">
+        <div class="history-card">
           <div class="history-top">
-            <div>
-              <span class="history-date">${w.date}</span>
-              <span class="history-part">${w.part}</span>
-            </div>
-            <div>
-              <button class="download-card-btn" onclick="downloadCardImage(${w.id}, '${w.date}', '${w.exercise}')">📷 画像保存</button>
-              <button class="delete-btn" onclick="deleteRecord(${w.id})" style="margin-left:8px;">削除</button>
-            </div>
+            <span class="history-part">${w.part}</span>
+            <button class="delete-btn" onclick="deleteRecord(${w.id})">削除</button>
           </div>
-          <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 6px;">${w.exercise}</div>
+          <div style="font-weight: 700; font-size: 1rem; margin-bottom: 4px;">${w.exercise}</div>
           ${contentHtml}
-          ${w.memo ? `<div style="font-size:0.8rem; color:var(--text-sub); margin-top:8px;">メモ: ${w.memo}</div>` : ''}
+          ${w.memo ? `<div style="font-size:0.75rem; color:var(--text-sub); margin-top:6px;">メモ: ${w.memo}</div>` : ''}
         </div>
       `;
     }
@@ -777,4 +889,3 @@
   </script>
 </body>
 </html>
-　
