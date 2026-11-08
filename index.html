@@ -750,7 +750,7 @@
     }
 
     /* ----------------------------------------------------------------
-       OCR (画像自動取込) - クロップ領域ピンポイント判定版
+       OCR (画像自動取込) - 小数点補正スマートロジック
     ------------------------------------------------------------------ */
     function triggerFileInput() {
       document.getElementById('ocr-file-input').click();
@@ -767,14 +767,11 @@
 
       try {
         const img = await loadImage(file);
-        const worker = await Tesseract.createWorker('eng'); // 数字中心のためeng指定で高速・高精度化
+        const worker = await Tesseract.createWorker('eng');
 
-        // TANITA FITの画面グリッド領域（各項目の相対座標 %）
-        // 3×3 のグリッド配置
         const W = img.width;
         const H = img.height;
 
-        // クロップ解析関数
         async function recognizeArea(rect) {
           const canvas = document.createElement('canvas');
           canvas.width = rect.w;
@@ -784,11 +781,6 @@
           const res = await worker.recognize(canvas);
           return res.data.text.replace(/[^0-9.]/g, '');
         }
-
-        // TANITA FIT 9円の配置推測領域（%指定）
-        // 行1: 体重(左), BMI(中), 体内年齢(右)
-        // 行2: 基礎代謝(左), 体脂肪率(中), 脂肪量(右)
-        // 行3: 筋肉量(左), 除脂肪量(中), 筋質点数(右)
 
         const rWeight    = { x: W * 0.05, y: H * 0.28, w: W * 0.28, h: H * 0.12 };
         const rBmr       = { x: W * 0.05, y: H * 0.47, w: W * 0.28, h: H * 0.12 };
@@ -805,11 +797,11 @@
         await worker.terminate();
 
         const parsed = {
-          weight: cleanNumber(txtWeight),
-          muscle: cleanNumber(txtMuscle),
-          fatMass: cleanNumber(txtFatMass),
-          fatPct: cleanNumber(txtFatPct),
-          bmr: Math.round(cleanNumber(txtBmr)) || ''
+          weight: cleanNumber(txtWeight, 1),
+          muscle: cleanNumber(txtMuscle, 1),
+          fatMass: cleanNumber(txtFatMass, 1),
+          fatPct: cleanFatPct(txtFatPct),
+          bmr: Math.round(cleanNumber(txtBmr, 0)) || ''
         };
 
         overlay.style.display = 'none';
@@ -840,10 +832,24 @@
       });
     }
 
-    function cleanNumber(str) {
+    function cleanNumber(str, decimals) {
       if (!str) return '';
       const m = str.match(/(\d+\.?\d*)/);
-      return m ? m[1] : '';
+      if (!m) return '';
+      let val = parseFloat(m[1]);
+      return val.toFixed(decimals);
+    }
+
+    function cleanFatPct(str) {
+      if (!str) return '';
+      const m = str.match(/(\d+\.?\d*)/);
+      if (!m) return '';
+      let val = parseFloat(m[1]);
+      // もし小数点が含まれておらず、値が大きすぎる場合（例: 144 → 14.4 に補正）
+      if (!m[1].includes('.') && val > 50) {
+        val = val / 10;
+      }
+      return val.toFixed(1);
     }
 
     /* 体組成モーダル操作 */
