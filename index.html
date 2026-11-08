@@ -874,17 +874,17 @@
     function openBodyEditModal() {
       const mStr = `${bodyViewYear}-${String(bodySelectedMonth + 1).padStart(2, '0')}`;
       const defaultDate = `${mStr}-${String(new Date().getDate()).padStart(2, '0')}`;
-      document.getElementById('edit-body-date').value = defaultDate;
-
+      
       const existing = bodyLogs.find(b => b.date && b.date.replace(/\//g, '-').startsWith(mStr));
       if (existing) {
         document.getElementById('edit-body-date').value = existing.date.replace(/\//g, '-');
-        document.getElementById('edit-body-weight').value = existing.weight || '';
-        document.getElementById('edit-body-muscle').value = existing.muscle || '';
-        document.getElementById('edit-body-fat-mass').value = existing.fatMass || '';
-        document.getElementById('edit-body-fat-pct').value = existing.fatPct || '';
-        document.getElementById('edit-body-bmr').value = existing.bmr || '';
+        document.getElementById('edit-body-weight').value = existing.weight !== undefined ? existing.weight : '';
+        document.getElementById('edit-body-muscle').value = existing.muscle !== undefined ? existing.muscle : '';
+        document.getElementById('edit-body-fat-mass').value = existing.fatMass !== undefined ? existing.fatMass : '';
+        document.getElementById('edit-body-fat-pct').value = existing.fatPct !== undefined ? existing.fatPct : '';
+        document.getElementById('edit-body-bmr').value = existing.bmr !== undefined ? existing.bmr : '';
       } else {
+        document.getElementById('edit-body-date').value = defaultDate;
         resetBodyInputs();
       }
 
