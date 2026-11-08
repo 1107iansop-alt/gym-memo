@@ -101,7 +101,7 @@
 
     .form-group { margin-bottom: 14px; }
     .form-label { font-size: 0.80rem; color: var(--text-sub); margin-bottom: 6px; display: block; }
-    .form-input, .form-select { width: 100%; background: #2c2c2e; border: 1px solid var(--border-color); color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; padding: 12px; border-radius: 10px; font-size: 0.95rem; }
+    .form-input, .form-select { width: 100%; background: #2c2c2e; border: 1px solid var(--border-color); color: white; padding: 12px; border-radius: 10px; font-size: 0.95rem; }
 
     .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 60px; gap: 8px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 10px; border-radius: 10px; }
     .set-num { font-weight: bold; color: var(--accent-red); text-align: center; font-size: 0.9rem; }
@@ -109,8 +109,7 @@
     .set-rm { font-size: 0.75rem; color: var(--text-sub); text-align: center; }
 
     .add-set-btn { width: 100%; background: #2c2c2e; color: #34c759; border: 1px dashed #34c759; padding: 12px; border-radius: 10px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-    .submit-btn { width: 100%; background: var(--accent-red); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 1rem; margin-top: 15px; cursor: pointer; }
-    .reset-btn { width: 100%; background: #3a3a3c; color: #ff453a; border: 1px solid var(--border-color); padding: 12px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; margin-top: 8px; cursor: pointer; }
+    .submit-btn { width: 100%; background: var(--accent-red); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 1rem; margin-top: 20px; cursor: pointer; }
     .close-modal { width: 100%; background: #2c2c2e; color: var(--text-main); border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 8px; cursor: pointer; }
     .manage-btn { background: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
 
@@ -283,9 +282,7 @@
           <button class="sub-tab-btn" onclick="setChartType('BMR', this)">基礎代謝</button>
         </div>
       </div>
-      <div style="width:100%; overflow:hidden;">
-        <canvas id="bodyChart" style="width:100%; height:220px; display:block;"></canvas>
-      </div>
+      <canvas id="bodyChart" width="400" height="220" style="width:100%; height:220px;"></canvas>
     </div>
   </div>
 
@@ -340,7 +337,6 @@
       </div>
 
       <button class="submit-btn" onclick="saveBodyEditData()">データを保存する</button>
-      <button class="reset-btn" onclick="resetBodyInputs()">入力欄をリセット（クリア）</button>
       <button class="close-modal" onclick="closeBodyEditModal()">キャンセル</button>
     </div>
   </div>
@@ -550,10 +546,10 @@
       for (let m = 0; m < 12; m++) {
         const cell = document.createElement('div');
         cell.className = 'month-cell';
-        cell.textContent = m + 1;
+        cell.textContent = m + 1; // 数字のみ表示
 
         const monthPrefix = `${bodyViewYear}-${String(m + 1).padStart(2, '0')}`;
-        const hasData = bodyLogs.some(b => b.date && b.date.replace(/\//g, '-').startsWith(monthPrefix));
+        const hasData = bodyLogs.some(b => b.date.startsWith(monthPrefix));
 
         if (hasData) cell.classList.add('has-data');
         if (m === bodySelectedMonth) cell.classList.add('selected');
@@ -572,8 +568,8 @@
       const mStr = `${bodyViewYear}-${String(bodySelectedMonth + 1).padStart(2, '0')}`;
       document.getElementById('body-selected-label').textContent = `${bodyViewYear}年 ${bodySelectedMonth + 1}月 測定データ`;
 
-      const matches = bodyLogs.filter(b => b.date && b.date.replace(/\//g, '-').startsWith(mStr));
-      matches.sort((a, b) => new Date(b.date.replace(/\//g, '-')) - new Date(a.date.replace(/\//g, '-')));
+      const matches = bodyLogs.filter(b => b.date.startsWith(mStr));
+      matches.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       if (matches.length > 0) {
         const data = matches[0];
@@ -609,84 +605,74 @@
       const canvas = document.getElementById('bodyChart');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      
-      const displayWidth = canvas.parentElement.clientWidth || 360;
-      const displayHeight = 220;
-      const dpr = window.devicePixelRatio || 1;
+      const width = canvas.width = canvas.parentElement.clientWidth || 380;
+      const height = canvas.height = 220;
 
-      canvas.width = displayWidth * dpr;
-      canvas.height = displayHeight * dpr;
-      canvas.style.width = displayWidth + 'px';
-      canvas.style.height = displayHeight + 'px';
-
-      ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, displayWidth, displayHeight);
+      ctx.clearRect(0, 0, width, height);
 
       if (bodyLogs.length === 0) {
         ctx.fillStyle = '#8e8e93';
-        ctx.font = '12px -apple-system, sans-serif';
+        ctx.font = '12px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('測定データがありません', displayWidth / 2, displayHeight / 2);
+        ctx.fillText('測定データがありません', width / 2, height / 2);
         return;
       }
 
-      let sortedLogs = [...bodyLogs].filter(b => b.date).map(b => ({
-        ...b,
-        normalizedDate: b.date.replace(/\//g, '-')
-      })).sort((a, b) => new Date(a.normalizedDate) - new Date(b.normalizedDate));
-
+      // 期間絞り込み
+      let sortedLogs = [...bodyLogs].sort((a, b) => new Date(a.date) - new Date(b.date));
       const now = new Date();
       if (chartRange === '3M') {
         const limit = new Date(); limit.setMonth(now.getMonth() - 3);
-        sortedLogs = sortedLogs.filter(b => new Date(b.normalizedDate) >= limit);
+        sortedLogs = sortedLogs.filter(b => new Date(b.date) >= limit);
       } else if (chartRange === '6M') {
         const limit = new Date(); limit.setMonth(now.getMonth() - 6);
-        sortedLogs = sortedLogs.filter(b => new Date(b.normalizedDate) >= limit);
+        sortedLogs = sortedLogs.filter(b => new Date(b.date) >= limit);
       } else if (chartRange === '1Y') {
         const limit = new Date(); limit.setFullYear(now.getFullYear() - 1);
-        sortedLogs = sortedLogs.filter(b => new Date(b.normalizedDate) >= limit);
+        sortedLogs = sortedLogs.filter(b => new Date(b.date) >= limit);
       }
 
       if (sortedLogs.length === 0) {
         ctx.fillStyle = '#8e8e93';
-        ctx.font = '12px -apple-system, sans-serif';
+        ctx.font = '12px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('対象期間のデータがありません', displayWidth / 2, displayHeight / 2);
+        ctx.fillText('対象期間のデータがありません', width / 2, height / 2);
         return;
       }
 
-      const paddingLeft = 45;
-      const paddingRight = 45;
-      const paddingTop = 35;
+      const paddingLeft = 35;
+      const paddingRight = (chartType === 'WEIGHT_FAT') ? 35 : 15;
+      const paddingTop = 25;
       const paddingBottom = 30;
-      const chartW = displayWidth - paddingLeft - paddingRight;
-      const chartH = displayHeight - paddingTop - paddingBottom;
+      const chartW = width - paddingLeft - paddingRight;
+      const chartH = height - paddingTop - paddingBottom;
 
-      // グリッド線
+      // 軸・グリッド線の描画
       ctx.strokeStyle = '#2c2c2e';
       ctx.lineWidth = 1;
       ctx.beginPath();
       for (let i = 0; i <= 4; i++) {
         const y = paddingTop + (chartH / 4) * i;
         ctx.moveTo(paddingLeft, y);
-        ctx.lineTo(displayWidth - paddingRight, y);
+        ctx.lineTo(width - paddingRight, y);
       }
       ctx.stroke();
 
-      const dates = sortedLogs.map(b => b.normalizedDate.substring(5).replace('-', '/'));
+      const dates = sortedLogs.map(b => b.date.substring(5).replace('-', '/'));
       const stepX = sortedLogs.length > 1 ? chartW / (sortedLogs.length - 1) : chartW / 2;
 
-      // X軸の日付
+      // X軸日付ラベル
       ctx.fillStyle = '#8e8e93';
-      ctx.font = '10px -apple-system, sans-serif';
+      ctx.font = '9px sans-serif';
       ctx.textAlign = 'center';
       sortedLogs.forEach((b, i) => {
         const x = sortedLogs.length === 1 ? paddingLeft + chartW / 2 : paddingLeft + i * stepX;
         if (sortedLogs.length <= 6 || i % Math.ceil(sortedLogs.length / 6) === 0 || i === sortedLogs.length - 1) {
-          ctx.fillText(dates[i], x, displayHeight - 10);
+          ctx.fillText(dates[i], x, height - 10);
         }
       });
 
+      // スケール計算＆描画関数（自動可変レンジ）
       function drawLineSeries(values, color, axisSide, labelUnit) {
         const validVals = values.filter(v => v !== null && !isNaN(v));
         if (validVals.length === 0) return;
@@ -698,14 +684,15 @@
         minV = Math.max(0, minV - margin);
         maxV = maxV + margin;
 
+        // 軸ラベル
         ctx.fillStyle = color;
-        ctx.font = '10px -apple-system, sans-serif';
+        ctx.font = '9px sans-serif';
         ctx.textAlign = axisSide === 'left' ? 'right' : 'left';
-        const axisX = axisSide === 'left' ? paddingLeft - 6 : displayWidth - paddingRight + 6;
-        
-        ctx.fillText(maxV.toFixed(1), axisX, paddingTop + 4);
-        ctx.fillText(minV.toFixed(1), axisX, paddingTop + chartH + 4);
+        const axisX = axisSide === 'left' ? paddingLeft - 5 : width - paddingRight + 5;
+        ctx.fillText(maxV.toFixed(1), axisX, paddingTop + 8);
+        ctx.fillText(minV.toFixed(1), axisX, height - paddingBottom);
 
+        // 折れ線描画
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -727,6 +714,7 @@
         });
         ctx.stroke();
 
+        // 点（ドット）
         sortedLogs.forEach((b, i) => {
           const val = values[i];
           if (val !== null && !isNaN(val)) {
@@ -740,36 +728,38 @@
         });
       }
 
+      // チャート描画分岐
       if (chartType === 'WEIGHT_FAT') {
         const weights = sortedLogs.map(b => b.weight ? parseFloat(b.weight) : null);
         const fatPcts = sortedLogs.map(b => b.fatPct ? parseFloat(b.fatPct) : null);
         
-        drawLineSeries(weights, '#ffffff', 'left', 'kg');
-        drawLineSeries(fatPcts, '#ff453a', 'right', '%');
+        drawLineSeries(weights, '#ffffff', 'left', 'kg'); // 左軸：体重（白）
+        drawLineSeries(fatPcts, '#ff453a', 'right', '%'); // 右軸：体脂肪率（赤）
 
-        ctx.fillStyle = '#ffffff'; ctx.fillText('■ 体重(kg)', paddingLeft + 10, 16);
-        ctx.fillStyle = '#ff453a'; ctx.fillText('■ 体脂肪率(%)', paddingLeft + 90, 16);
+        // 凡例
+        ctx.fillStyle = '#ffffff'; ctx.fillText('■ 体重(kg)', paddingLeft + 10, 15);
+        ctx.fillStyle = '#ff453a'; ctx.fillText('■ 体脂肪率(%)', paddingLeft + 90, 15);
 
       } else if (chartType === 'MUSCLE_FAT') {
         const muscles = sortedLogs.map(b => b.muscle ? parseFloat(b.muscle) : null);
         const fatMasses = sortedLogs.map(b => b.fatMass ? parseFloat(b.fatMass) : null);
 
-        drawLineSeries(muscles, '#30d158', 'left', 'kg');
-        drawLineSeries(fatMasses, '#ff9f0a', 'right', 'kg');
+        drawLineSeries(muscles, '#30d158', 'left', 'kg'); // 筋肉量（緑）
+        drawLineSeries(fatMasses, '#ff9f0a', 'left', 'kg'); // 脂肪量（オレンジ）
 
-        ctx.fillStyle = '#30d158'; ctx.fillText('■ 筋肉量(kg)', paddingLeft + 10, 16);
-        ctx.fillStyle = '#ff9f0a'; ctx.fillText('■ 脂肪量(kg)', paddingLeft + 95, 16);
+        ctx.fillStyle = '#30d158'; ctx.fillText('■ 筋肉量(kg)', paddingLeft + 10, 15);
+        ctx.fillStyle = '#ff9f0a'; ctx.fillText('■ 脂肪量(kg)', paddingLeft + 90, 15);
 
       } else if (chartType === 'BMR') {
         const bmrs = sortedLogs.map(b => b.bmr ? parseFloat(b.bmr) : null);
-        drawLineSeries(bmrs, '#64d2ff', 'left', 'kcal');
+        drawLineSeries(bmrs, '#64d2ff', 'left', 'kcal'); // 基礎代謝（水色）
 
-        ctx.fillStyle = '#64d2ff'; ctx.fillText('■ 基礎代謝(kcal)', paddingLeft + 10, 16);
+        ctx.fillStyle = '#64d2ff'; ctx.fillText('■ 基礎代謝(kcal)', paddingLeft + 10, 15);
       }
     }
 
     /* ----------------------------------------------------------------
-       OCR (画像自動取込)
+       OCR (画像自動取込) - 精度改善版
     ------------------------------------------------------------------ */
     function triggerFileInput() {
       document.getElementById('ocr-file-input').click();
@@ -782,57 +772,38 @@
       const overlay = document.getElementById('loading-overlay');
       const loadText = document.getElementById('loading-text');
       overlay.style.display = 'flex';
-      loadText.textContent = '画像を精密解析中...';
+      loadText.textContent = '画像を自動解析中...';
 
       try {
-        const img = await loadImage(file);
-        const worker = await Tesseract.createWorker('eng');
-
-        const W = img.width;
-        const H = img.height;
-
-        async function recognizeArea(rect) {
-          const canvas = document.createElement('canvas');
-          canvas.width = rect.w;
-          canvas.height = rect.h;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
-          const res = await worker.recognize(canvas);
-          return res.data.text.replace(/[^0-9.]/g, '');
-        }
-
-        const rWeight    = { x: W * 0.05, y: H * 0.28, w: W * 0.28, h: H * 0.12 };
-        const rBmr       = { x: W * 0.05, y: H * 0.47, w: W * 0.28, h: H * 0.12 };
-        const rFatPct    = { x: W * 0.36, y: H * 0.47, w: W * 0.28, h: H * 0.12 };
-        const rFatMass   = { x: W * 0.67, y: H * 0.47, w: W * 0.28, h: H * 0.12 };
-        const rMuscle    = { x: W * 0.05, y: H * 0.67, w: W * 0.28, h: H * 0.12 };
-
-        const txtWeight  = await recognizeArea(rWeight);
-        const txtBmr     = await recognizeArea(rBmr);
-        const txtFatPct  = await recognizeArea(rFatPct);
-        const txtFatMass = await recognizeArea(rFatMass);
-        const txtMuscle  = await recognizeArea(rMuscle);
-
+        const worker = await Tesseract.createWorker('jpn');
+        const ret = await worker.recognize(file);
         await worker.terminate();
 
+        const fullText = ret.data.text;
+        console.log('OCR Raw Text:', fullText);
+
+        // 改行や空白を除去したテキスト（全体検索用）
+        const cleanText = fullText.replace(/\s+/g, '');
+
         const parsed = {
-          weight: cleanNumber(txtWeight, 1),
-          muscle: cleanNumber(txtMuscle, 1),
-          fatMass: cleanNumber(txtFatMass, 1),
-          fatPct: cleanFatPct(txtFatPct),
-          bmr: Math.round(cleanNumber(txtBmr, 0)) || ''
+          weight: extractPreciseValue(cleanText, ['体重'], 30, /^\d{2,3}\.\d/),
+          fatPct: extractPreciseValue(cleanText, ['体脂肪率'], 25, /^\d{1,2}\.\d/),
+          fatMass: extractPreciseValue(cleanText, ['脂肪量'], 25, /^\d{1,2}\.\d/),
+          muscle: extractPreciseValue(cleanText, ['筋肉量'], 25, /^\d{2,3}\.\d/),
+          bmr: extractPreciseValue(cleanText, ['基礎代謝量', '基礎代謝'], 30, /^\d{4}/)
         };
 
         overlay.style.display = 'none';
 
+        // 入力モーダルを開いてセット
         openBodyEditModal();
-        document.getElementById('edit-body-weight').value = parsed.weight;
-        document.getElementById('edit-body-muscle').value = parsed.muscle;
-        document.getElementById('edit-body-fat-mass').value = parsed.fatMass;
-        document.getElementById('edit-body-fat-pct').value = parsed.fatPct;
-        document.getElementById('edit-body-bmr').value = parsed.bmr;
+        if (parsed.weight) document.getElementById('edit-body-weight').value = parsed.weight;
+        if (parsed.fatPct) document.getElementById('edit-body-fat-pct').value = parsed.fatPct;
+        if (parsed.fatMass) document.getElementById('edit-body-fat-mass').value = parsed.fatMass;
+        if (parsed.muscle) document.getElementById('edit-body-muscle').value = parsed.muscle;
+        if (parsed.bmr) document.getElementById('edit-body-bmr').value = parsed.bmr;
 
-        alert('画像をピンポイント解析しました。数値を確認・修正して保存してください。');
+        alert('画像の解析が完了しました。数値を確認・修正して保存してください。');
 
       } catch (err) {
         overlay.style.display = 'none';
@@ -842,50 +813,52 @@
       event.target.value = '';
     }
 
-    function loadImage(file) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = URL.createObjectURL(file);
-      });
-    }
-
-    function cleanNumber(str, decimals) {
-      if (!str) return '';
-      const m = str.match(/(\d+\.?\d*)/);
-      if (!m) return '';
-      let val = parseFloat(m[1]);
-      return val.toFixed(decimals);
-    }
-
-    function cleanFatPct(str) {
-      if (!str) return '';
-      const m = str.match(/(\d+\.?\d*)/);
-      if (!m) return '';
-      let val = parseFloat(m[1]);
-      if (!m[1].includes('.') && val > 50) {
-        val = val / 10;
+    function extractPreciseValue(text, keywords, searchLength, pattern) {
+      for (let kw of keywords) {
+        let idx = text.indexOf(kw);
+        while (idx !== -1) {
+          const sub = text.substring(idx + kw.length, idx + kw.length + searchLength);
+          // 数字（小数含む）を抽出
+          const matches = sub.match(/(\d+\.?\d*)/g);
+          if (matches && matches.length > 0) {
+            // 最も条件に合う数値を選ぶ
+            for (let m of matches) {
+              let num = parseFloat(m);
+              if (kw.includes('体重') && num >= 30 && num <= 200) return m;
+              if (kw.includes('体脂肪率') && num >= 3 && num <= 60) return m;
+              if (kw.includes('脂肪量') && num >= 1 && num <= 100) return m;
+              if (kw.includes('筋肉量') && num >= 10 && num <= 150) return m;
+              if ((kw.includes('基礎代謝')) && num >= 500 && num <= 5000) return m;
+            }
+            return matches[0];
+          }
+          idx = text.indexOf(kw, idx + 1);
+        }
       }
-      return val.toFixed(1);
+      return '';
     }
 
     /* 体組成モーダル操作 */
     function openBodyEditModal() {
       const mStr = `${bodyViewYear}-${String(bodySelectedMonth + 1).padStart(2, '0')}`;
       const defaultDate = `${mStr}-${String(new Date().getDate()).padStart(2, '0')}`;
-      
-      const existing = bodyLogs.find(b => b.date && b.date.replace(/\//g, '-').startsWith(mStr));
+      document.getElementById('edit-body-date').value = defaultDate;
+
+      // 既存データがあれば自動セット
+      const existing = bodyLogs.find(b => b.date.startsWith(mStr));
       if (existing) {
-        document.getElementById('edit-body-date').value = existing.date.replace(/\//g, '-');
-        document.getElementById('edit-body-weight').value = existing.weight !== undefined ? existing.weight : '';
-        document.getElementById('edit-body-muscle').value = existing.muscle !== undefined ? existing.muscle : '';
-        document.getElementById('edit-body-fat-mass').value = existing.fatMass !== undefined ? existing.fatMass : '';
-        document.getElementById('edit-body-fat-pct').value = existing.fatPct !== undefined ? existing.fatPct : '';
-        document.getElementById('edit-body-bmr').value = existing.bmr !== undefined ? existing.bmr : '';
+        document.getElementById('edit-body-date').value = existing.date;
+        document.getElementById('edit-body-weight').value = existing.weight || '';
+        document.getElementById('edit-body-muscle').value = existing.muscle || '';
+        document.getElementById('edit-body-fat-mass').value = existing.fatMass || '';
+        document.getElementById('edit-body-fat-pct').value = existing.fatPct || '';
+        document.getElementById('edit-body-bmr').value = existing.bmr || '';
       } else {
-        document.getElementById('edit-body-date').value = defaultDate;
-        resetBodyInputs();
+        document.getElementById('edit-body-weight').value = '';
+        document.getElementById('edit-body-muscle').value = '';
+        document.getElementById('edit-body-fat-mass').value = '';
+        document.getElementById('edit-body-fat-pct').value = '';
+        document.getElementById('edit-body-bmr').value = '';
       }
 
       document.getElementById('body-edit-modal').classList.add('open');
@@ -895,19 +868,9 @@
       document.getElementById('body-edit-modal').classList.remove('open');
     }
 
-    function resetBodyInputs() {
-      document.getElementById('edit-body-weight').value = '';
-      document.getElementById('edit-body-muscle').value = '';
-      document.getElementById('edit-body-fat-mass').value = '';
-      document.getElementById('edit-body-fat-pct').value = '';
-      document.getElementById('edit-body-bmr').value = '';
-    }
-
     function saveBodyEditData() {
-      let rawDate = document.getElementById('edit-body-date').value;
-      if (!rawDate) { alert('測定日を選択してください'); return; }
-
-      const date = rawDate.replace(/\//g, '-');
+      const date = document.getElementById('edit-body-date').value;
+      if (!date) { alert('測定日を選択してください'); return; }
 
       const weight = document.getElementById('edit-body-weight').value;
       const muscle = document.getElementById('edit-body-muscle').value;
@@ -915,17 +878,11 @@
       const fatPct = document.getElementById('edit-body-fat-pct').value;
       const bmr = document.getElementById('edit-body-bmr').value;
 
-      bodyLogs = bodyLogs.filter(b => b.date && b.date.replace(/\//g, '-') !== date);
+      bodyLogs = bodyLogs.filter(b => b.date !== date);
       bodyLogs.push({ id: Date.now(), date, weight, muscle, fatMass, fatPct, bmr });
 
       localStorage.setItem('gym_body_logs', JSON.stringify(bodyLogs));
       closeBodyEditModal();
-      
-      const parts = date.split('-');
-      if (parts.length >= 2) {
-        bodyViewYear = parseInt(parts[0], 10);
-        bodySelectedMonth = parseInt(parts[1], 10) - 1;
-      }
       renderBodyTab();
     }
 
