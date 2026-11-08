@@ -109,7 +109,8 @@
     .set-rm { font-size: 0.75rem; color: var(--text-sub); text-align: center; }
 
     .add-set-btn { width: 100%; background: #2c2c2e; color: #34c759; border: 1px dashed #34c759; padding: 12px; border-radius: 10px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-    .submit-btn { width: 100%; background: var(--accent-red); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 1rem; margin-top: 20px; cursor: pointer; }
+    .submit-btn { width: 100%; background: var(--accent-red); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 1rem; margin-top: 15px; cursor: pointer; }
+    .reset-btn { width: 100%; background: #3a3a3c; color: #ff453a; border: 1px solid var(--border-color); padding: 12px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; margin-top: 8px; cursor: pointer; }
     .close-modal { width: 100%; background: #2c2c2e; color: var(--text-main); border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 8px; cursor: pointer; }
     .manage-btn { background: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
 
@@ -339,6 +340,7 @@
       </div>
 
       <button class="submit-btn" onclick="saveBodyEditData()">データを保存する</button>
+      <button class="reset-btn" onclick="resetBodyInputs()">入力欄をリセット（クリア）</button>
       <button class="close-modal" onclick="closeBodyEditModal()">キャンセル</button>
     </div>
   </div>
@@ -551,7 +553,7 @@
         cell.textContent = m + 1;
 
         const monthPrefix = `${bodyViewYear}-${String(m + 1).padStart(2, '0')}`;
-        const hasData = bodyLogs.some(b => b.date.startsWith(monthPrefix));
+        const hasData = bodyLogs.some(b => b.date && b.date.startsWith(monthPrefix));
 
         if (hasData) cell.classList.add('has-data');
         if (m === bodySelectedMonth) cell.classList.add('selected');
@@ -570,7 +572,7 @@
       const mStr = `${bodyViewYear}-${String(bodySelectedMonth + 1).padStart(2, '0')}`;
       document.getElementById('body-selected-label').textContent = `${bodyViewYear}年 ${bodySelectedMonth + 1}月 測定データ`;
 
-      const matches = bodyLogs.filter(b => b.date.startsWith(mStr));
+      const matches = bodyLogs.filter(b => b.date && b.date.startsWith(mStr));
       matches.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       if (matches.length > 0) {
@@ -628,7 +630,7 @@
         return;
       }
 
-      let sortedLogs = [...bodyLogs].sort((a, b) => new Date(a.date) - new Date(b.date));
+      let sortedLogs = [...bodyLogs].filter(b => b.date).sort((a, b) => new Date(a.date) - new Date(b.date));
       const now = new Date();
       if (chartRange === '3M') {
         const limit = new Date(); limit.setMonth(now.getMonth() - 3);
@@ -651,7 +653,7 @@
 
       const paddingLeft = 45;
       const paddingRight = 45;
-      const paddingTop = 30;
+      const paddingTop = 35; // 基礎代謝等のラベルが隠れないよう十分に確保
       const paddingBottom = 30;
       const chartW = displayWidth - paddingLeft - paddingRight;
       const chartH = displayHeight - paddingTop - paddingBottom;
@@ -741,8 +743,8 @@
         drawLineSeries(weights, '#ffffff', 'left', 'kg');
         drawLineSeries(fatPcts, '#ff453a', 'right', '%');
 
-        ctx.fillStyle = '#ffffff'; ctx.fillText('■ 体重(kg)', paddingLeft + 10, 15);
-        ctx.fillStyle = '#ff453a'; ctx.fillText('■ 体脂肪率(%)', paddingLeft + 90, 15);
+        ctx.fillStyle = '#ffffff'; ctx.fillText('■ 体重(kg)', paddingLeft + 10, 16);
+        ctx.fillStyle = '#ff453a'; ctx.fillText('■ 体脂肪率(%)', paddingLeft + 90, 16);
 
       } else if (chartType === 'MUSCLE_FAT') {
         const muscles = sortedLogs.map(b => b.muscle ? parseFloat(b.muscle) : null);
@@ -751,19 +753,19 @@
         drawLineSeries(muscles, '#30d158', 'left', 'kg');
         drawLineSeries(fatMasses, '#ff9f0a', 'right', 'kg');
 
-        ctx.fillStyle = '#30d158'; ctx.fillText('■ 筋肉量(kg)', paddingLeft + 10, 15);
-        ctx.fillStyle = '#ff9f0a'; ctx.fillText('■ 脂肪量(kg)', paddingLeft + 95, 15);
+        ctx.fillStyle = '#30d158'; ctx.fillText('■ 筋肉量(kg)', paddingLeft + 10, 16);
+        ctx.fillStyle = '#ff9f0a'; ctx.fillText('■ 脂肪量(kg)', paddingLeft + 95, 16);
 
       } else if (chartType === 'BMR') {
         const bmrs = sortedLogs.map(b => b.bmr ? parseFloat(b.bmr) : null);
         drawLineSeries(bmrs, '#64d2ff', 'left', 'kcal');
 
-        ctx.fillStyle = '#64d2ff'; ctx.fillText('■ 基礎代謝(kcal)', paddingLeft + 10, 15);
+        ctx.fillStyle = '#64d2ff'; ctx.fillText('■ 基礎代謝(kcal)', paddingLeft + 10, 16);
       }
     }
 
     /* ----------------------------------------------------------------
-       OCR (画像自動取込) - 修正版
+       OCR (画像自動取込)
     ------------------------------------------------------------------ */
     function triggerFileInput() {
       document.getElementById('ocr-file-input').click();
@@ -870,7 +872,7 @@
       const defaultDate = `${mStr}-${String(new Date().getDate()).padStart(2, '0')}`;
       document.getElementById('edit-body-date').value = defaultDate;
 
-      const existing = bodyLogs.find(b => b.date.startsWith(mStr));
+      const existing = bodyLogs.find(b => b.date && b.date.startsWith(mStr));
       if (existing) {
         document.getElementById('edit-body-date').value = existing.date;
         document.getElementById('edit-body-weight').value = existing.weight || '';
@@ -887,9 +889,20 @@
       document.getElementById('body-edit-modal').classList.remove('open');
     }
 
+    function resetBodyInputs() {
+      document.getElementById('edit-body-weight').value = '';
+      document.getElementById('edit-body-muscle').value = '';
+      document.getElementById('edit-body-fat-mass').value = '';
+      document.getElementById('edit-body-fat-pct').value = '';
+      document.getElementById('edit-body-bmr').value = '';
+    }
+
     function saveBodyEditData() {
-      const date = document.getElementById('edit-body-date').value;
-      if (!date) { alert('測定日を選択してください'); return; }
+      let rawDate = document.getElementById('edit-body-date').value;
+      if (!rawDate) { alert('測定日を選択してください'); return; }
+
+      // スラッシュをハイフンに正規化（例: 2026/10/08 → 2026-10-08）
+      const date = rawDate.replace(/\//g, '-');
 
       const weight = document.getElementById('edit-body-weight').value;
       const muscle = document.getElementById('edit-body-muscle').value;
@@ -902,6 +915,13 @@
 
       localStorage.setItem('gym_body_logs', JSON.stringify(bodyLogs));
       closeBodyEditModal();
+      
+      // 保存された日付の月に自動でビューを合わせる
+      const parts = date.split('-');
+      if (parts.length >= 2) {
+        bodyViewYear = parseInt(parts[0], 10);
+        bodySelectedMonth = parseInt(parts[1], 10) - 1;
+      }
       renderBodyTab();
     }
 
