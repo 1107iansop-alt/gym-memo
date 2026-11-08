@@ -553,7 +553,7 @@
         cell.textContent = m + 1;
 
         const monthPrefix = `${bodyViewYear}-${String(m + 1).padStart(2, '0')}`;
-        const hasData = bodyLogs.some(b => b.date && b.date.startsWith(monthPrefix));
+        const hasData = bodyLogs.some(b => b.date && b.date.replace(/\//g, '-').startsWith(monthPrefix));
 
         if (hasData) cell.classList.add('has-data');
         if (m === bodySelectedMonth) cell.classList.add('selected');
@@ -572,8 +572,8 @@
       const mStr = `${bodyViewYear}-${String(bodySelectedMonth + 1).padStart(2, '0')}`;
       document.getElementById('body-selected-label').textContent = `${bodyViewYear}年 ${bodySelectedMonth + 1}月 測定データ`;
 
-      const matches = bodyLogs.filter(b => b.date && b.date.startsWith(mStr));
-      matches.sort((a, b) => new Date(b.date) - new Date(a.date));
+      const matches = bodyLogs.filter(b => b.date && b.date.replace(/\//g, '-').startsWith(mStr));
+      matches.sort((a, b) => new Date(b.date.replace(/\//g, '-')) - new Date(a.date.replace(/\//g, '-')));
 
       if (matches.length > 0) {
         const data = matches[0];
@@ -630,17 +630,21 @@
         return;
       }
 
-      let sortedLogs = [...bodyLogs].filter(b => b.date).sort((a, b) => new Date(a.date) - new Date(b.date));
+      let sortedLogs = [...bodyLogs].filter(b => b.date).map(b => ({
+        ...b,
+        normalizedDate: b.date.replace(/\//g, '-')
+      })).sort((a, b) => new Date(a.normalizedDate) - new Date(b.normalizedDate));
+
       const now = new Date();
       if (chartRange === '3M') {
         const limit = new Date(); limit.setMonth(now.getMonth() - 3);
-        sortedLogs = sortedLogs.filter(b => new Date(b.date) >= limit);
+        sortedLogs = sortedLogs.filter(b => new Date(b.normalizedDate) >= limit);
       } else if (chartRange === '6M') {
         const limit = new Date(); limit.setMonth(now.getMonth() - 6);
-        sortedLogs = sortedLogs.filter(b => new Date(b.date) >= limit);
+        sortedLogs = sortedLogs.filter(b => new Date(b.normalizedDate) >= limit);
       } else if (chartRange === '1Y') {
         const limit = new Date(); limit.setFullYear(now.getFullYear() - 1);
-        sortedLogs = sortedLogs.filter(b => new Date(b.date) >= limit);
+        sortedLogs = sortedLogs.filter(b => new Date(b.normalizedDate) >= limit);
       }
 
       if (sortedLogs.length === 0) {
@@ -653,7 +657,7 @@
 
       const paddingLeft = 45;
       const paddingRight = 45;
-      const paddingTop = 35; // 基礎代謝等のラベルが隠れないよう十分に確保
+      const paddingTop = 35;
       const paddingBottom = 30;
       const chartW = displayWidth - paddingLeft - paddingRight;
       const chartH = displayHeight - paddingTop - paddingBottom;
@@ -669,7 +673,7 @@
       }
       ctx.stroke();
 
-      const dates = sortedLogs.map(b => b.date.substring(5).replace('-', '/'));
+      const dates = sortedLogs.map(b => b.normalizedDate.substring(5).replace('-', '/'));
       const stepX = sortedLogs.length > 1 ? chartW / (sortedLogs.length - 1) : chartW / 2;
 
       // X軸の日付
@@ -872,14 +876,16 @@
       const defaultDate = `${mStr}-${String(new Date().getDate()).padStart(2, '0')}`;
       document.getElementById('edit-body-date').value = defaultDate;
 
-      const existing = bodyLogs.find(b => b.date && b.date.startsWith(mStr));
+      const existing = bodyLogs.find(b => b.date && b.date.replace(/\//g, '-').startsWith(mStr));
       if (existing) {
-        document.getElementById('edit-body-date').value = existing.date;
+        document.getElementById('edit-body-date').value = existing.date.replace(/\//g, '-');
         document.getElementById('edit-body-weight').value = existing.weight || '';
         document.getElementById('edit-body-muscle').value = existing.muscle || '';
         document.getElementById('edit-body-fat-mass').value = existing.fatMass || '';
         document.getElementById('edit-body-fat-pct').value = existing.fatPct || '';
         document.getElementById('edit-body-bmr').value = existing.bmr || '';
+      } else {
+        resetBodyInputs();
       }
 
       document.getElementById('body-edit-modal').classList.add('open');
@@ -901,7 +907,6 @@
       let rawDate = document.getElementById('edit-body-date').value;
       if (!rawDate) { alert('測定日を選択してください'); return; }
 
-      // スラッシュをハイフンに正規化（例: 2026/10/08 → 2026-10-08）
       const date = rawDate.replace(/\//g, '-');
 
       const weight = document.getElementById('edit-body-weight').value;
@@ -910,13 +915,12 @@
       const fatPct = document.getElementById('edit-body-fat-pct').value;
       const bmr = document.getElementById('edit-body-bmr').value;
 
-      bodyLogs = bodyLogs.filter(b => b.date !== date);
+      bodyLogs = bodyLogs.filter(b => b.date && b.date.replace(/\//g, '-') !== date);
       bodyLogs.push({ id: Date.now(), date, weight, muscle, fatMass, fatPct, bmr });
 
       localStorage.setItem('gym_body_logs', JSON.stringify(bodyLogs));
       closeBodyEditModal();
       
-      // 保存された日付の月に自動でビューを合わせる
       const parts = date.split('-');
       if (parts.length >= 2) {
         bodyViewYear = parseInt(parts[0], 10);
