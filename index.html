@@ -8,6 +8,8 @@
   <title>Workout-Log</title>
   <!-- 画像ダウンロード・シェア用ライブラリ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- スクショ文字解析用OCRライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
       --bg-dark: #121214;
@@ -16,6 +18,7 @@
       --text-main: #ffffff;
       --text-sub: #8e8e93;
       --border-color: #2c2c2e;
+      --accent-blue: #0a84ff;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
@@ -81,7 +84,7 @@
 
     .footer-nav {
       position: fixed; bottom: 0; left: 0; width: 100%; background: #1c1c1e; border-top: 1px solid var(--border-color);
-      display: grid; grid-template-columns: repeat(2, 1fr); padding: 5px 0 0 0; height: 50px; z-index: 50;
+      display: grid; grid-template-columns: repeat(3, 1fr); padding: 5px 0 0 0; height: 50px; z-index: 50;
     }
     .nav-item { background: none; border: none; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; gap: 2px; cursor: pointer; padding-bottom: env(safe-area-inset-bottom, 0px); }
     .nav-item.active { color: var(--accent-red); }
@@ -114,12 +117,41 @@
     .summary-box { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 16px; text-align: center; }
     .summary-box-title { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; }
     .summary-box-val { font-size: 1.4rem; font-weight: 800; color: var(--accent-red); }
+
+    /* 測定（体組成）画面用スタイル */
+    .body-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .body-header h2 { font-size: 1.2rem; color: var(--accent-red); font-weight: 700; }
+    .ocr-btn { background-color: var(--accent-blue); color: white; border: none; border-radius: 8px; padding: 6px 14px; font-weight: bold; font-size: 0.8rem; cursor: pointer; }
+
+    .month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+    .month-cell { background: #2c2c2e; border-radius: 10px; padding: 10px 0; text-align: center; font-weight: bold; font-size: 0.9rem; color: var(--text-main); cursor: pointer; border: 1px solid transparent; }
+    .month-cell.has-data { background: #3a3a3c; border-color: var(--accent-red); }
+    .month-cell.selected { background: var(--accent-red); color: white; border-color: white; }
+
+    .body-display-card { background-color: var(--card-bg); border-radius: 14px; padding: 12px 14px; margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .body-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; }
+    .body-row:last-child { margin-bottom: 0; }
+    .body-item { flex: 1; text-align: center; }
+    .body-item-val { font-weight: bold; font-size: 0.95rem; color: var(--text-main); margin-top: 2px; }
+    
+    .chart-controls { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 10px; }
+    .sub-tabs { display: flex; gap: 4px; width: 100%; overflow-x: auto; padding-bottom: 4px; }
+    .sub-tab-btn { flex: 1; background: #2c2c2e; color: var(--text-sub); border: none; padding: 6px 4px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; text-align: center; white-space: nowrap; }
+    .sub-tab-btn.active { background: var(--accent-red); color: white; }
+
+    .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 200; justify-content: center; align-items: center; color: white; font-weight: bold; flex-direction: column; gap: 10px; }
   </style>
 </head>
 <body>
   <header>
     <h1>Workout-Log</h1>
   </header>
+
+  <!-- ローディング表示 -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div style="font-size: 1.2rem;" id="loading-text">解析中...</div>
+    <div style="font-size: 0.8rem; color: var(--text-sub);">少々お待ちください</div>
+  </div>
 
   <!-- ホームタブ -->
   <div id="tab-home" class="tab-content active">
@@ -167,7 +199,6 @@
   <div id="tab-history" class="tab-content">
     <div class="filter-tabs" id="filter-tabs-container" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:16px;"></div>
     
-    <!-- カレンダーカード（部位を選んでも常に表示） -->
     <div class="card">
       <div class="cal-header">
         <button class="cal-btn" onclick="changeHistoryMonth(-1)">◀</button>
@@ -181,8 +212,78 @@
       </div>
     </div>
 
-    <!-- カレンダーの下に表示される履歴タイムラインエリア -->
     <div id="history-timeline-display"></div>
+  </div>
+
+  <!-- 測定（体組成）タブ -->
+  <div id="tab-body" class="tab-content">
+    <div class="body-header">
+      <h2>体組成結果</h2>
+      <button class="ocr-btn" onclick="triggerFileInput()">画像取込</button>
+      <input type="file" id="ocr-file-input" accept="image/*" style="display:none;" onchange="handleOCRImage(event)">
+    </div>
+
+    <!-- 年・月切替パネル (数字のみ) -->
+    <div class="card">
+      <div class="cal-header">
+        <button class="cal-btn" onclick="changeBodyYear(-1)">◀</button>
+        <span id="body-year-title">2026</span>
+        <button class="cal-btn" onclick="changeBodyYear(1)">▶</button>
+      </div>
+      <div class="month-grid" id="body-month-grid"></div>
+    </div>
+
+    <!-- 当月（選択月）の測定データ表示 -->
+    <div class="body-display-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">
+        <div style="font-size:0.8rem; font-weight:bold; color:var(--accent-red);" id="body-selected-label">2026年 11月 測定データ</div>
+        <button class="manage-btn" onclick="openBodyEditModal()">手書き修正 / 入力</button>
+      </div>
+      <div class="body-row">
+        <div class="body-item">
+          <div style="font-size:0.7rem; color:var(--text-sub);">体重</div>
+          <div class="body-item-val" id="disp-weight">-- kg</div>
+        </div>
+        <div class="body-item">
+          <div style="font-size:0.7rem; color:var(--text-sub);">筋肉量</div>
+          <div class="body-item-val" id="disp-muscle">-- kg</div>
+        </div>
+        <div class="body-item">
+          <div style="font-size:0.7rem; color:var(--text-sub);">脂肪量</div>
+          <div class="body-item-val" id="disp-fat-mass">-- kg</div>
+        </div>
+      </div>
+      <div class="body-row" style="margin-top:6px;">
+        <div class="body-item">
+          <div style="font-size:0.7rem; color:var(--text-sub);">体脂肪率</div>
+          <div class="body-item-val" id="disp-fat-pct">-- %</div>
+        </div>
+        <div class="body-item">
+          <div style="font-size:0.7rem; color:var(--text-sub);">基礎代謝</div>
+          <div class="body-item-val" id="disp-bmr">-- kcal</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 折れ線グラフ表示カード -->
+    <div class="card">
+      <div class="chart-controls">
+        <div class="sub-tabs" id="range-tabs">
+          <button class="sub-tab-btn active" onclick="setChartRange('3M', this)">3ヶ月</button>
+          <button class="sub-tab-btn" onclick="setChartRange('6M', this)">6ヶ月</button>
+          <button class="sub-tab-btn" onclick="setChartRange('1Y', this)">1年</button>
+          <button class="sub-tab-btn" onclick="setChartRange('ALL', this)">全期間</button>
+        </div>
+      </div>
+      <div class="chart-controls" style="margin-bottom:12px;">
+        <div class="sub-tabs" id="type-tabs">
+          <button class="sub-tab-btn active" onclick="setChartType('WEIGHT_FAT', this)">体重 ＆ 体脂肪率</button>
+          <button class="sub-tab-btn" onclick="setChartType('MUSCLE_FAT', this)">筋肉量 ＆ 脂肪量</button>
+          <button class="sub-tab-btn" onclick="setChartType('BMR', this)">基礎代謝</button>
+        </div>
+      </div>
+      <canvas id="bodyChart" width="400" height="220" style="width:100%; height:220px;"></canvas>
+    </div>
   </div>
 
   <!-- フッターナビゲーション -->
@@ -195,9 +296,52 @@
       <span class="icon">📅</span>
       <span>履歴</span>
     </button>
+    <button class="nav-item" onclick="switchTab('body', this)">
+      <span class="icon">⚖️</span>
+      <span>測定</span>
+    </button>
   </nav>
 
-  <!-- 記録入力モーダル -->
+  <!-- 体組成 手書き修正・入力モーダル -->
+  <div class="modal" id="body-edit-modal">
+    <div class="modal-content">
+      <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;" id="body-edit-modal-title">体組成データの直接入力 / 修正</div>
+      
+      <div class="form-group">
+        <label class="form-label">測定日</label>
+        <input type="date" id="edit-body-date" class="form-input">
+      </div>
+      <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label class="form-label">体重 (kg)</label>
+          <input type="number" step="0.1" id="edit-body-weight" class="form-input" placeholder="67.2">
+        </div>
+        <div class="form-group">
+          <label class="form-label">筋肉量 (kg)</label>
+          <input type="number" step="0.1" id="edit-body-muscle" class="form-input" placeholder="54.5">
+        </div>
+      </div>
+      <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label class="form-label">脂肪量 (kg)</label>
+          <input type="number" step="0.1" id="edit-body-fat-mass" class="form-input" placeholder="9.7">
+        </div>
+        <div class="form-group">
+          <label class="form-label">体脂肪率 (%)</label>
+          <input type="number" step="0.1" id="edit-body-fat-pct" class="form-input" placeholder="14.4">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">基礎代謝 (kcal)</label>
+        <input type="number" id="edit-body-bmr" class="form-input" placeholder="1584">
+      </div>
+
+      <button class="submit-btn" onclick="saveBodyEditData()">データを保存する</button>
+      <button class="close-modal" onclick="closeBodyEditModal()">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- 既存モーダル類 (Workout Log用) -->
   <div class="modal" id="record-modal">
     <div class="modal-content">
       <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -260,7 +404,6 @@
     </div>
   </div>
 
-  <!-- 月間サマリモーダル -->
   <div class="modal" id="summary-modal">
     <div class="modal-content">
       <div id="summary-capture-target" style="padding: 10px; background: var(--card-bg); border-radius: 16px;">
@@ -309,7 +452,6 @@
     </div>
   </div>
 
-  <!-- 種目・部位管理モーダル -->
   <div class="modal" id="manage-modal">
     <div class="modal-content">
       <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;">種目・部位の管理</div>
@@ -322,6 +464,8 @@
     let customParts = JSON.parse(localStorage.getItem('gym_custom_parts')) || ['胸', '背中', '脚', '肩', '腕', '腹', '前腕', 'お尻', '有酸素運動', 'その他'];
     let customExercises = JSON.parse(localStorage.getItem('gym_custom_exercises')) || {};
     let workouts = JSON.parse(localStorage.getItem('gym_workouts_v2')) || [];
+    let bodyLogs = JSON.parse(localStorage.getItem('gym_body_logs')) || [];
+
     let currentLastRecordData = null;
     
     function getTodayString() {
@@ -336,6 +480,12 @@
     let historyViewMonth = new Date().getMonth();
     let summaryViewYear = new Date().getFullYear();
     let summaryViewMonth = new Date().getMonth();
+
+    let bodyViewYear = new Date().getFullYear();
+    let bodySelectedMonth = new Date().getMonth(); // 0~11
+    let chartRange = '3M';
+    let chartType = 'WEIGHT_FAT';
+
     let currentSetCount = 0;
     let currentHistoryPart = 'ALL';
 
@@ -369,9 +519,362 @@
       if (tabId === 'history') {
         renderHistoryFilterTabs();
         renderHistoryCalendar();
+      } else if (tabId === 'body') {
+        renderBodyTab();
       }
     }
 
+    /* ----------------------------------------------------------------
+       体組成（測定）タブの制御
+    ------------------------------------------------------------------ */
+    function renderBodyTab() {
+      document.getElementById('body-year-title').textContent = bodyViewYear;
+      renderBodyMonthGrid();
+      updateBodyDisplayCard();
+      renderBodyChart();
+    }
+
+    function changeBodyYear(dir) {
+      bodyViewYear += dir;
+      renderBodyTab();
+    }
+
+    function renderBodyMonthGrid() {
+      const grid = document.getElementById('body-month-grid');
+      grid.innerHTML = '';
+
+      for (let m = 0; m < 12; m++) {
+        const cell = document.createElement('div');
+        cell.className = 'month-cell';
+        cell.textContent = m + 1; // 数字のみ表示
+
+        const monthPrefix = `${bodyViewYear}-${String(m + 1).padStart(2, '0')}`;
+        const hasData = bodyLogs.some(b => b.date.startsWith(monthPrefix));
+
+        if (hasData) cell.classList.add('has-data');
+        if (m === bodySelectedMonth) cell.classList.add('selected');
+
+        cell.onclick = () => {
+          bodySelectedMonth = m;
+          renderBodyMonthGrid();
+          updateBodyDisplayCard();
+        };
+
+        grid.appendChild(cell);
+      }
+    }
+
+    function updateBodyDisplayCard() {
+      const mStr = `${bodyViewYear}-${String(bodySelectedMonth + 1).padStart(2, '0')}`;
+      document.getElementById('body-selected-label').textContent = `${bodyViewYear}年 ${bodySelectedMonth + 1}月 測定データ`;
+
+      const matches = bodyLogs.filter(b => b.date.startsWith(mStr));
+      matches.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (matches.length > 0) {
+        const data = matches[0];
+        document.getElementById('disp-weight').textContent = data.weight ? `${data.weight} kg` : '-- kg';
+        document.getElementById('disp-muscle').textContent = data.muscle ? `${data.muscle} kg` : '-- kg';
+        document.getElementById('disp-fat-mass').textContent = data.fatMass ? `${data.fatMass} kg` : '-- kg';
+        document.getElementById('disp-fat-pct').textContent = data.fatPct ? `${data.fatPct} %` : '-- %';
+        document.getElementById('disp-bmr').textContent = data.bmr ? `${data.bmr} kcal` : '-- kcal';
+      } else {
+        document.getElementById('disp-weight').textContent = '-- kg';
+        document.getElementById('disp-muscle').textContent = '-- kg';
+        document.getElementById('disp-fat-mass').textContent = '-- kg';
+        document.getElementById('disp-fat-pct').textContent = '-- %';
+        document.getElementById('disp-bmr').textContent = '-- kcal';
+      }
+    }
+
+    function setChartRange(range, el) {
+      chartRange = range;
+      document.querySelectorAll('#range-tabs .sub-tab-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      renderBodyChart();
+    }
+
+    function setChartType(type, el) {
+      chartType = type;
+      document.querySelectorAll('#type-tabs .sub-tab-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      renderBodyChart();
+    }
+
+    function renderBodyChart() {
+      const canvas = document.getElementById('bodyChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width = canvas.parentElement.clientWidth || 380;
+      const height = canvas.height = 220;
+
+      ctx.clearRect(0, 0, width, height);
+
+      if (bodyLogs.length === 0) {
+        ctx.fillStyle = '#8e8e93';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('測定データがありません', width / 2, height / 2);
+        return;
+      }
+
+      // 期間絞り込み
+      let sortedLogs = [...bodyLogs].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const now = new Date();
+      if (chartRange === '3M') {
+        const limit = new Date(); limit.setMonth(now.getMonth() - 3);
+        sortedLogs = sortedLogs.filter(b => new Date(b.date) >= limit);
+      } else if (chartRange === '6M') {
+        const limit = new Date(); limit.setMonth(now.getMonth() - 6);
+        sortedLogs = sortedLogs.filter(b => new Date(b.date) >= limit);
+      } else if (chartRange === '1Y') {
+        const limit = new Date(); limit.setFullYear(now.getFullYear() - 1);
+        sortedLogs = sortedLogs.filter(b => new Date(b.date) >= limit);
+      }
+
+      if (sortedLogs.length === 0) {
+        ctx.fillStyle = '#8e8e93';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('対象期間のデータがありません', width / 2, height / 2);
+        return;
+      }
+
+      const paddingLeft = 35;
+      const paddingRight = (chartType === 'WEIGHT_FAT') ? 35 : 15;
+      const paddingTop = 25;
+      const paddingBottom = 30;
+      const chartW = width - paddingLeft - paddingRight;
+      const chartH = height - paddingTop - paddingBottom;
+
+      // 軸・グリッド線の描画
+      ctx.strokeStyle = '#2c2c2e';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= 4; i++) {
+        const y = paddingTop + (chartH / 4) * i;
+        ctx.moveTo(paddingLeft, y);
+        ctx.lineTo(width - paddingRight, y);
+      }
+      ctx.stroke();
+
+      const dates = sortedLogs.map(b => b.date.substring(5).replace('-', '/'));
+      const stepX = sortedLogs.length > 1 ? chartW / (sortedLogs.length - 1) : chartW / 2;
+
+      // X軸日付ラベル
+      ctx.fillStyle = '#8e8e93';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      sortedLogs.forEach((b, i) => {
+        const x = sortedLogs.length === 1 ? paddingLeft + chartW / 2 : paddingLeft + i * stepX;
+        if (sortedLogs.length <= 6 || i % Math.ceil(sortedLogs.length / 6) === 0 || i === sortedLogs.length - 1) {
+          ctx.fillText(dates[i], x, height - 10);
+        }
+      });
+
+      // スケール計算＆描画関数（自動可変レンジ）
+      function drawLineSeries(values, color, axisSide, labelUnit) {
+        const validVals = values.filter(v => v !== null && !isNaN(v));
+        if (validVals.length === 0) return;
+
+        let minV = Math.min(...validVals);
+        let maxV = Math.max(...validVals);
+        if (minV === maxV) { minV -= 1; maxV += 1; }
+        const margin = (maxV - minV) * 0.15;
+        minV = Math.max(0, minV - margin);
+        maxV = maxV + margin;
+
+        // 軸ラベル
+        ctx.fillStyle = color;
+        ctx.font = '9px sans-serif';
+        ctx.textAlign = axisSide === 'left' ? 'right' : 'left';
+        const axisX = axisSide === 'left' ? paddingLeft - 5 : width - paddingRight + 5;
+        ctx.fillText(maxV.toFixed(1), axisX, paddingTop + 8);
+        ctx.fillText(minV.toFixed(1), axisX, height - paddingBottom);
+
+        // 折れ線描画
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let started = false;
+
+        sortedLogs.forEach((b, i) => {
+          const val = values[i];
+          if (val !== null && !isNaN(val)) {
+            const x = sortedLogs.length === 1 ? paddingLeft + chartW / 2 : paddingLeft + i * stepX;
+            const y = paddingTop + chartH - ((val - minV) / (maxV - minV)) * chartH;
+
+            if (!started) {
+              ctx.moveTo(x, y);
+              started = true;
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+        });
+        ctx.stroke();
+
+        // 点（ドット）
+        sortedLogs.forEach((b, i) => {
+          const val = values[i];
+          if (val !== null && !isNaN(val)) {
+            const x = sortedLogs.length === 1 ? paddingLeft + chartW / 2 : paddingLeft + i * stepX;
+            const y = paddingTop + chartH - ((val - minV) / (maxV - minV)) * chartH;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      }
+
+      // チャート描画分岐
+      if (chartType === 'WEIGHT_FAT') {
+        const weights = sortedLogs.map(b => b.weight ? parseFloat(b.weight) : null);
+        const fatPcts = sortedLogs.map(b => b.fatPct ? parseFloat(b.fatPct) : null);
+        
+        drawLineSeries(weights, '#ffffff', 'left', 'kg'); // 左軸：体重（白）
+        drawLineSeries(fatPcts, '#ff453a', 'right', '%'); // 右軸：体脂肪率（赤）
+
+        // 凡例
+        ctx.fillStyle = '#ffffff'; ctx.fillText('■ 体重(kg)', paddingLeft + 10, 15);
+        ctx.fillStyle = '#ff453a'; ctx.fillText('■ 体脂肪率(%)', paddingLeft + 90, 15);
+
+      } else if (chartType === 'MUSCLE_FAT') {
+        const muscles = sortedLogs.map(b => b.muscle ? parseFloat(b.muscle) : null);
+        const fatMasses = sortedLogs.map(b => b.fatMass ? parseFloat(b.fatMass) : null);
+
+        drawLineSeries(muscles, '#30d158', 'left', 'kg'); // 筋肉量（緑）
+        drawLineSeries(fatMasses, '#ff9f0a', 'left', 'kg'); // 脂肪量（オレンジ）
+
+        ctx.fillStyle = '#30d158'; ctx.fillText('■ 筋肉量(kg)', paddingLeft + 10, 15);
+        ctx.fillStyle = '#ff9f0a'; ctx.fillText('■ 脂肪量(kg)', paddingLeft + 90, 15);
+
+      } else if (chartType === 'BMR') {
+        const bmrs = sortedLogs.map(b => b.bmr ? parseFloat(b.bmr) : null);
+        drawLineSeries(bmrs, '#64d2ff', 'left', 'kcal'); // 基礎代謝（水色）
+
+        ctx.fillStyle = '#64d2ff'; ctx.fillText('■ 基礎代謝(kcal)', paddingLeft + 10, 15);
+      }
+    }
+
+    /* ----------------------------------------------------------------
+       OCR (画像自動取込)
+    ------------------------------------------------------------------ */
+    function triggerFileInput() {
+      document.getElementById('ocr-file-input').click();
+    }
+
+    async function handleOCRImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const overlay = document.getElementById('loading-overlay');
+      const loadText = document.getElementById('loading-text');
+      overlay.style.display = 'flex';
+      loadText.textContent = '画像を自動解析中...';
+
+      try {
+        const worker = await Tesseract.createWorker('jpn');
+        const ret = await worker.recognize(file);
+        await worker.terminate();
+
+        const text = ret.data.text.replace(/\s+/g, '');
+        console.log('OCR Result:', text);
+
+        // 数値抽出ロジック
+        const parsed = {
+          weight: extractValue(text, ['体重'], 'kg'),
+          fatPct: extractValue(text, ['体脂肪率'], '%'),
+          fatMass: extractValue(text, ['脂肪量'], 'kg'),
+          muscle: extractValue(text, ['筋肉量'], 'kg'),
+          bmr: extractValue(text, ['基礎代謝量', '基礎代謝'], 'kcal')
+        };
+
+        overlay.style.display = 'none';
+
+        // 入力モーダルを開いて確認・修正できるようにセット
+        openBodyEditModal();
+        if (parsed.weight) document.getElementById('edit-body-weight').value = parsed.weight;
+        if (parsed.fatPct) document.getElementById('edit-body-fat-pct').value = parsed.fatPct;
+        if (parsed.fatMass) document.getElementById('edit-body-fat-mass').value = parsed.fatMass;
+        if (parsed.muscle) document.getElementById('edit-body-muscle').value = parsed.muscle;
+        if (parsed.bmr) document.getElementById('edit-body-bmr').value = parsed.bmr;
+
+        alert('画像の解析が完了しました。内容を確認・修正して「データを保存する」を押してください。');
+
+      } catch (err) {
+        overlay.style.display = 'none';
+        alert('画像の解析に失敗しました。手動でのご入力をお願いいたします。');
+      }
+
+      event.target.value = '';
+    }
+
+    function extractValue(fullText, keywords, unit) {
+      for (let kw of keywords) {
+        const idx = fullText.indexOf(kw);
+        if (idx !== -1) {
+          const sub = fullText.substring(idx + kw.length, idx + kw.length + 15);
+          const match = sub.match(/(\d+\.?\d*)/);
+          if (match) return match[1];
+        }
+      }
+      return '';
+    }
+
+    /* 体組成モーダル操作 */
+    function openBodyEditModal() {
+      const mStr = `${bodyViewYear}-${String(bodySelectedMonth + 1).padStart(2, '0')}`;
+      const defaultDate = `${mStr}-${String(new Date().getDate()).padStart(2, '0')}`;
+      document.getElementById('edit-body-date').value = defaultDate;
+
+      // 既存データがあれば自動セット
+      const existing = bodyLogs.find(b => b.date.startsWith(mStr));
+      if (existing) {
+        document.getElementById('edit-body-date').value = existing.date;
+        document.getElementById('edit-body-weight').value = existing.weight || '';
+        document.getElementById('edit-body-muscle').value = existing.muscle || '';
+        document.getElementById('edit-body-fat-mass').value = existing.fatMass || '';
+        document.getElementById('edit-body-fat-pct').value = existing.fatPct || '';
+        document.getElementById('edit-body-bmr').value = existing.bmr || '';
+      } else {
+        document.getElementById('edit-body-weight').value = '';
+        document.getElementById('edit-body-muscle').value = '';
+        document.getElementById('edit-body-fat-mass').value = '';
+        document.getElementById('edit-body-fat-pct').value = '';
+        document.getElementById('edit-body-bmr').value = '';
+      }
+
+      document.getElementById('body-edit-modal').classList.add('open');
+    }
+
+    function closeBodyEditModal() {
+      document.getElementById('body-edit-modal').classList.remove('open');
+    }
+
+    function saveBodyEditData() {
+      const date = document.getElementById('edit-body-date').value;
+      if (!date) { alert('測定日を選択してください'); return; }
+
+      const weight = document.getElementById('edit-body-weight').value;
+      const muscle = document.getElementById('edit-body-muscle').value;
+      const fatMass = document.getElementById('edit-body-fat-mass').value;
+      const fatPct = document.getElementById('edit-body-fat-pct').value;
+      const bmr = document.getElementById('edit-body-bmr').value;
+
+      bodyLogs = bodyLogs.filter(b => b.date !== date);
+      bodyLogs.push({ id: Date.now(), date, weight, muscle, fatMass, fatPct, bmr });
+
+      localStorage.setItem('gym_body_logs', JSON.stringify(bodyLogs));
+      closeBodyEditModal();
+      renderBodyTab();
+    }
+
+
+    /* ----------------------------------------------------------------
+       既存の Workout Log 機能
+    ------------------------------------------------------------------ */
     function openModal(targetPart = null, targetExercise = null, isEdit = false) {
       document.getElementById('input-memo').value = '';
       document.getElementById('cardio-time').value = '';
@@ -780,14 +1283,6 @@
       renderHome();
     }
 
-    function deleteRecord(id) {
-      if (confirm('この記録を削除しますか？')) {
-        workouts = workouts.filter(w => w.id !== id);
-        localStorage.setItem('gym_workouts_v2', JSON.stringify(workouts));
-        renderHome();
-      }
-    }
-
     function changeMonth(dir) {
       viewMonth += dir;
       if (viewMonth > 11) { viewMonth = 0; viewYear++; }
@@ -942,7 +1437,6 @@
     function renderHistoryCalendar() {
       document.getElementById('history-cal-title').textContent = `${historyViewYear}年 ${historyViewMonth + 1}月`;
 
-      // 1. カレンダーに表示する対象のワークアウトを絞り込み
       let targetWorkoutsForCalendar = workouts;
       if (currentHistoryPart !== 'ALL') {
         targetWorkoutsForCalendar = workouts.filter(w => w.part === currentHistoryPart);
@@ -982,7 +1476,6 @@
         grid.appendChild(cell);
       }
 
-      // 2. カレンダーの下に表示するタイムラインの処理
       const timelineDisplay = document.getElementById('history-timeline-display');
       if (currentHistoryPart === 'ALL') {
         timelineDisplay.innerHTML = '';
