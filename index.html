@@ -101,7 +101,7 @@
 
     .form-group { margin-bottom: 14px; }
     .form-label { font-size: 0.80rem; color: var(--text-sub); margin-bottom: 6px; display: block; }
-    .form-input, .form-select { width: 100%; background: #2c2c2e; border: 1px solid var(--border-color); color: white; padding: 12px; border-radius: 10px; font-size: 0.95rem; }
+    .form-input, .form-select { width: 100%; background: #2c2c2e; border: 1px solid var(--border-color); color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; padding: 12px; border-radius: 10px; font-size: 0.95rem; }
 
     .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 60px; gap: 8px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 10px; border-radius: 10px; }
     .set-num { font-weight: bold; color: var(--accent-red); text-align: center; font-size: 0.9rem; }
@@ -282,7 +282,9 @@
           <button class="sub-tab-btn" onclick="setChartType('BMR', this)">基礎代謝</button>
         </div>
       </div>
-      <canvas id="bodyChart" width="400" height="220" style="width:100%; height:220px;"></canvas>
+      <div style="width:100%; overflow:hidden;">
+        <canvas id="bodyChart" style="width:100%; height:220px; display:block;"></canvas>
+      </div>
     </div>
   </div>
 
@@ -605,16 +607,24 @@
       const canvas = document.getElementById('bodyChart');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      const width = canvas.width = canvas.parentElement.clientWidth || 380;
-      const height = canvas.height = 220;
+      
+      const displayWidth = canvas.parentElement.clientWidth || 360;
+      const displayHeight = 220;
+      const dpr = window.devicePixelRatio || 1;
 
-      ctx.clearRect(0, 0, width, height);
+      canvas.width = displayWidth * dpr;
+      canvas.height = displayHeight * dpr;
+      canvas.style.width = displayWidth + 'px';
+      canvas.style.height = displayHeight + 'px';
+
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, displayWidth, displayHeight);
 
       if (bodyLogs.length === 0) {
         ctx.fillStyle = '#8e8e93';
-        ctx.font = '12px sans-serif';
+        ctx.font = '12px -apple-system, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('測定データがありません', width / 2, height / 2);
+        ctx.fillText('測定データがありません', displayWidth / 2, displayHeight / 2);
         return;
       }
 
@@ -633,39 +643,41 @@
 
       if (sortedLogs.length === 0) {
         ctx.fillStyle = '#8e8e93';
-        ctx.font = '12px sans-serif';
+        ctx.font = '12px -apple-system, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('対象期間のデータがありません', width / 2, height / 2);
+        ctx.fillText('対象期間のデータがありません', displayWidth / 2, displayHeight / 2);
         return;
       }
 
-      const paddingLeft = 35;
-      const paddingRight = (chartType === 'WEIGHT_FAT') ? 35 : 15;
-      const paddingTop = 25;
+      const paddingLeft = 45;
+      const paddingRight = 45;
+      const paddingTop = 30;
       const paddingBottom = 30;
-      const chartW = width - paddingLeft - paddingRight;
-      const chartH = height - paddingTop - paddingBottom;
+      const chartW = displayWidth - paddingLeft - paddingRight;
+      const chartH = displayHeight - paddingTop - paddingBottom;
 
+      // グリッド線
       ctx.strokeStyle = '#2c2c2e';
       ctx.lineWidth = 1;
       ctx.beginPath();
       for (let i = 0; i <= 4; i++) {
         const y = paddingTop + (chartH / 4) * i;
         ctx.moveTo(paddingLeft, y);
-        ctx.lineTo(width - paddingRight, y);
+        ctx.lineTo(displayWidth - paddingRight, y);
       }
       ctx.stroke();
 
       const dates = sortedLogs.map(b => b.date.substring(5).replace('-', '/'));
       const stepX = sortedLogs.length > 1 ? chartW / (sortedLogs.length - 1) : chartW / 2;
 
+      // X軸の日付
       ctx.fillStyle = '#8e8e93';
-      ctx.font = '9px sans-serif';
+      ctx.font = '10px -apple-system, sans-serif';
       ctx.textAlign = 'center';
       sortedLogs.forEach((b, i) => {
         const x = sortedLogs.length === 1 ? paddingLeft + chartW / 2 : paddingLeft + i * stepX;
         if (sortedLogs.length <= 6 || i % Math.ceil(sortedLogs.length / 6) === 0 || i === sortedLogs.length - 1) {
-          ctx.fillText(dates[i], x, height - 10);
+          ctx.fillText(dates[i], x, displayHeight - 10);
         }
       });
 
@@ -681,11 +693,12 @@
         maxV = maxV + margin;
 
         ctx.fillStyle = color;
-        ctx.font = '9px sans-serif';
+        ctx.font = '10px -apple-system, sans-serif';
         ctx.textAlign = axisSide === 'left' ? 'right' : 'left';
-        const axisX = axisSide === 'left' ? paddingLeft - 5 : width - paddingRight + 5;
-        ctx.fillText(maxV.toFixed(1), axisX, paddingTop + 8);
-        ctx.fillText(minV.toFixed(1), axisX, height - paddingBottom);
+        const axisX = axisSide === 'left' ? paddingLeft - 6 : displayWidth - paddingRight + 6;
+        
+        ctx.fillText(maxV.toFixed(1), axisX, paddingTop + 4);
+        ctx.fillText(minV.toFixed(1), axisX, paddingTop + chartH + 4);
 
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
@@ -736,10 +749,10 @@
         const fatMasses = sortedLogs.map(b => b.fatMass ? parseFloat(b.fatMass) : null);
 
         drawLineSeries(muscles, '#30d158', 'left', 'kg');
-        drawLineSeries(fatMasses, '#ff9f0a', 'left', 'kg');
+        drawLineSeries(fatMasses, '#ff9f0a', 'right', 'kg');
 
         ctx.fillStyle = '#30d158'; ctx.fillText('■ 筋肉量(kg)', paddingLeft + 10, 15);
-        ctx.fillStyle = '#ff9f0a'; ctx.fillText('■ 脂肪量(kg)', paddingLeft + 90, 15);
+        ctx.fillStyle = '#ff9f0a'; ctx.fillText('■ 脂肪量(kg)', paddingLeft + 95, 15);
 
       } else if (chartType === 'BMR') {
         const bmrs = sortedLogs.map(b => b.bmr ? parseFloat(b.bmr) : null);
@@ -750,7 +763,7 @@
     }
 
     /* ----------------------------------------------------------------
-       OCR (画像自動取込) - 小数点補正スマートロジック
+       OCR (画像自動取込) - 修正版
     ------------------------------------------------------------------ */
     function triggerFileInput() {
       document.getElementById('ocr-file-input').click();
@@ -807,11 +820,11 @@
         overlay.style.display = 'none';
 
         openBodyEditModal();
-        if (parsed.weight) document.getElementById('edit-body-weight').value = parsed.weight;
-        if (parsed.muscle) document.getElementById('edit-body-muscle').value = parsed.muscle;
-        if (parsed.fatMass) document.getElementById('edit-body-fat-mass').value = parsed.fatMass;
-        if (parsed.fatPct) document.getElementById('edit-body-fat-pct').value = parsed.fatPct;
-        if (parsed.bmr) document.getElementById('edit-body-bmr').value = parsed.bmr;
+        document.getElementById('edit-body-weight').value = parsed.weight;
+        document.getElementById('edit-body-muscle').value = parsed.muscle;
+        document.getElementById('edit-body-fat-mass').value = parsed.fatMass;
+        document.getElementById('edit-body-fat-pct').value = parsed.fatPct;
+        document.getElementById('edit-body-bmr').value = parsed.bmr;
 
         alert('画像をピンポイント解析しました。数値を確認・修正して保存してください。');
 
@@ -845,7 +858,6 @@
       const m = str.match(/(\d+\.?\d*)/);
       if (!m) return '';
       let val = parseFloat(m[1]);
-      // もし小数点が含まれておらず、値が大きすぎる場合（例: 144 → 14.4 に補正）
       if (!m[1].includes('.') && val > 50) {
         val = val / 10;
       }
@@ -866,12 +878,6 @@
         document.getElementById('edit-body-fat-mass').value = existing.fatMass || '';
         document.getElementById('edit-body-fat-pct').value = existing.fatPct || '';
         document.getElementById('edit-body-bmr').value = existing.bmr || '';
-      } else {
-        document.getElementById('edit-body-weight').value = '';
-        document.getElementById('edit-body-muscle').value = '';
-        document.getElementById('edit-body-fat-mass').value = '';
-        document.getElementById('edit-body-fat-pct').value = '';
-        document.getElementById('edit-body-bmr').value = '';
       }
 
       document.getElementById('body-edit-modal').classList.add('open');
