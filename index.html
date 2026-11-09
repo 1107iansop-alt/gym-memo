@@ -80,23 +80,31 @@
     .max-rm-badge { background-color: var(--accent-red); color: white; font-size: 0.55rem; font-weight: bold; padding: 1px 3px; border-radius: 3px; flex-shrink: 0; }
     .delete-btn { background: none; border: none; color: #ff453a; font-size: 0.75rem; cursor: pointer; padding: 2px 4px; }
 
-    /* 最高RM画面用 揃えレイアウト */
+    /* 最高RM画面用 2段式レイアウト */
     .max-rm-container { background: var(--card-bg); border-radius: 16px; padding: 16px; border: 1px solid var(--border-color); }
     .max-rm-header { font-size: 1.1rem; font-weight: bold; color: var(--accent-red); margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
-    .max-rm-row {
-      display: grid;
-      grid-template-columns: 82px 1fr 65px 95px;
-      gap: 6px;
-      align-items: center;
-      padding: 10px 8px;
+    .max-rm-card {
+      padding: 10px 4px;
       border-bottom: 1px solid var(--border-color);
-      font-size: 0.8rem;
     }
-    .max-rm-row:last-child { border-bottom: none; }
-    .max-rm-date { color: var(--text-sub); font-size: 0.75rem; white-space: nowrap; }
-    .max-rm-name { font-weight: bold; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .max-rm-val { font-weight: 800; color: var(--accent-red); text-align: right; white-space: nowrap; }
-    .max-rm-actual { color: var(--text-sub); font-size: 0.73rem; text-align: right; white-space: nowrap; }
+    .max-rm-card:last-child { border-bottom: none; }
+    .max-rm-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: var(--text-main);
+      margin-bottom: 6px;
+      word-break: break-all;
+    }
+    .max-rm-subrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
+    }
+    .max-rm-date { color: var(--text-sub); }
+    .max-rm-divider { color: var(--border-color); }
+    .max-rm-val { font-weight: 800; color: var(--accent-red); }
+    .max-rm-actual { color: var(--text-sub); font-size: 0.78rem; }
 
     .footer-nav {
       position: fixed; bottom: 0; left: 0; width: 100%; background: #1c1c1e; border-top: 1px solid var(--border-color);
@@ -226,7 +234,7 @@
     </button>
   </nav>
 
-  <!-- 既存モーダル類 (Workout Log用) -->
+  <!-- モーダル類 (Workout Log用) -->
   <div class="modal" id="record-modal">
     <div class="modal-content">
       <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -404,12 +412,11 @@
     }
 
     /* ----------------------------------------------------------------
-       最高RM タブのレンダリング (全期間対象・自動反映)
+       最高RM タブのレンダリング (2段表示・種目名全表示)
     ------------------------------------------------------------------ */
     function renderMaxRMTab() {
       const displayArea = document.getElementById('max-rm-list-display');
       
-      // 有酸素運動を除く全筋肉トレ記録を取得
       const strengthWorkouts = workouts.filter(w => !w.isCardio && w.sets && w.sets.length > 0);
 
       if (strengthWorkouts.length === 0) {
@@ -417,8 +424,7 @@
         return;
       }
 
-      // 種目ごとに全期間での最高RMを算出
-      const maxMap = {}; // { exerciseName: { maxRm, date, weight, reps } }
+      const maxMap = {};
 
       strengthWorkouts.forEach(w => {
         const exName = w.exercise;
@@ -444,7 +450,6 @@
         return;
       }
 
-      // 種目名順にソートして並べる
       exercises.sort();
 
       let html = '';
@@ -454,11 +459,15 @@
         const wFormatted = Number(item.weight).toFixed(1);
 
         html += `
-          <div class="max-rm-row">
-            <div class="max-rm-date">${item.date}</div>
-            <div class="max-rm-name">${exName}</div>
-            <div class="max-rm-val">${roundedRM} kg</div>
-            <div class="max-rm-actual">(${wFormatted}kg × ${item.reps})</div>
+          <div class="max-rm-card">
+            <div class="max-rm-title">${exName}</div>
+            <div class="max-rm-subrow">
+              <span class="max-rm-date">${item.date}</span>
+              <span class="max-rm-divider">｜</span>
+              <span class="max-rm-val">${roundedRM} kg</span>
+              <span class="max-rm-divider">｜</span>
+              <span class="max-rm-actual">(${wFormatted}kg × ${item.reps})</span>
+            </div>
           </div>
         `;
       });
