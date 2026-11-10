@@ -24,7 +24,6 @@
       margin: 0; 
       padding: 0; 
       -webkit-tap-highlight-color: transparent; 
-      /* iOSアプリ起動時の文字ボヤけ・滲みをシャープにする設定 */
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -32,7 +31,6 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-dark);
       color: var(--text-main);
-      /* PWAアプリ起動時の上部食い込み・ボヤキを完全に防ぐ余白 */
       padding: max(28px, env(safe-area-inset-top) + 16px) 12px 65px 12px;
       max-width: 500px;
       margin: 0 auto;
@@ -113,16 +111,36 @@
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: flex-end; z-index: 100; }
     .modal.open { display: flex; }
     
-    /* 上部パディングを50pxに設定し、全体をしっかり一段下げて食い込みとボヤけを完全解消 */
+    /* モーダル全体をフレックスコンテナにし、上部を固定・内部だけスクロールさせる構造 */
     .modal-content { 
       background: var(--card-bg); 
       width: 100%; 
-      max-height: 92vh; 
-      overflow-y: auto; 
+      height: 90vh; 
+      max-height: 90vh; 
+      display: flex;
+      flex-direction: column;
       border-radius: 20px 20px 0 0; 
-      padding: 50px 16px calc(40px + env(safe-area-inset-bottom, 0px)) 16px; 
+      padding: 0; 
       border-top: 1px solid var(--border-color); 
-      -webkit-overflow-scrolling: touch; 
+      overflow: hidden;
+    }
+
+    /* 常に上に固定されるヘッダーエリア（部位・種目名） */
+    .modal-sticky-header {
+      padding: 50px 16px 14px 16px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+      z-index: 2;
+    }
+
+    /* 内部のスクロール可能なコンテンツエリア（前回履歴やセット入力） */
+    .modal-scrollable-body {
+      padding: 16px;
+      overflow-y: auto;
+      flex-grow: 1;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
     }
     
     .last-record-box { background: #2c2c2e; border-radius: 12px; padding: 12px; margin-bottom: 20px; font-size: 0.85rem; }
@@ -134,8 +152,8 @@
     .form-label { font-size: 0.80rem; color: var(--text-sub); margin-bottom: 6px; display: block; }
     .form-input, .form-select { width: 100%; background: #2c2c2e; border: 1px solid var(--border-color); color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; padding: 12px; border-radius: 10px; font-size: 0.95rem; }
 
-    /* 部位枠を「有酸素運動」が美しく収まるサイズに設定（125px） */
-    .form-row-selectors { display: grid; grid-template-columns: 125px 1fr; gap: 10px; }
+    /* 部位枠の幅調整（125px） */
+    .form-row-selectors { display: grid; grid-template-columns: 125px 1fr; gap: 10px; margin-bottom: 0; }
 
     /* セット入力行のグリッド調整 */
     .set-row { display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
@@ -254,68 +272,74 @@
   <!-- モーダル類 -->
   <div class="modal" id="record-modal">
     <div class="modal-content">
-      <div class="form-row-selectors">
-        <div class="form-group">
-          <label class="form-label">部位</label>
-          <select id="input-part" class="form-select" onchange="onPartChange()"></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">種目名</label>
-          <select id="input-exercise-select" class="form-select" onchange="onExerciseChange()"></select>
-        </div>
-      </div>
-
-      <div class="last-record-box" id="last-record-box">
-        <div class="last-record-title">
-          <span>Last Record (<span id="last-record-date" style="color: #ffffff;">----/--/--</span>)</span>
-          <button class="copy-last-btn" id="copy-last-btn" onclick="copyLastRecordData()" style="display:none;">前回履歴コピー</button>
-        </div>
-        <div id="last-record-content" style="color: var(--text-sub);">前回の記録はありません</div>
-      </div>
-
-      <div id="strength-input-area">
-        <div style="display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; font-size: 0.65rem; color: var(--text-sub); text-align: center; margin-bottom: 6px;">
-          <div>セット</div><div></div><div>重さ(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>
-        </div>
-        <div id="set-inputs-container"></div>
-        <button class="add-set-btn" onclick="addSetInput()">＋ セットを追加</button>
-      </div>
-
-      <div id="cardio-input-area" style="display: none;">
-        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <!-- 常に上部に固定される部位・種目名エリア -->
+      <div class="modal-sticky-header">
+        <div class="form-row-selectors">
           <div class="form-group">
-            <label class="form-label">運動時間 (分)</label>
-            <input type="number" id="cardio-time" class="form-input" placeholder="30">
+            <label class="form-label">部位</label>
+            <select id="input-part" class="form-select" onchange="onPartChange()"></select>
           </div>
           <div class="form-group">
-            <label class="form-label">速度 (km/h)</label>
-            <input type="number" step="0.1" id="cardio-speed" class="form-input" placeholder="10.0">
-          </div>
-        </div>
-        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <div class="form-group">
-            <label class="form-label">距離 (km)</label>
-            <input type="number" step="0.01" id="cardio-distance" class="form-input" placeholder="5.0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">消費カロリー (kcal)</label>
-            <input type="number" id="cardio-cal" class="form-input" placeholder="300">
+            <label class="form-label">種目名</label>
+            <select id="input-exercise-select" class="form-select" onchange="onExerciseChange()"></select>
           </div>
         </div>
       </div>
 
-      <div class="form-group" style="margin-top: 15px;">
-        <label class="form-label">メモ (任意)</label>
-        <input type="text" id="input-memo" class="form-input" placeholder="フォームや感想など">
-      </div>
+      <!-- スクロール可能なボディエリア（履歴、セット入力、ボタン類） -->
+      <div class="modal-scrollable-body">
+        <div class="last-record-box" id="last-record-box">
+          <div class="last-record-title">
+            <span>Last Record (<span id="last-record-date" style="color: #ffffff;">----/--/--</span>)</span>
+            <button class="copy-last-btn" id="copy-last-btn" onclick="copyLastRecordData()" style="display:none;">前回履歴コピー</button>
+          </div>
+          <div id="last-record-content" style="color: var(--text-sub);">前回の記録はありません</div>
+        </div>
 
-      <button class="submit-btn" onclick="saveRecord()">記録を保存する</button>
-      <button class="close-modal" onclick="closeModal()">キャンセル</button>
+        <div id="strength-input-area">
+          <div style="display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; font-size: 0.65rem; color: var(--text-sub); text-align: center; margin-bottom: 6px;">
+            <div>セット</div><div></div><div>重さ(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>
+          </div>
+          <div id="set-inputs-container"></div>
+          <button class="add-set-btn" onclick="addSetInput()">＋ セットを追加</button>
+        </div>
+
+        <div id="cardio-input-area" style="display: none;">
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label">運動時間 (分)</label>
+              <input type="number" id="cardio-time" class="form-input" placeholder="30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">速度 (km/h)</label>
+              <input type="number" step="0.1" id="cardio-speed" class="form-input" placeholder="10.0">
+            </div>
+          </div>
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label">距離 (km)</label>
+              <input type="number" step="0.01" id="cardio-distance" class="form-input" placeholder="5.0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">消費カロリー (kcal)</label>
+              <input type="number" id="cardio-cal" class="form-input" placeholder="300">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 15px;">
+          <label class="form-label">メモ (任意)</label>
+          <input type="text" id="input-memo" class="form-input" placeholder="フォームや感想など">
+        </div>
+
+        <button class="submit-btn" onclick="saveRecord()">記録を保存する</button>
+        <button class="close-modal" onclick="closeModal()">キャンセル</button>
+      </div>
     </div>
   </div>
 
   <div class="modal" id="summary-modal">
-    <div class="modal-content">
+    <div class="modal-content" style="padding: 20px 16px;">
       <div id="summary-capture-target" style="padding: 10px; background: var(--card-bg); border-radius: 16px;">
         <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;" id="summary-modal-main-title">2026年 11月 サマリ</div>
         
@@ -363,9 +387,9 @@
   </div>
 
   <div class="modal" id="manage-modal">
-    <div class="modal-content">
+    <div class="modal-content" style="padding: 20px 16px;">
       <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;">種目・部位の管理</div>
-      <div id="manage-content-area" style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 20px;"></div>
+      <div id="manage-content-area" style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 20px; overflow-y: auto; flex-grow: 1;"></div>
       <button class="close-modal" onclick="closeManageModal()">閉じる</button>
     </div>
   </div>
