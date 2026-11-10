@@ -111,6 +111,7 @@
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: flex-end; z-index: 100; }
     .modal.open { display: flex; }
     
+    /* トレーニング記録追加モーダル専用の上下分割ウィンドウ構造 */
     .modal-content { 
       background: var(--card-bg); 
       width: 100%; 
@@ -124,7 +125,6 @@
       overflow: hidden;
     }
 
-    /* 常に上に固定されるヘッダーエリア（上部パディングを60pxに引き上げて完全な安全圏を確保） */
     .modal-sticky-header {
       padding: 60px 16px 14px 16px;
       background: var(--card-bg);
@@ -133,13 +133,24 @@
       z-index: 2;
     }
 
-    /* 内部のスクロール可能なコンテンツエリア */
     .modal-scrollable-body {
       padding: 16px;
       overflow-y: auto;
       flex-grow: 1;
       -webkit-overflow-scrolling: touch;
       padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* 月間サマリ・管理モーダル専用の自然スクロール構造 */
+    .modal-content-scrollable {
+      background: var(--card-bg);
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 20px 20px 0 0;
+      padding: 50px 16px calc(40px + env(safe-area-inset-bottom, 0px)) 16px;
+      border-top: 1px solid var(--border-color);
+      -webkit-overflow-scrolling: touch;
     }
     
     .last-record-box { background: #2c2c2e; border-radius: 12px; padding: 12px; margin-bottom: 20px; font-size: 0.85rem; }
@@ -151,10 +162,8 @@
     .form-label { font-size: 0.80rem; color: var(--text-sub); margin-bottom: 6px; display: block; }
     .form-input, .form-select { width: 100%; background: #2c2c2e; border: 1px solid var(--border-color); color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; padding: 12px; border-radius: 10px; font-size: 0.95rem; }
 
-    /* 部位枠の幅調整（125px） */
     .form-row-selectors { display: grid; grid-template-columns: 125px 1fr; gap: 10px; margin-bottom: 0; }
 
-    /* セット入力行のグリッド調整 */
     .set-row { display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
     .set-num { font-weight: bold; color: var(--accent-red); text-align: center; font-size: 0.85rem; white-space: nowrap; }
     .set-input { width: 100%; background: #1c1c1e; border: 1px solid var(--border-color); color: white; padding: 8px 2px; border-radius: 8px; font-size: 0.9rem; text-align: center; }
@@ -271,7 +280,6 @@
   <!-- モーダル類 -->
   <div class="modal" id="record-modal">
     <div class="modal-content">
-      <!-- 常に上部に固定される部位・種目名エリア（パディング60pxで完全安全） -->
       <div class="modal-sticky-header">
         <div class="form-row-selectors">
           <div class="form-group">
@@ -285,7 +293,6 @@
         </div>
       </div>
 
-      <!-- スクロール可能なボディエリア -->
       <div class="modal-scrollable-body">
         <div class="last-record-box" id="last-record-box">
           <div class="last-record-title">
@@ -303,6 +310,7 @@
           <button class="add-set-btn" onclick="addSetInput()">＋ セットを追加</button>
         </div>
 
+        <!-- 有酸素運動入力欄：初期値(value)を完全に排除しplaceholderのみに修正 -->
         <div id="cardio-input-area" style="display: none;">
           <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
@@ -337,8 +345,9 @@
     </div>
   </div>
 
+  <!-- 月間サマリモーダル：専用のスクロール構造クラスを適用 -->
   <div class="modal" id="summary-modal">
-    <div class="modal-content" style="padding: 20px 16px;">
+    <div class="modal-content-scrollable">
       <div id="summary-capture-target" style="padding: 10px; background: var(--card-bg); border-radius: 16px;">
         <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;" id="summary-modal-main-title">2026年 11月 サマリ</div>
         
@@ -385,10 +394,11 @@
     </div>
   </div>
 
+  <!-- 部位・種目管理モーダル：専用のスクロール構造クラスを適用 -->
   <div class="modal" id="manage-modal">
-    <div class="modal-content" style="padding: 20px 16px;">
+    <div class="modal-content-scrollable">
       <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;">種目・部位の管理</div>
-      <div id="manage-content-area" style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 20px; overflow-y: auto; flex-grow: 1;"></div>
+      <div id="manage-content-area" style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 20px;"></div>
       <button class="close-modal" onclick="closeManageModal()">閉じる</button>
     </div>
   </div>
@@ -523,13 +533,23 @@
       
       if (isEdit && targetPart && targetExercise) {
         const existing = workouts.find(w => w.date === selectedDate && w.part === targetPart && w.exercise === targetExercise);
-        if (existing && existing.sets && existing.sets.length > 0) {
-          const container = document.getElementById('set-inputs-container');
-          container.innerHTML = '';
-          existing.sets.forEach((s) => {
-            appendSetRow(s.weight, s.reps);
-          });
-          reindexSetRows();
+        if (existing) {
+          if (existing.isCardio && existing.cardio) {
+            document.getElementById('cardio-time').value = existing.cardio.time || '';
+            document.getElementById('cardio-speed').value = existing.cardio.speed || '';
+            document.getElementById('cardio-distance').value = existing.cardio.distance || '';
+            document.getElementById('cardio-cal').value = existing.cardio.cal || '';
+          } else if (existing.sets && existing.sets.length > 0) {
+            const container = document.getElementById('set-inputs-container');
+            container.innerHTML = '';
+            existing.sets.forEach((s) => {
+              appendSetRow(s.weight, s.reps);
+            });
+            reindexSetRows();
+          }
+          if (existing.memo) {
+            document.getElementById('input-memo').value = existing.memo;
+          }
         }
       } else {
         initSetInputs();
@@ -1017,7 +1037,7 @@
         const grouped = {};
         dayWorkouts.forEach(w => {
           if (!grouped[w.exercise]) {
-            grouped[w.exercise] = { part: w.part, sets: [], memo: [] };
+            grouped[w.exercise] = { part: w.part, sets: [], cardio: w.cardio, isCardio: w.isCardio, memo: [] };
           }
           if (w.sets) grouped[w.exercise].sets.push(...w.sets);
           if (w.memo) grouped[w.exercise].memo.push(w.memo);
@@ -1030,63 +1050,78 @@
 
         for (let exName in grouped) {
           const item = grouped[exName];
-          const histMax = getHistoricalMaxRM(exName, selectedDate);
           
-          let dayMaxRM = 0;
-          const setRms = item.sets.map(s => {
-            const rm = calcRM(s.weight, s.reps);
-            if (rm > dayMaxRM) dayMaxRM = rm;
-            return rm;
-          });
-
-          let displayHeaderRM = Math.max(dayMaxRM, histMax);
-          const maxInDay = setRms.length > 0 ? Math.max(...setRms) : 0;
-
-          let setsHtml = item.sets.map((s, idx) => {
-            const currentRM = setRms[idx];
-            const currentRMFormatted = currentRM.toFixed(1);
-            const wFormatted = Number(s.weight).toFixed(1) + ' kg';
-            const rFormatted = s.reps + ' reps';
-
-            let badgeHtml = '';
-
-            if (currentRM > 0 && Math.abs(currentRM - maxInDay) <= 0.05) {
-              if (histMax > 0) {
-                if (maxInDay > histMax + 0.05) {
-                  badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
-                } else if (Math.abs(maxInDay - histMax) <= 0.05) {
-                  badgeHtml = '<span class="max-rm-badge gold">MAX RM</span>';
-                }
-              } else {
-                badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
-              }
-            }
-
-            return `
-              <div class="history-set-row">
-                <div class="set-num-col">${idx + 1}</div>
-                <div class="set-weight-col">${wFormatted}</div>
-                <div class="set-x-col">×</div>
-                <div class="set-reps-col">${rFormatted}</div>
-                <div class="set-rm-col">
-                  <span>(1RM:${currentRMFormatted}kg)</span>
-                  ${badgeHtml}
+          if (item.isCardio) {
+            const c = item.cardio || {};
+            html += `
+              <div class="history-card" onclick="openModal('${item.part}', '${exName}', true)">
+                <div class="history-header-row">
+                  <div class="history-ex-title">${exName}</div>
+                  <div style="font-size:0.8rem; font-weight:bold; color:var(--text-main);">有酸素</div>
+                </div>
+                <div style="font-size:0.85rem; color:var(--text-main); margin-top:4px;">
+                  時間: ${c.time || '-'}分 / 速度: ${c.speed || '-'}km/h / 距離: ${c.distance || '-'}km / カロリー: ${c.cal || '-'}kcal
                 </div>
               </div>
             `;
-          }).join('');
+          } else {
+            const histMax = getHistoricalMaxRM(exName, selectedDate);
+            let dayMaxRM = 0;
+            const setRms = item.sets.map(s => {
+              const rm = calcRM(s.weight, s.reps);
+              if (rm > dayMaxRM) dayMaxRM = rm;
+              return rm;
+            });
 
-          html += `
-            <div class="history-card" onclick="openModal('${item.part}', '${exName}', true)">
-              <div class="history-header-row">
-                <div class="history-ex-title">${exName}</div>
-                <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                  <span style="font-size:0.8rem; font-weight:bold; color:var(--text-main);">RM : ${displayHeaderRM.toFixed(1)}kg</span>
+            let displayHeaderRM = Math.max(dayMaxRM, histMax);
+            const maxInDay = setRms.length > 0 ? Math.max(...setRms) : 0;
+
+            let setsHtml = item.sets.map((s, idx) => {
+              const currentRM = setRms[idx];
+              const currentRMFormatted = currentRM.toFixed(1);
+              const wFormatted = Number(s.weight).toFixed(1) + ' kg';
+              const rFormatted = s.reps + ' reps';
+
+              let badgeHtml = '';
+
+              if (currentRM > 0 && Math.abs(currentRM - maxInDay) <= 0.05) {
+                if (histMax > 0) {
+                  if (maxInDay > histMax + 0.05) {
+                    badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
+                  } else if (Math.abs(maxInDay - histMax) <= 0.05) {
+                    badgeHtml = '<span class="max-rm-badge gold">MAX RM</span>';
+                  }
+                } else {
+                  badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
+                }
+              }
+
+              return `
+                <div class="history-set-row">
+                  <div class="set-num-col">${idx + 1}</div>
+                  <div class="set-weight-col">${wFormatted}</div>
+                  <div class="set-x-col">×</div>
+                  <div class="set-reps-col">${rFormatted}</div>
+                  <div class="set-rm-col">
+                    <span>(1RM:${currentRMFormatted}kg)</span>
+                    ${badgeHtml}
+                  </div>
                 </div>
+              `;
+            }).join('');
+
+            html += `
+              <div class="history-card" onclick="openModal('${item.part}', '${exName}', true)">
+                <div class="history-header-row">
+                  <div class="history-ex-title">${exName}</div>
+                  <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                    <span style="font-size:0.8rem; font-weight:bold; color:var(--text-main);">RM : ${displayHeaderRM.toFixed(1)}kg</span>
+                  </div>
+                </div>
+                ${setsHtml}
               </div>
-              ${setsHtml}
-            </div>
-          `;
+            `;
+          }
         }
         html += `</div>`;
         displayArea.innerHTML = html;
@@ -1173,62 +1208,78 @@
         let html = `<div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-red); margin: 16px 0 10px 0;">■ ${currentHistoryPart} の直近履歴（過去3ヶ月）</div>`;
         
         targetWorkouts.forEach(w => {
-          const histMax = getHistoricalMaxRM(w.exercise, w.date);
-          let dayMaxRM = 0;
-          const setRms = w.sets ? w.sets.map(s => {
-            const rm = calcRM(s.weight, s.reps);
-            if (rm > dayMaxRM) dayMaxRM = rm;
-            return rm;
-          }) : [];
-
-          let displayHeaderRM = Math.max(dayMaxRM, histMax);
-          const maxInDay = setRms.length > 0 ? Math.max(...setRms) : 0;
-
-          let setsHtml = w.sets ? w.sets.map((s, idx) => {
-            const currentRM = setRms[idx];
-            const currentRMFormatted = currentRM.toFixed(1);
-            const wFormatted = Number(s.weight).toFixed(1) + ' kg';
-            const rFormatted = s.reps + ' reps';
-
-            let badgeHtml = '';
-            if (currentRM > 0 && Math.abs(currentRM - maxInDay) <= 0.05) {
-              if (histMax > 0) {
-                if (maxInDay > histMax + 0.05) {
-                  badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
-                } else if (Math.abs(maxInDay - histMax) <= 0.05) {
-                  badgeHtml = '<span class="max-rm-badge gold">MAX RM</span>';
-                }
-              } else {
-                badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
-              }
-            }
-
-            return `
-              <div class="history-set-row">
-                <div class="set-num-col">${idx + 1}</div>
-                <div class="set-weight-col">${wFormatted}</div>
-                <div class="set-x-col">×</div>
-                <div class="set-reps-col">${rFormatted}</div>
-                <div class="set-rm-col">
-                  <span>(1RM:${currentRMFormatted}kg)</span>
-                  ${badgeHtml}
+          if (w.isCardio) {
+            const c = w.cardio || {};
+            html += `
+              <div class="history-card" onclick="selectedDate = '${w.date}'; switchTab('home', document.querySelectorAll('.nav-item')[0]); renderHome();">
+                <div style="font-size: 0.75rem; color: var(--text-sub); margin-bottom: 2px;">${w.date}</div>
+                <div class="history-header-row">
+                  <div class="history-ex-title">${w.exercise}</div>
+                  <div style="font-size:0.8rem; font-weight:bold; color:var(--text-main);">有酸素</div>
+                </div>
+                <div style="font-size:0.85rem; color:var(--text-main); margin-top:4px;">
+                  時間: ${c.time || '-'}分 / 速度: ${c.speed || '-'}km/h / 距離: ${c.distance || '-'}km / カロリー: ${c.cal || '-'}kcal
                 </div>
               </div>
             `;
-          }).join('') : '';
+          } else {
+            const histMax = getHistoricalMaxRM(w.exercise, w.date);
+            let dayMaxRM = 0;
+            const setRms = w.sets ? w.sets.map(s => {
+              const rm = calcRM(s.weight, s.reps);
+              if (rm > dayMaxRM) dayMaxRM = rm;
+              return rm;
+            }) : [];
 
-          html += `
-            <div class="history-card" onclick="selectedDate = '${w.date}'; switchTab('home', document.querySelectorAll('.nav-item')[0]); renderHome();">
-              <div style="font-size: 0.75rem; color: var(--text-sub); margin-bottom: 2px;">${w.date}</div>
-              <div class="history-header-row">
-                <div class="history-ex-title">${w.exercise}</div>
-                <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                  <span style="font-size:0.8rem; font-weight:bold; color:var(--text-main);">RM : ${displayHeaderRM.toFixed(1)}kg</span>
+            let displayHeaderRM = Math.max(dayMaxRM, histMax);
+            const maxInDay = setRms.length > 0 ? Math.max(...setRms) : 0;
+
+            let setsHtml = w.sets ? w.sets.map((s, idx) => {
+              const currentRM = setRms[idx];
+              const currentRMFormatted = currentRM.toFixed(1);
+              const wFormatted = Number(s.weight).toFixed(1) + ' kg';
+              const rFormatted = s.reps + ' reps';
+
+              let badgeHtml = '';
+              if (currentRM > 0 && Math.abs(currentRM - maxInDay) <= 0.05) {
+                if (histMax > 0) {
+                  if (maxInDay > histMax + 0.05) {
+                    badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
+                  } else if (Math.abs(maxInDay - histMax) <= 0.05) {
+                    badgeHtml = '<span class="max-rm-badge gold">MAX RM</span>';
+                  }
+                } else {
+                  badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
+                }
+              }
+
+              return `
+                <div class="history-set-row">
+                  <div class="set-num-col">${idx + 1}</div>
+                  <div class="set-weight-col">${wFormatted}</div>
+                  <div class="set-x-col">×</div>
+                  <div class="set-reps-col">${rFormatted}</div>
+                  <div class="set-rm-col">
+                    <span>(1RM:${currentRMFormatted}kg)</span>
+                    ${badgeHtml}
+                  </div>
                 </div>
+              `;
+            }).join('') : '';
+
+            html += `
+              <div class="history-card" onclick="selectedDate = '${w.date}'; switchTab('home', document.querySelectorAll('.nav-item')[0]); renderHome();">
+                <div style="font-size: 0.75rem; color: var(--text-sub); margin-bottom: 2px;">${w.date}</div>
+                <div class="history-header-row">
+                  <div class="history-ex-title">${w.exercise}</div>
+                  <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                    <span style="font-size:0.8rem; font-weight:bold; color:var(--text-main);">RM : ${displayHeaderRM.toFixed(1)}kg</span>
+                  </div>
+                </div>
+                ${setsHtml}
               </div>
-              ${setsHtml}
-            </div>
-          `;
+            `;
+          }
         });
 
         timelineDisplay.innerHTML = html;
