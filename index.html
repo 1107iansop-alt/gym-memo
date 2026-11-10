@@ -111,7 +111,6 @@
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: flex-end; z-index: 100; }
     .modal.open { display: flex; }
     
-    /* トレーニング記録追加モーダル専用の上下分割ウィンドウ構造 */
     .modal-content { 
       background: var(--card-bg); 
       width: 100%; 
@@ -141,7 +140,6 @@
       padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
     }
 
-    /* 月間サマリ・管理モーダル専用の自然スクロール構造 */
     .modal-content-scrollable {
       background: var(--card-bg);
       width: 100%;
@@ -177,6 +175,7 @@
 
     .add-set-btn { width: 100%; background: #2c2c2e; color: #34c759; border: 1px dashed #34c759; padding: 12px; border-radius: 10px; font-weight: bold; margin-top: 10px; cursor: pointer; }
     .submit-btn { width: 100%; background: var(--accent-red); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 1rem; margin-top: 15px; cursor: pointer; }
+    .delete-record-btn { width: 100%; background: #2c2c2e; color: #ff453a; border: 1px solid #ff453a; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 8px; cursor: pointer; display: none; }
     .close-modal { width: 100%; background: #2c2c2e; color: var(--text-main); border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 8px; cursor: pointer; }
     .manage-btn { background: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
 
@@ -310,7 +309,7 @@
           <button class="add-set-btn" onclick="addSetInput()">＋ セットを追加</button>
         </div>
 
-        <!-- 有酸素運動入力欄：プレースホルダーではなくvalueとして残らないよう、JS側で確実に完全クリアする構造に改善 -->
+        <!-- 有酸素運動入力欄：確実に空で開き、自由に入力可能 -->
         <div id="cardio-input-area" style="display: none;">
           <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
@@ -340,6 +339,7 @@
         </div>
 
         <button class="submit-btn" onclick="saveRecord()">記録を保存する</button>
+        <button class="delete-record-btn" id="delete-record-btn" onclick="deleteCurrentRecord()">この記録を削除する</button>
         <button class="close-modal" onclick="closeModal()">キャンセル</button>
       </div>
     </div>
@@ -523,7 +523,6 @@
     }
 
     function openModal(targetPart = null, targetExercise = null, isEdit = false) {
-      // 1. モーダルを開いた瞬間に有酸素入力欄の値を完全に空にクリア
       document.getElementById('cardio-time').value = '';
       document.getElementById('cardio-speed').value = '';
       document.getElementById('cardio-distance').value = '';
@@ -532,7 +531,10 @@
 
       updatePartSelectOptions(targetPart, targetExercise);
       
+      const deleteBtn = document.getElementById('delete-record-btn');
+
       if (isEdit && targetPart && targetExercise) {
+        deleteBtn.style.display = 'block';
         const existing = workouts.find(w => w.date === selectedDate && w.part === targetPart && w.exercise === targetExercise);
         if (existing) {
           if (existing.isCardio && existing.cardio) {
@@ -553,6 +555,7 @@
           }
         }
       } else {
+        deleteBtn.style.display = 'none';
         initSetInputs();
       }
 
@@ -561,6 +564,17 @@
 
     function closeModal() {
       document.getElementById('record-modal').classList.remove('open');
+    }
+
+    function deleteCurrentRecord() {
+      const part = document.getElementById('input-part').value;
+      const exercise = document.getElementById('input-exercise-select').value;
+      if (confirm(`「${exercise}」の記録を削除しますか？`)) {
+        workouts = workouts.filter(w => !(w.date === selectedDate && w.part === part && w.exercise === exercise));
+        localStorage.setItem('gym_workouts_v2', JSON.stringify(workouts));
+        closeModal();
+        renderHome();
+      }
     }
 
     function openSummaryModal() {
@@ -772,14 +786,6 @@
       document.getElementById('strength-input-area').style.display = isCardio ? 'none' : 'block';
       document.getElementById('cardio-input-area').style.display = isCardio ? 'block' : 'none';
 
-      // 2. 部位変更時に新規作成（非編集時）であれば有酸素運動の入力欄を確実に強制クリア
-      if (!selectedExercise) {
-        document.getElementById('cardio-time').value = '';
-        document.getElementById('cardio-speed').value = '';
-        document.getElementById('cardio-distance').value = '';
-        document.getElementById('cardio-cal').value = '';
-      }
-
       onExerciseChange();
     }
 
@@ -827,7 +833,7 @@
       copyBtn.style.display = 'inline-block';
 
       if (last.isCardio) {
-        boxContent.innerHTML = `時間: ${last.cardio.time || '-'}分 / 距離: ${last.cardio.distance || '-'}km`;
+        boxContent.innerHTML = `時間：${last.cardio.time || '-'}分 / 距離：${last.cardio.distance || '-'}km`;
       } else if (last.sets) {
         boxContent.innerHTML = last.sets.map((s, idx) => {
           const wStr = Number(s.weight).toFixed(1);
@@ -951,16 +957,20 @@
 
       const isCardio = (part === '有酸素運動');
 
+      workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
+
       if (isCardio) {
-        let recordData = { id: Date.now(), date, part, exercise, isCardio, memo };
-        recordData.cardio = {
-          time: document.getElementById('cardio-time').value,
-          speed: document.getElementById('cardio-speed').value,
-          distance: document.getElementById('cardio-distance').value,
-          cal: document.getElementById('cardio-cal').value
-        };
-        workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
-        workouts.push(recordData);
+        const time = document.getElementById('cardio-time').value.trim();
+        const speed = document.getElementById('cardio-speed').value.trim();
+        const distance = document.getElementById('cardio-distance').value.trim();
+        const cal = document.getElementById('cardio-cal').value.trim();
+
+        // 全ての項目が空の場合は保存せず削除扱いにする
+        if (time !== '' || speed !== '' || distance !== '' || cal !== '') {
+          let recordData = { id: Date.now(), date, part, exercise, isCardio, memo };
+          recordData.cardio = { time, speed, distance, cal };
+          workouts.push(recordData);
+        }
       } else {
         const rows = document.querySelectorAll('.set-row');
         const setsData = [];
@@ -971,8 +981,6 @@
             setsData.push({ weight, reps });
           }
         });
-
-        workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
 
         if (setsData.length > 0) {
           let recordData = { id: Date.now(), date, part, exercise, isCardio: false, memo, sets: setsData };
@@ -1065,14 +1073,19 @@
           
           if (item.isCardio) {
             const c = item.cardio || {};
+            const timeStr = c.time ? `${c.time}分` : '-';
+            const speedStr = c.speed ? `${c.speed}km/h` : '-';
+            const distStr = c.distance ? `${c.distance}km` : '-';
+            const calStr = c.cal ? `${c.cal}kcal` : '-';
+
             html += `
               <div class="history-card" onclick="openModal('${item.part}', '${exName}', true)">
                 <div class="history-header-row">
                   <div class="history-ex-title">${exName}</div>
-                  <div style="font-size:0.8rem; font-weight:bold; color:var(--text-main);">有酸素</div>
                 </div>
-                <div style="font-size:0.85rem; color:var(--text-main); margin-top:4px;">
-                  時間: ${c.time || '-'}分 / 速度: ${c.speed || '-'}km/h / 距離: ${c.distance || '-'}km / カロリー: ${c.cal || '-'}kcal
+                <div style="font-size:0.85rem; color:var(--text-main); margin-top:4px; line-height: 1.5;">
+                  <div>時間：${timeStr} / 速度：${speedStr}</div>
+                  <div>距離：${distStr} / カロリー：${calStr}</div>
                 </div>
               </div>
             `;
@@ -1222,15 +1235,20 @@
         targetWorkouts.forEach(w => {
           if (w.isCardio) {
             const c = w.cardio || {};
+            const timeStr = c.time ? `${c.time}分` : '-';
+            const speedStr = c.speed ? `${c.speed}km/h` : '-';
+            const distStr = c.distance ? `${c.distance}km` : '-';
+            const calStr = c.cal ? `${c.cal}kcal` : '-';
+
             html += `
               <div class="history-card" onclick="selectedDate = '${w.date}'; switchTab('home', document.querySelectorAll('.nav-item')[0]); renderHome();">
                 <div style="font-size: 0.75rem; color: var(--text-sub); margin-bottom: 2px;">${w.date}</div>
                 <div class="history-header-row">
                   <div class="history-ex-title">${w.exercise}</div>
-                  <div style="font-size:0.8rem; font-weight:bold; color:var(--text-main);">有酸素</div>
                 </div>
-                <div style="font-size:0.85rem; color:var(--text-main); margin-top:4px;">
-                  時間: ${c.time || '-'}分 / 速度: ${c.speed || '-'}km/h / 距離: ${c.distance || '-'}km / カロリー: ${c.cal || '-'}kcal
+                <div style="font-size:0.85rem; color:var(--text-main); margin-top:4px; line-height: 1.5;">
+                  <div>時間：${timeStr} / 速度：${speedStr}</div>
+                  <div>距離：${distStr} / カロリー：${calStr}</div>
                 </div>
               </div>
             `;
@@ -1420,7 +1438,7 @@
 
     function deletePart(idx) {
       const target = customParts[idx];
-      if (confirm(`部位「${target}` + `」を削除しますか？`)) {
+      if (confirm(`部位「${target}」を削除しますか？`)) {
         customParts.splice(idx, 1);
         delete customExercises[target];
         localStorage.setItem('gym_custom_parts', JSON.stringify(customParts));
@@ -1436,9 +1454,11 @@
         const trimmedNewName = newName.trim();
         if (trimmedNewName === oldName) return;
 
+        // 種目リスト側を更新
         customExercises[part][exIdx] = trimmedNewName;
         localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
 
+        // 過去のワークアウト記録（workouts）の種目名も確実に連動して更新
         workouts.forEach(w => {
           if (w.part === part && w.exercise === oldName) {
             w.exercise = trimmedNewName;
