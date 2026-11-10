@@ -913,10 +913,8 @@
           if (weight > 0 || reps > 0) setsData.push({ weight, reps });
         });
 
-        // 既存のこの種目の記録をまずいったん取り除く（上書きor削除のため）
         workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
 
-        // 有効なセットが1つでもある場合のみ新しく記録を追加する（全削除/未入力なら登録せずそのまま削除状態にする）
         if (setsData.length > 0) {
           let recordData = { id: Date.now(), date, part, exercise, isCardio: false, memo, sets: setsData };
           workouts.push(recordData);
@@ -1015,24 +1013,42 @@
 
           let displayHeaderRM = Math.max(dayMaxRM, histMax);
 
-          let runningMax = histMax;
+          // 当日内におけるセットごとの正確なバッジ判定ロジック
+          // まず当日内の各セットの1RMを計算
+          const setRms = item.sets.map(s => calcRM(s.weight, s.reps));
+          
+          // 当日内での最大RM値を取得
+          const maxInDay = Math.max(...setRms);
+
+          let hasRedAssigned = false;
 
           let setsHtml = item.sets.map((s, idx) => {
-            const currentRM = calcRM(s.weight, s.reps);
+            const currentRM = setRms[idx];
             const currentRMFormatted = currentRM.toFixed(1);
             const wFormatted = Number(s.weight).toFixed(1) + ' kg';
             const rFormatted = s.reps + ' reps';
 
             let badgeHtml = '';
-            if (runningMax === 0) {
-              runningMax = currentRM;
-              badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
-            } else {
-              if (currentRM > runningMax + 0.05) {
-                runningMax = currentRM;
+
+            // 判定：
+            // 1. 過去の歴代最高（histMax）よりも大きく、かつ当日内の最高値（maxInDay）と同等以上である場合
+            if (currentRM > histMax + 0.05) {
+              if (!hasRedAssigned && Math.abs(currentRM - maxInDay) <= 0.05) {
+                // 当日最高を最初に叩き出したセット ➔ 赤バッジ
+                hasRedAssigned = true;
                 badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
-              } else if (Math.abs(currentRM - runningMax) <= 0.05) {
+              } else {
+                // 過去最高を超えているが、当日最高値と同じ、または2回目以降の最高値 ➔ ゴールド（タイ記録扱い）
                 badgeHtml = '<span class="max-rm-badge gold">MAX RM</span>';
+              }
+            } else if (histMax > 0 && Math.abs(currentRM - histMax) <= 0.05) {
+              // 過去の歴代最高と完全に同率（タイ）の場合 ➔ ゴールドバッジ
+              badgeHtml = '<span class="max-rm-badge gold">MAX RM</span>';
+            } else if (histMax === 0 && currentRM > 0) {
+              // 初めての記録の場合 ➔ 初セットに赤バッジ
+              if (!hasRedAssigned) {
+                hasRedAssigned = true;
+                badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
               }
             }
 
@@ -1157,24 +1173,31 @@
           }
 
           let displayHeaderRM = Math.max(dayMaxRM, histMax);
-          let runningMax = histMax;
+
+          const setRms = w.sets ? w.sets.map(s => calcRM(s.weight, s.reps)) : [];
+          const maxInDay = setRms.length > 0 ? Math.max(...setRms) : 0;
+          let hasRedAssigned = false;
 
           let setsHtml = w.sets ? w.sets.map((s, idx) => {
-            const currentRM = calcRM(s.weight, s.reps);
+            const currentRM = setRms[idx];
             const currentRMFormatted = currentRM.toFixed(1);
             const wFormatted = Number(s.weight).toFixed(1) + ' kg';
             const rFormatted = s.reps + ' reps';
 
             let badgeHtml = '';
-            if (runningMax === 0) {
-              runningMax = currentRM;
-              badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
-            } else {
-              if (currentRM > runningMax + 0.05) {
-                runningMax = currentRM;
+            if (currentRM > histMax + 0.05) {
+              if (!hasRedAssigned && Math.abs(currentRM - maxInDay) <= 0.05) {
+                hasRedAssigned = true;
                 badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
-              } else if (Math.abs(currentRM - runningMax) <= 0.05) {
+              } else {
                 badgeHtml = '<span class="max-rm-badge gold">MAX RM</span>';
+              }
+            } else if (histMax > 0 && Math.abs(currentRM - histMax) <= 0.05) {
+              badgeHtml = '<span class="max-rm-badge gold">MAX RM</span>';
+            } else if (histMax === 0 && currentRM > 0) {
+              if (!hasRedAssigned) {
+                hasRedAssigned = true;
+                badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
               }
             }
 
