@@ -310,7 +310,7 @@
           <button class="add-set-btn" onclick="addSetInput()">＋ セットを追加</button>
         </div>
 
-        <!-- 有酸素運動入力欄：初期値(value)を完全に排除しplaceholderのみに修正 -->
+        <!-- 有酸素運動入力欄：初期値(value)を完全排除し、確実に空文字にする -->
         <div id="cardio-input-area" style="display: none;">
           <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
@@ -345,7 +345,7 @@
     </div>
   </div>
 
-  <!-- 月間サマリモーダル：専用のスクロール構造クラスを適用 -->
+  <!-- 月間サマリモーダル -->
   <div class="modal" id="summary-modal">
     <div class="modal-content-scrollable">
       <div id="summary-capture-target" style="padding: 10px; background: var(--card-bg); border-radius: 16px;">
@@ -394,7 +394,7 @@
     </div>
   </div>
 
-  <!-- 部位・種目管理モーダル：専用のスクロール構造クラスを適用 -->
+  <!-- 部位・種目管理モーダル -->
   <div class="modal" id="manage-modal">
     <div class="modal-content-scrollable">
       <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;">種目・部位の管理</div>
@@ -523,11 +523,12 @@
     }
 
     function openModal(targetPart = null, targetExercise = null, isEdit = false) {
-      document.getElementById('input-memo').value = '';
+      // 1. 有酸素運動入力欄の値を完全にクリアする
       document.getElementById('cardio-time').value = '';
       document.getElementById('cardio-speed').value = '';
       document.getElementById('cardio-distance').value = '';
       document.getElementById('cardio-cal').value = '';
+      document.getElementById('input-memo').value = '';
 
       updatePartSelectOptions(targetPart, targetExercise);
       
@@ -952,12 +953,15 @@
         workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
         workouts.push(recordData);
       } else {
+        // 2. 画面上の入力行から有効なセットのみを確実に収集して保存（削除したセットが残らないように改善）
         const rows = document.querySelectorAll('.set-row');
         const setsData = [];
         rows.forEach(row => {
           const weight = parseFloat(row.querySelector('.set-weight').value) || 0;
           const reps = parseInt(row.querySelector('.set-reps').value) || 0;
-          if (weight > 0 || reps > 0) setsData.push({ weight, reps });
+          if (weight > 0 || reps > 0) {
+            setsData.push({ weight, reps });
+          }
         });
 
         workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
@@ -1421,8 +1425,20 @@
       const oldName = customExercises[part][exIdx];
       const newName = prompt('種目名を修正してください:', oldName);
       if (newName && newName.trim() !== '') {
-        customExercises[part][exIdx] = newName.trim();
+        const trimmedNewName = newName.trim();
+        if (trimmedNewName === oldName) return;
+
+        // 3. 種目名変更時に、過去に登録されたすべてのトレーニングデータの種目名も連動して変更する
+        customExercises[part][exIdx] = trimmedNewName;
         localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+
+        workouts.forEach(w => {
+          if (w.part === part && w.exercise === oldName) {
+            w.exercise = trimmedNewName;
+          }
+        });
+        localStorage.setItem('gym_workouts_v2', JSON.stringify(workouts));
+
         openManageModal();
       }
     }
