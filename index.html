@@ -24,12 +24,13 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-dark);
       color: var(--text-main);
-      padding: max(16px, env(safe-area-inset-top) + 8px) 12px 65px 12px;
+      /* PWA/アプリ起動時の上部マージン・ボヤキ対策としてsafe-area余白を確実に確保 */
+      padding: max(20px, env(safe-area-inset-top) + 12px) 12px 75px 12px;
       max-width: 500px;
       margin: 0 auto;
       overflow-x: hidden;
     }
-    header { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px 12px 4px; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 4px 4px 14px 4px; }
     h1 { font-size: 1.3rem; color: var(--accent-red); font-weight: 700; }
     
     .tab-content { display: none; }
@@ -115,6 +116,9 @@
     .form-group { margin-bottom: 14px; }
     .form-label { font-size: 0.80rem; color: var(--text-sub); margin-bottom: 6px; display: block; }
     .form-input, .form-select { width: 100%; background: #2c2c2e; border: 1px solid var(--border-color); color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; padding: 12px; border-radius: 10px; font-size: 0.95rem; }
+
+    /* 部位と種目名の比率調整：部位は「有酸素運動」の4文字が収まる幅（約110px）、種目名を広く取る */
+    .form-row-selectors { display: grid; grid-template-columns: 110px 1fr; gap: 10px; }
 
     /* セット入力行のグリッド調整 */
     .set-row { display: grid; grid-template-columns: 24px 26px 1fr 26px 1fr 52px 30px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
@@ -233,7 +237,8 @@
   <!-- モーダル類 -->
   <div class="modal" id="record-modal">
     <div class="modal-content">
-      <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <!-- 部位の幅を有酸素運動の4文字分に合わせ、種目名幅を広げたグリッド -->
+      <div class="form-row-selectors">
         <div class="form-group">
           <label class="form-label">部位</label>
           <select id="input-part" class="form-select" onchange="onPartChange()"></select>
@@ -899,10 +904,8 @@
           if (weight > 0 || reps > 0) setsData.push({ weight, reps });
         });
 
-        // 該当日の種目を一旦除外
         workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
 
-        // 有効なセットが存在する場合のみ追加（全削除や未入力なら削除扱いとなる）
         if (setsData.length > 0) {
           let recordData = { id: Date.now(), date, part, exercise, isCardio: false, memo, sets: setsData };
           workouts.push(recordData);
@@ -991,7 +994,6 @@
 
         for (let exName in grouped) {
           const item = grouped[exName];
-          // 選択日より前の過去最高RMを取得
           const histMax = getHistoricalMaxRM(exName, selectedDate);
           
           let dayMaxRM = 0;
@@ -1012,19 +1014,14 @@
 
             let badgeHtml = '';
 
-            // バッジ判定の完全仕様：
-            // 「その日の最高値（maxInDay）」に該当するセット（複数あればすべて）のみを判定対象とする
             if (currentRM > 0 && Math.abs(currentRM - maxInDay) <= 0.05) {
               if (histMax > 0) {
                 if (maxInDay > histMax + 0.05) {
-                  // 過去最高を更新 ➔ 赤バッジ
                   badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
                 } else if (Math.abs(maxInDay - histMax) <= 0.05) {
-                  // 過去最高と同率タイ ➔ ゴールドバッジ
                   badgeHtml = '<span class="max-rm-badge gold">MAX RM</span>';
                 }
               } else {
-                // アプリで初めての種目（過去データなし） ➔ その日のMAXセット（複数可）すべて赤バッジ
                 badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
               }
             }
