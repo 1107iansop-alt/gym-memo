@@ -111,7 +111,6 @@
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: flex-end; z-index: 100; }
     .modal.open { display: flex; }
     
-    /* モーダル全体をフレックスコンテナにし、上部を固定・内部だけスクロールさせる構造 */
     .modal-content { 
       background: var(--card-bg); 
       width: 100%; 
@@ -125,16 +124,16 @@
       overflow: hidden;
     }
 
-    /* 常に上に固定されるヘッダーエリア（部位・種目名） */
+    /* 常に上に固定されるヘッダーエリア（上部パディングを60pxに引き上げて完全な安全圏を確保） */
     .modal-sticky-header {
-      padding: 50px 16px 14px 16px;
+      padding: 60px 16px 14px 16px;
       background: var(--card-bg);
       border-bottom: 1px solid var(--border-color);
       flex-shrink: 0;
       z-index: 2;
     }
 
-    /* 内部のスクロール可能なコンテンツエリア（前回履歴やセット入力） */
+    /* 内部のスクロール可能なコンテンツエリア */
     .modal-scrollable-body {
       padding: 16px;
       overflow-y: auto;
@@ -272,7 +271,7 @@
   <!-- モーダル類 -->
   <div class="modal" id="record-modal">
     <div class="modal-content">
-      <!-- 常に上部に固定される部位・種目名エリア -->
+      <!-- 常に上部に固定される部位・種目名エリア（パディング60pxで完全安全） -->
       <div class="modal-sticky-header">
         <div class="form-row-selectors">
           <div class="form-group">
@@ -286,7 +285,7 @@
         </div>
       </div>
 
-      <!-- スクロール可能なボディエリア（履歴、セット入力、ボタン類） -->
+      <!-- スクロール可能なボディエリア -->
       <div class="modal-scrollable-body">
         <div class="last-record-box" id="last-record-box">
           <div class="last-record-title">
