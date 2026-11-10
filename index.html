@@ -116,7 +116,7 @@
     .form-label { font-size: 0.80rem; color: var(--text-sub); margin-bottom: 6px; display: block; }
     .form-input, .form-select { width: 100%; background: #2c2c2e; border: 1px solid var(--border-color); color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; padding: 12px; border-radius: 10px; font-size: 0.95rem; }
 
-    /* セット入力行のグリッド調整 (番号, コピー重さ, 重さinput, コピー回数, 回数input, 1RM, 削除ボタン) */
+    /* セット入力行のグリッド調整 */
     .set-row { display: grid; grid-template-columns: 24px 26px 1fr 26px 1fr 52px 30px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
     .set-num { font-weight: bold; color: var(--accent-red); text-align: center; font-size: 0.85rem; }
     .set-input { width: 100%; background: #1c1c1e; border: 1px solid var(--border-color); color: white; padding: 8px 2px; border-radius: 8px; font-size: 0.9rem; text-align: center; }
@@ -230,7 +230,7 @@
     </button>
   </nav>
 
-  <!-- モーダル類 (Workout Log用) -->
+  <!-- モーダル類 -->
   <div class="modal" id="record-modal">
     <div class="modal-content">
       <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -412,9 +412,6 @@
       return w * (1 + r / 30);
     }
 
-    /* ----------------------------------------------------------------
-       最高RM タブのレンダリング
-    ------------------------------------------------------------------ */
     function renderMaxRMTab() {
       const displayArea = document.getElementById('max-rm-list-display');
       const strengthWorkouts = workouts.filter(w => !w.isCardio && w.sets && w.sets.length > 0);
@@ -475,10 +472,6 @@
       displayArea.innerHTML = html;
     }
 
-    /* ----------------------------------------------------------------
-       過去最高RM判定ロジック
-       (指定日よりも「前の日」までの最大1RMを取得)
-    ------------------------------------------------------------------ */
     function getHistoricalMaxRM(exerciseName, targetDate) {
       let historicalMax = 0;
       workouts.forEach(w => {
@@ -492,9 +485,6 @@
       return historicalMax;
     }
 
-    /* ----------------------------------------------------------------
-       Workout Log 機能
-    ------------------------------------------------------------------ */
     function openModal(targetPart = null, targetExercise = null, isEdit = false) {
       document.getElementById('input-memo').value = '';
       document.getElementById('cardio-time').value = '';
@@ -903,15 +893,17 @@
       if (!exercise || exercise === '__ADD_NEW__') { alert('種目名を選択してください'); return; }
 
       const isCardio = (part === '有酸素運動');
-      let recordData = { id: Date.now(), date, part, exercise, isCardio, memo };
 
       if (isCardio) {
+        let recordData = { id: Date.now(), date, part, exercise, isCardio, memo };
         recordData.cardio = {
           time: document.getElementById('cardio-time').value,
           speed: document.getElementById('cardio-speed').value,
           distance: document.getElementById('cardio-distance').value,
           cal: document.getElementById('cardio-cal').value
         };
+        workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
+        workouts.push(recordData);
       } else {
         const rows = document.querySelectorAll('.set-row');
         const setsData = [];
@@ -920,12 +912,16 @@
           const reps = parseInt(row.querySelector('.set-reps').value) || 0;
           if (weight > 0 || reps > 0) setsData.push({ weight, reps });
         });
-        if (setsData.length === 0) { alert('セットを入力してください'); return; }
-        recordData.sets = setsData;
-      }
 
-      workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
-      workouts.push(recordData);
+        // 既存のこの種目の記録をまずいったん取り除く（上書きor削除のため）
+        workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
+
+        // 有効なセットが1つでもある場合のみ新しく記録を追加する（全削除/未入力なら登録せずそのまま削除状態にする）
+        if (setsData.length > 0) {
+          let recordData = { id: Date.now(), date, part, exercise, isCardio: false, memo, sets: setsData };
+          workouts.push(recordData);
+        }
+      }
 
       localStorage.setItem('gym_workouts_v2', JSON.stringify(workouts));
       closeModal();
@@ -1029,7 +1025,6 @@
 
             let badgeHtml = '';
             if (runningMax === 0) {
-              // 履歴全くなし：初セットは更新扱い(赤)
               runningMax = currentRM;
               badgeHtml = '<span class="max-rm-badge red">MAX RM</span>';
             } else {
