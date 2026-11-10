@@ -310,26 +310,26 @@
           <button class="add-set-btn" onclick="addSetInput()">＋ セットを追加</button>
         </div>
 
-        <!-- 有酸素運動入力欄：初期値(value)を完全排除し、確実に空文字にする -->
+        <!-- 有酸素運動入力欄：プレースホルダーではなくvalueとして残らないよう、JS側で確実に完全クリアする構造に改善 -->
         <div id="cardio-input-area" style="display: none;">
           <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
               <label class="form-label">運動時間 (分)</label>
-              <input type="number" id="cardio-time" class="form-input" placeholder="30">
+              <input type="number" id="cardio-time" class="form-input">
             </div>
             <div class="form-group">
               <label class="form-label">速度 (km/h)</label>
-              <input type="number" step="0.1" id="cardio-speed" class="form-input" placeholder="10.0">
+              <input type="number" step="0.1" id="cardio-speed" class="form-input">
             </div>
           </div>
           <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
               <label class="form-label">距離 (km)</label>
-              <input type="number" step="0.01" id="cardio-distance" class="form-input" placeholder="5.0">
+              <input type="number" step="0.01" id="cardio-distance" class="form-input">
             </div>
             <div class="form-group">
               <label class="form-label">消費カロリー (kcal)</label>
-              <input type="number" id="cardio-cal" class="form-input" placeholder="300">
+              <input type="number" id="cardio-cal" class="form-input">
             </div>
           </div>
         </div>
@@ -523,7 +523,7 @@
     }
 
     function openModal(targetPart = null, targetExercise = null, isEdit = false) {
-      // 1. 有酸素運動入力欄の値を完全にクリアする
+      // 1. モーダルを開いた瞬間に有酸素入力欄の値を完全に空にクリア
       document.getElementById('cardio-time').value = '';
       document.getElementById('cardio-speed').value = '';
       document.getElementById('cardio-distance').value = '';
@@ -771,6 +771,15 @@
       const isCardio = (part === '有酸素運動');
       document.getElementById('strength-input-area').style.display = isCardio ? 'none' : 'block';
       document.getElementById('cardio-input-area').style.display = isCardio ? 'block' : 'none';
+
+      // 2. 部位変更時に新規作成（非編集時）であれば有酸素運動の入力欄を確実に強制クリア
+      if (!selectedExercise) {
+        document.getElementById('cardio-time').value = '';
+        document.getElementById('cardio-speed').value = '';
+        document.getElementById('cardio-distance').value = '';
+        document.getElementById('cardio-cal').value = '';
+      }
+
       onExerciseChange();
     }
 
@@ -953,7 +962,6 @@
         workouts = workouts.filter(w => !(w.date === date && w.part === part && w.exercise === exercise));
         workouts.push(recordData);
       } else {
-        // 2. 画面上の入力行から有効なセットのみを確実に収集して保存（削除したセットが残らないように改善）
         const rows = document.querySelectorAll('.set-row');
         const setsData = [];
         rows.forEach(row => {
@@ -1412,7 +1420,7 @@
 
     function deletePart(idx) {
       const target = customParts[idx];
-      if (confirm(`部位「${target}」を削除しますか？`)) {
+      if (confirm(`部位「${target}` + `」を削除しますか？`)) {
         customParts.splice(idx, 1);
         delete customExercises[target];
         localStorage.setItem('gym_custom_parts', JSON.stringify(customParts));
@@ -1428,7 +1436,6 @@
         const trimmedNewName = newName.trim();
         if (trimmedNewName === oldName) return;
 
-        // 3. 種目名変更時に、過去に登録されたすべてのトレーニングデータの種目名も連動して変更する
         customExercises[part][exIdx] = trimmedNewName;
         localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
 
