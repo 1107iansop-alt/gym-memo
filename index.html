@@ -309,7 +309,7 @@
           <button class="add-set-btn" onclick="addSetInput()">＋ セットを追加</button>
         </div>
 
-        <!-- 有酸素運動入力欄：確実に空で開き、自由に入力可能 -->
+        <!-- 有酸素運動入力欄 -->
         <div id="cardio-input-area" style="display: none;">
           <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
@@ -965,7 +965,6 @@
         const distance = document.getElementById('cardio-distance').value.trim();
         const cal = document.getElementById('cardio-cal').value.trim();
 
-        // 全ての項目が空の場合は保存せず削除扱いにする
         if (time !== '' || speed !== '' || distance !== '' || cal !== '') {
           let recordData = { id: Date.now(), date, part, exercise, isCardio, memo };
           recordData.cardio = { time, speed, distance, cal };
@@ -1454,11 +1453,11 @@
         const trimmedNewName = newName.trim();
         if (trimmedNewName === oldName) return;
 
-        // 種目リスト側を更新
+        // 1. 管理画面の種目リスト名を更新
         customExercises[part][exIdx] = trimmedNewName;
         localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
 
-        // 過去のワークアウト記録（workouts）の種目名も確実に連動して更新
+        // 2. 過去に登録されたすべてのトレーニング履歴（workouts）の種目名も連動して更新
         workouts.forEach(w => {
           if (w.part === part && w.exercise === oldName) {
             w.exercise = trimmedNewName;
