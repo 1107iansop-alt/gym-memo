@@ -47,8 +47,8 @@
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
-      /* ステータスバーと重ならず、かつ高すぎない適切な位置に調整 */
-      padding: calc(env(safe-area-inset-top, 20px) + 12px) 16px 12px 16px;
+      /* 上部パディングをさらに大きく（safe-area + 24px）広げて位置を十分に下げる */
+      padding: calc(env(safe-area-inset-top, 20px) + 24px) 16px 12px 16px;
       background-color: var(--bg-dark);
       border-bottom: 1px solid var(--border-color);
       flex-shrink: 0;
@@ -168,7 +168,7 @@
     }
 
     .modal-sticky-header {
-      padding: calc(env(safe-area-inset-top, 20px) + 12px) 16px 14px 16px;
+      padding: calc(env(safe-area-inset-top, 20px) + 24px) 16px 14px 16px;
       background: var(--card-bg);
       border-bottom: 1px solid var(--border-color);
       flex-shrink: 0;
@@ -189,7 +189,7 @@
       max-height: 90vh;
       overflow-y: auto;
       border-radius: 20px 20px 0 0;
-      padding: calc(env(safe-area-inset-top, 20px) + 12px) 16px calc(40px + env(safe-area-inset-bottom, 0px)) 16px;
+      padding: calc(env(safe-area-inset-top, 20px) + 24px) 16px calc(40px + env(safe-area-inset-bottom, 0px)) 16px;
       border-top: 1px solid var(--border-color);
       -webkit-overflow-scrolling: touch;
     }
