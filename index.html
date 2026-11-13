@@ -24,7 +24,7 @@
       margin: 0; 
       padding: 0; 
       -webkit-tap-highlight-color: transparent; 
-      -webkit-font-smoothing: subpixel-antialiased;
+      -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
     
@@ -47,19 +47,14 @@
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
-      padding: env(safe-area-inset-top, 16px) 16px 12px 16px;
+      /* ステータスバーと絶対に重ならないよう、セーフエリア＋十分な余白を確実に確保 */
+      padding: calc(env(safe-area-inset-top, 20px) + 24px) 16px 12px 16px;
       background-color: var(--bg-dark);
       border-bottom: 1px solid var(--border-color);
       flex-shrink: 0;
       z-index: 10;
-      transform: translateZ(0);
     }
-    h1 { 
-      font-size: 1.3rem; 
-      color: var(--accent-red); 
-      font-weight: 700; 
-      transform: translateZ(0);
-    }
+    h1 { font-size: 1.3rem; color: var(--accent-red); font-weight: 700; }
     
     /* タブコンテンツエリアをスクロール可能にし、フッターに隠れないよう下部に余白を確保 */
     .tab-content { 
@@ -173,7 +168,7 @@
     }
 
     .modal-sticky-header {
-      padding: env(safe-area-inset-top, 16px) 16px 14px 16px;
+      padding: calc(env(safe-area-inset-top, 20px) + 24px) 16px 14px 16px;
       background: var(--card-bg);
       border-bottom: 1px solid var(--border-color);
       flex-shrink: 0;
@@ -194,7 +189,7 @@
       max-height: 90vh;
       overflow-y: auto;
       border-radius: 20px 20px 0 0;
-      padding: env(safe-area-inset-top, 16px) 16px calc(40px + env(safe-area-inset-bottom, 0px)) 16px;
+      padding: calc(env(safe-area-inset-top, 20px) + 24px) 16px calc(40px + env(safe-area-inset-bottom, 0px)) 16px;
       border-top: 1px solid var(--border-color);
       -webkit-overflow-scrolling: touch;
     }
