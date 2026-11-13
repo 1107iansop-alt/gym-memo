@@ -28,7 +28,7 @@
       -moz-osx-font-smoothing: grayscale;
     }
     
-    /* アプリ全体を画面の高さに固定し、Flexboxの3段構造（ヘッダー・スクロール中身・フッター）にする */
+    /* アプリ全体の高さを固定し、Flexboxの3段構造（ヘッダー・スクロール中身・フッター）にする */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-dark);
@@ -117,19 +117,25 @@
     .max-rm-card { padding: 10px 4px; border-bottom: 1px solid var(--border-color); }
     .max-rm-card:last-child { border-bottom: none; }
     .max-rm-title { font-size: 0.95rem; font-weight: bold; color: var(--text-main); margin-bottom: 6px; word-break: break-all; }
-    .max-rm-subrow { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; }
+    
+    /* MAX RMのサブ行をCSS Grid化し、3桁+小数点（100.5kg以上や極端な数値でも）カッコの位置が完璧に揃うように修正 */
+    .max-rm-subrow { 
+      display: grid; 
+      grid-template-columns: 95px 95px 1fr; 
+      align-items: center; 
+      font-size: 0.82rem; 
+    }
     .max-rm-date { color: var(--text-sub); }
-    .max-rm-divider { color: var(--border-color); }
-    .max-rm-val { font-weight: 800; color: var(--accent-red); }
-    .max-rm-actual { color: var(--text-sub); font-size: 0.78rem; }
+    .max-rm-val { font-weight: 800; color: var(--accent-red); text-align: right; padding-right: 12px; }
+    .max-rm-actual { color: var(--text-sub); font-size: 0.78rem; text-align: left; }
 
-    /* フッターナビ (アプリ最下部に完全に固定され、絶対に位置がブレない構造) */
+    /* フッターナビ (アプリ最下部に完全に固定) */
     .footer-nav {
       position: absolute; 
       bottom: 0; 
       left: 0; 
       right: 0;
-      width: 100%; 
+      width: 100vw; 
       background: #1c1c1e; 
       border-top: 1px solid var(--border-color);
       display: grid; 
@@ -532,11 +538,9 @@
           <div class="max-rm-card">
             <div class="max-rm-title">${exName}</div>
             <div class="max-rm-subrow">
-              <span class="max-rm-date">${item.date}</span>
-              <span class="max-rm-divider">｜</span>
-              <span class="max-rm-val">${rmFormatted} kg</span>
-              <span class="max-rm-divider">｜</span>
-              <span class="max-rm-actual">(${wFormatted}kg × ${item.reps})</span>
+              <div class="max-rm-date">${item.date}</div>
+              <div class="max-rm-val">${rmFormatted} kg</div>
+              <div class="max-rm-actual">(${wFormatted}kg × ${item.reps})</div>
             </div>
           </div>
         `;
