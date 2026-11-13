@@ -47,7 +47,7 @@
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
-      padding: max(12px, env(safe-area-inset-top) + 8px) 16px 12px 16px;
+      padding: max(60px, env(safe-area-inset-top) + 16px) 16px 12px 16px;
       background-color: var(--bg-dark);
       border-bottom: 1px solid var(--border-color);
       flex-shrink: 0;
@@ -118,10 +118,10 @@
     .max-rm-card:last-child { border-bottom: none; }
     .max-rm-title { font-size: 0.95rem; font-weight: bold; color: var(--text-main); margin-bottom: 6px; word-break: break-all; }
     
-    /* MAX RMのサブ行をCSS Grid化し、3桁+小数点（100.5kg以上や極端な数値でも）カッコの位置が完璧に揃うように修正 */
+    /* MAX RMのサブ行をCSS Grid化し、3桁+小数点（10000.5kg等でも）カッコの位置が完璧に揃うように設定 */
     .max-rm-subrow { 
       display: grid; 
-      grid-template-columns: 95px 95px 1fr; 
+      grid-template-columns: 90px 115px 1fr; 
       align-items: center; 
       font-size: 0.82rem; 
     }
