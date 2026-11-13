@@ -6,8 +6,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Workout-Log</title>
-  <!-- 画像ダウンロード・シェア用ライブラリ -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
       --bg-dark: #121214;
@@ -100,10 +98,20 @@
     .max-rm-val { font-weight: 800; color: var(--accent-red); }
     .max-rm-actual { color: var(--text-sub); font-size: 0.78rem; }
 
-    /* フッターナビ (完全固定) */
+    /* フッターナビ (完全固定の修正) */
     .footer-nav {
-      position: fixed; bottom: 0; left: 0; width: 100%; background: #1c1c1e; border-top: 1px solid var(--border-color);
-      display: grid; grid-template-columns: repeat(3, 1fr); padding: 5px 0 0 0; height: 50px; z-index: 1000;
+      position: fixed; 
+      bottom: 0; 
+      left: 0; 
+      right: 0;
+      width: 100%; 
+      background: #1c1c1e; 
+      border-top: 1px solid var(--border-color);
+      display: grid; 
+      grid-template-columns: repeat(3, 1fr); 
+      padding: 5px 0 0 0; 
+      height: 50px; 
+      z-index: 9999;
       padding-bottom: env(safe-area-inset-bottom, 0px);
     }
     .nav-item { background: none; border: none; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; gap: 2px; cursor: pointer; }
@@ -156,7 +164,6 @@
     .last-record-box { background: #2c2c2e; border-radius: 12px; padding: 12px; margin-bottom: 20px; font-size: 0.85rem; }
     .last-record-title { color: var(--text-sub); font-weight: bold; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
 
-    /* 前回履歴コピーを赤ボタン化 */
     .copy-last-btn { background: var(--accent-red); color: white; border: none; border-radius: 6px; padding: 5px 12px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
 
     .form-group { margin-bottom: 14px; }
@@ -191,7 +198,6 @@
 <body>
   <header>
     <h1>Workout-Log</h1>
-    <button class="manage-btn" onclick="openExportModal()" style="background:#2c2c2e; color:var(--text-main);">画像出力</button>
   </header>
 
   <!-- ホームタブ -->
@@ -259,7 +265,6 @@
   <!-- MAX RMタブ -->
   <div id="tab-maxrm" class="tab-content">
     <div class="max-rm-container">
-      <!-- 種目別 MAX RM の横に (Epley式) を追加 -->
       <div class="max-rm-header">種目別 MAX RM (Epley式)</div>
       <div id="max-rm-list-display"></div>
     </div>
@@ -291,7 +296,6 @@
             <select id="input-part" class="form-select" onchange="onPartChange()"></select>
           </div>
           <div class="form-group">
-            <!-- ラベルを「種目名」からシンプルに「種目」へ変更 -->
             <label class="form-label">種目</label>
             <select id="input-exercise-select" class="form-select" onchange="onExerciseChange()"></select>
           </div>
@@ -400,7 +404,7 @@
     </div>
   </div>
 
-  <!-- 部位・種目管理モーダル (種目リスト側にも部位の追加と同様の「＋種目を追加」ボタンを設置、部位選択ロジック完備) -->
+  <!-- 部位・種目管理モーダル -->
   <div class="modal" id="manage-modal">
     <div class="modal-content-scrollable">
       <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;">種目・部位の管理</div>
@@ -727,10 +731,6 @@
           }
         });
       });
-    }
-
-    function openExportModal() {
-      alert('画像出力機能です');
     }
 
     function updatePartSelectOptions(selectedPart = null, selectedExercise = null) {
@@ -1107,7 +1107,6 @@
               return rm;
             });
 
-            // 記録カード右上の「RM : ○○.kg」の表示を削除するため、ここでの表示を排除しています
             const maxInDay = setRms.length > 0 ? Math.max(...setRms) : 0;
 
             let setsHtml = item.sets.map((s, idx) => {
@@ -1337,7 +1336,6 @@
         </div>`;
       });
 
-      // 種目リスト側にも部位の追加ボタンとグリッド位置を合わせた「＋種目を追加」ボタンを新設
       html += `<div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0 15px 0;">
         <div style="font-weight:bold; color:var(--accent-red);">【種目リスト】</div>
         <button class="manage-btn" style="background:var(--accent-red); color:white;" onclick="addNewExerciseFromManage()">＋ 種目を追加</button>
@@ -1389,7 +1387,6 @@
       }
     }
 
-    // 種目リスト側からの追加ボタン用関数（部位選択ロジック付き）
     function addNewExerciseFromManage() {
       const newEx = prompt('追加する種目名を入力してください:');
       if (!newEx || newEx.trim() === '') return;
