@@ -698,14 +698,13 @@
       document.getElementById('sum-days').textContent = `${activeDaysSet.size} days`;
       document.getElementById('sum-ton').textContent = `${totalTonnage.toFixed(2)} t`;
       document.getElementById('sum-sets').textContent = `${totalSetsCount} sets`;
-      document.getElementById('sum-reps').textContent = `${totalRepsCount} reps`;
+      document.getElementById('sum-res').textContent = `${totalRepsCount} reps`;
 
       const partsListEl = document.getElementById('summary-parts-list');
       const partsKeys = Object.keys(partStats);
       if (partsKeys.length === 0) {
         partsListEl.innerHTML = '集計データはありません';
       } else {
-        // 1. 部位の並び順を管理画面で設定した順番（customParts）通りに統一する
         partsKeys.sort((a, b) => {
           const idxA = customParts.indexOf(a);
           const idxB = customParts.indexOf(b);
@@ -718,16 +717,20 @@
         let pHtml = '';
         partsKeys.forEach(p => {
           const st = partStats[p];
-          // 2. 有酸素運動の場合は「時間（分）」を、それ以外は「負荷（t）」を表示
           const isCardioPart = (p === '有酸素運動');
-          const rightValText = isCardioPart ? `時間: ${st.time}分` : `負荷: ${st.tonnage.toFixed(2)}t`;
+          const label = isCardioPart ? '時間：' : '負荷：';
+          const valText = isCardioPart ? `${st.time} 分` : `${st.tonnage.toFixed(2)} t`;
 
-          // 3. CSSグリッドを使い、部位名・セット数・負荷(or時間)の縦列を綺麗に整列
-          pHtml += `<div style="display:grid; grid-template-columns: 1fr 95px 115px; align-items:center; margin-bottom:6px; border-bottom:1px solid #2c2c2e; padding-bottom:4px;">
-            <span style="color:var(--text-main); font-weight:600;">${p}</span>
-            <span style="text-align:right;">セット: ${st.sets}</span>
-            <span style="text-align:right;">${rightValText}</span>
-          </div>`;
+          // ご要望通り：セット：のセで揃え、数字は左揃えで1桁目を揃え、負荷：/時間：で揃え、tと分は右詰め
+          pHtml += `
+            <div style="display: grid; grid-template-columns: 90px 52px 28px 64px 1fr; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #2c2c2e; padding-bottom: 4px; font-size: 0.85rem;">
+              <div style="color:var(--text-main); font-weight:600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p}</div>
+              <div style="text-align: left;">セット：</div>
+              <div style="text-align: left; font-variant-numeric: tabular-nums;">${st.sets}</div>
+              <div style="text-align: left; padding-left: 6px;">${label}</div>
+              <div style="text-align: right; font-variant-numeric: tabular-nums;">${valText}</div>
+            </div>
+          `;
         });
         partsListEl.innerHTML = pHtml;
       }
@@ -1046,7 +1049,6 @@
 
       const isCardio = (part === '有酸素運動');
 
-      // 4. 編集保存時に一番下に回らず元の並び位置を保持するため、既存のインデックス位置を特定
       const existingIndex = workouts.findIndex(w => w.date === date && w.part === part && w.exercise === exercise);
 
       let newRecordData = null;
@@ -1077,20 +1079,17 @@
       }
 
       if (existingIndex !== -1) {
-        // 既に登録済みの場合は元の位置（インデックス）を保って上書き、内容が空なら削除
         if (newRecordData) {
           workouts[existingIndex] = newRecordData;
         } else {
           workouts.splice(existingIndex, 1);
         }
-        // 万が一重複があった場合のために以降の同一種目レコードがあれば掃除
         for (let i = workouts.length - 1; i > existingIndex; i--) {
           if (workouts[i].date === date && workouts[i].part === part && workouts[i].exercise === exercise) {
             workouts.splice(i, 1);
           }
         }
       } else {
-        // 新規登録の場合のみ末尾に追加
         if (newRecordData) {
           workouts.push(newRecordData);
         }
