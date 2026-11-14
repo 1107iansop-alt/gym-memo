@@ -50,7 +50,6 @@
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
-      /* アプリモードでブラウザ版と同じように文字位置をしっかり下げるため上部パディングを十分に確保 */
       padding: calc(env(safe-area-inset-top, 0px) + 32px) 16px 12px 16px;
       background-color: var(--bg-dark);
       border-bottom: 1px solid var(--border-color);
@@ -103,7 +102,6 @@
     .workout-day-view { background: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--border-color); }
     .workout-day-title { font-size: 1.05rem; font-weight: bold; color: var(--accent-red); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
     
-    /* 縦長感をなくすため、個別カードの背景や余白をスッキリコンパクトに変更 */
     .history-card { background-color: transparent; padding: 8px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; }
     .history-card:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
     .history-card:hover { opacity: 0.85; }
@@ -698,7 +696,7 @@
       document.getElementById('sum-days').textContent = `${activeDaysSet.size} days`;
       document.getElementById('sum-ton').textContent = `${totalTonnage.toFixed(2)} t`;
       document.getElementById('sum-sets').textContent = `${totalSetsCount} sets`;
-      document.getElementById('sum-res').textContent = `${totalRepsCount} reps`;
+      document.getElementById('sum-reps').textContent = `${totalRepsCount} reps`;
 
       const partsListEl = document.getElementById('summary-parts-list');
       const partsKeys = Object.keys(partStats);
@@ -719,15 +717,15 @@
           const st = partStats[p];
           const isCardioPart = (p === '有酸素運動');
           const label = isCardioPart ? '時間：' : '負荷：';
-          const valText = isCardioPart ? `${st.time} 分` : `${st.tonnage.toFixed(2)} t`;
+          const valText = isCardioPart ? `${st.time}分` : `${st.tonnage.toFixed(2)}t`;
 
-          // ご要望通り：セット：のセで揃え、数字は左揃えで1桁目を揃え、負荷：/時間：で揃え、tと分は右詰め
+          // ご要望通りのグリッドレイアウト（「セット：」の「セ」位置合わせ、数値左揃え、ラベル位置合わせ、単位右詰め）
           pHtml += `
-            <div style="display: grid; grid-template-columns: 90px 52px 28px 64px 1fr; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #2c2c2e; padding-bottom: 4px; font-size: 0.85rem;">
+            <div style="display: grid; grid-template-columns: 88px 52px 26px 56px 1fr; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #2c2c2e; padding-bottom: 4px; font-size: 0.85rem;">
               <div style="color:var(--text-main); font-weight:600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p}</div>
               <div style="text-align: left;">セット：</div>
               <div style="text-align: left; font-variant-numeric: tabular-nums;">${st.sets}</div>
-              <div style="text-align: left; padding-left: 6px;">${label}</div>
+              <div style="text-align: left; padding-left: 4px;">${label}</div>
               <div style="text-align: right; font-variant-numeric: tabular-nums;">${valText}</div>
             </div>
           `;
