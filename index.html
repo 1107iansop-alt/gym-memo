@@ -743,7 +743,13 @@
         alert('当日サマリ（表示中の記録）がありません。');
         return;
       }
-      html2canvas(target, { backgroundColor: '#1c1c1e', scale: 2 }).then(canvas => {
+      // 要素の実際の高さを自動で取得して指定することで、メニュー量に応じて縦長に完全収まるようにする
+      html2canvas(target, { 
+        backgroundColor: '#1c1c1e', 
+        scale: 2,
+        height: target.scrollHeight,
+        windowHeight: target.scrollHeight
+      }).then(canvas => {
         canvas.toBlob(blob => {
           const file = new File([blob], `Workout-Log_${selectedDate}.png`, { type: 'image/png' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -764,7 +770,12 @@
 
     function shareSummaryMonthImage() {
       const target = document.getElementById('summary-capture-target');
-      html2canvas(target, { backgroundColor: '#1c1c1e', scale: 2 }).then(canvas => {
+      html2canvas(target, { 
+        backgroundColor: '#1c1c1e', 
+        scale: 2,
+        height: target.scrollHeight,
+        windowHeight: target.scrollHeight
+      }).then(canvas => {
         canvas.toBlob(blob => {
           const file = new File([blob], `Workout-Log_月間サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`, { type: 'image/png' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
