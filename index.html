@@ -101,22 +101,24 @@
     .empty-state { background-color: var(--card-bg); border-radius: 12px; padding: 30px 20px; text-align: center; color: var(--text-sub); font-size: 0.9rem; margin-bottom: 16px; }
 
     .workout-day-view { background: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--border-color); }
-    .workout-day-title { font-size: 1.05rem; font-weight: bold; color: var(--accent-red); margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+    .workout-day-title { font-size: 1.05rem; font-weight: bold; color: var(--accent-red); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
     
-    .history-card { background-color: #252528; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; border: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; }
-    .history-card:hover { background-color: #2f2f33; }
+    /* 縦長感をなくすため、個別カードの背景や余白をスッキリコンパクトに変更 */
+    .history-card { background-color: transparent; padding: 8px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; }
+    .history-card:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .history-card:hover { opacity: 0.85; }
     
-    .history-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .history-ex-title { font-weight: 700; font-size: 1rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+    .history-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .history-ex-title { font-weight: 700; font-size: 0.95rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
     
-    .history-set-row { display: grid; grid-template-columns: 24px 75px 10px 65px 1fr; align-items: center; font-size: 0.8rem; color: var(--text-main); margin-top: 4px; white-space: nowrap; }
+    .history-set-row { display: grid; grid-template-columns: 24px 75px 10px 65px 1fr; align-items: center; font-size: 0.78rem; color: var(--text-main); margin-top: 3px; white-space: nowrap; }
     .set-num-col { text-align: right; padding-right: 4px; color: var(--text-main); }
     .set-weight-col { text-align: right; }
     .set-x-col { text-align: center; color: var(--text-sub); }
     .set-reps-col { text-align: right; padding-right: 4px; }
-    .set-rm-col { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--text-sub); overflow: hidden; }
+    .set-rm-col { display: flex; align-items: center; gap: 6px; font-size: 0.68rem; color: var(--text-sub); overflow: hidden; }
 
-    .max-rm-badge { font-size: 0.55rem; font-weight: bold; padding: 1px 4px; border-radius: 3px; flex-shrink: 0; display: inline-block; }
+    .max-rm-badge { font-size: 0.52rem; font-weight: bold; padding: 1px 4px; border-radius: 3px; flex-shrink: 0; display: inline-block; }
     .max-rm-badge.red { background-color: var(--accent-red); color: #ffffff; }
     .max-rm-badge.gold { background-color: var(--accent-gold); color: #000000; }
 
@@ -1140,7 +1142,7 @@
                 <div class="history-header-row">
                   <div class="history-ex-title">${exName}</div>
                 </div>
-                <div style="font-size:0.85rem; color:var(--text-main); margin-top:4px; line-height: 1.5;">
+                <div style="font-size:0.8rem; color:var(--text-main); margin-top:3px; line-height: 1.4;">
                   <div>時間：${timeStr} / 速度：${speedStr}</div>
                   <div>距離：${distStr} / カロリー：${calStr}</div>
                 </div>
@@ -1299,7 +1301,7 @@
                 <div class="history-header-row">
                   <div class="history-ex-title">${w.exercise}</div>
                 </div>
-                <div style="font-size:0.85rem; color:var(--text-main); margin-top:4px; line-height: 1.5;">
+                <div style="font-size:0.8rem; color:var(--text-main); margin-top:3px; line-height: 1.4;">
                   <div>時間：${timeStr} / 速度：${speedStr}</div>
                   <div>距離：${distStr} / カロリー：${calStr}</div>
                 </div>
