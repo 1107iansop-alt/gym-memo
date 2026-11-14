@@ -361,7 +361,7 @@
           <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
               <label class="form-label">運動時間 (分)</label>
-              <input type="number" id="cardio-time" class="form-input">
+              <input type="number" id="cardio-time" class="form-input" oninput="calculateCardioSpeed()">
             </div>
             <div class="form-group">
               <label class="form-label">速度 (km/h)</label>
@@ -371,7 +371,7 @@
           <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
               <label class="form-label">距離 (km)</label>
-              <input type="number" step="0.01" id="cardio-distance" class="form-input">
+              <input type="number" step="0.01" inputmode="decimal" id="cardio-distance" class="form-input" oninput="calculateCardioSpeed()">
             </div>
             <div class="form-group">
               <label class="form-label">消費カロリー (kcal)</label>
@@ -471,6 +471,19 @@
     let summaryViewMonth = new Date().getMonth();
 
     let currentHistoryPart = 'ALL';
+
+    function calculateCardioSpeed() {
+      const timeVal = parseFloat(document.getElementById('cardio-time').value);
+      const distVal = parseFloat(document.getElementById('cardio-distance').value);
+      const speedInput = document.getElementById('cardio-speed');
+
+      if (!isNaN(timeVal) && timeVal > 0 && !isNaN(distVal) && distVal > 0) {
+        const speed = distVal / (timeVal / 60);
+        speedInput.value = (Math.round(speed * 10) / 10).toFixed(1);
+      } else {
+        speedInput.value = '';
+      }
+    }
 
     function getAllParts() {
       return [...new Set(customParts)];
