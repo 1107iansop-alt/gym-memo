@@ -210,13 +210,16 @@
 
     .form-row-selectors { display: grid; grid-template-columns: 125px 1fr; gap: 10px; margin-bottom: 0; }
 
-    /* セット行 (自重チェック削除に伴いシンプル化) */
+    /* セット行 (通常種目用) */
     .set-row { display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
+    /* セット行 (自重種目用: 重さ、加重、回数が並ぶため微調整) */
+    .set-row.bw-row { display: grid; grid-template-columns: 32px 22px 64px 22px 54px 22px 48px 44px 26px; gap: 3px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
+    
     .set-num { font-weight: bold; color: var(--accent-red); text-align: center; font-size: 0.85rem; white-space: nowrap; }
-    .set-input { width: 100%; background: #1c1c1e; border: 1px solid var(--border-color); color: white; padding: 8px 2px; border-radius: 8px; font-size: 0.9rem; text-align: center; }
+    .set-input { width: 100%; background: #1c1c1e; border: 1px solid var(--border-color); color: white; padding: 8px 2px; border-radius: 8px; font-size: 0.85rem; text-align: center; }
     .set-rm { font-size: 0.65rem; color: var(--text-sub); text-align: center; white-space: nowrap; overflow: hidden; }
 
-    .copy-prev-btn { background: #2c2c2e; border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px; height: 32px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; }
+    .copy-prev-btn { background: #2c2c2e; border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px; height: 32px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; }
     .copy-prev-btn:active { background: #3a3a3c; }
 
     .delete-set-btn { background: none; border: 1px solid #ff453a; color: #ff453a; border-radius: 6px; height: 32px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; }
@@ -254,9 +257,9 @@
     .graph-slide-card { flex: 0 0 100%; width: 100%; scroll-snap-align: center; background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; }
     .graph-slide-title { font-size: 0.85rem; font-weight: bold; color: var(--text-main); margin-bottom: 8px; text-align: center; }
 
-    /* 期間絞り込みボタン群 (グラフの下部) */
-    .period-filter-container { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
-    .period-btn { background: #2c2c2e; color: var(--text-sub); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
+    /* 期間絞り込みボタン群 (グラフの下部) - 4つ均等配置・大きさ統一 */
+    .period-filter-container { display: flex; gap: 8px; width: 100%; margin-top: 10px; }
+    .period-btn { flex: 1; background: #2c2c2e; color: var(--text-sub); border: 1px solid var(--border-color); padding: 6px 0; border-radius: 8px; font-size: 0.75rem; font-weight: 600; text-align: center; cursor: pointer; white-space: nowrap; }
     .period-btn.active { background: var(--accent-red); color: white; border-color: var(--accent-red); }
   </style>
 </head>
@@ -435,7 +438,7 @@
         </div>
 
         <div id="strength-input-area">
-          <div style="display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; font-size: 0.65rem; color: var(--text-sub); text-align: center; margin-bottom: 6px;">
+          <div id="set-header-labels" style="display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; font-size: 0.65rem; color: var(--text-sub); text-align: center; margin-bottom: 6px;">
             <div>セット</div><div></div><div>重さ(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>
           </div>
           <div id="set-inputs-container"></div>
@@ -661,34 +664,32 @@
       }
     }
 
-    // 負荷量計算 (種目の自重設定を自動判別)
-    function calculateSetTonnage(s, exerciseName) {
-      const reps = s.reps || 0;
-      if (reps <= 0) return 0;
+    // 該当種目が自重設定されているか判定
+    function isBwExercise(exerciseName) {
+      const setting = exerciseSettings[exerciseName];
+      return setting && setting.isBw;
+    }
 
+    // セットの実効重量計算 (自重設定ありなら (体重×係数) + 加重、通常なら weight)
+    function calcEffectiveWeightForSet(s, exerciseName) {
       const setting = exerciseSettings[exerciseName];
       if (setting && setting.isBw) {
-        const latestW = getLatestWeight();
-        if (latestW === null) return 0;
-        const coeff = parseFloat(setting.coeff) || 0.7;
-        const addWeight = s.weight || 0;
-        return ((latestW * coeff) + addWeight) * reps / 1000;
+        const latestW = getLatestWeight() || 0;
+        const coeff = parseFloat(setting.coeff) || 0;
+        const baseW = latestW * coeff;
+        const addW = parseFloat(s.addWeight) !== undefined && s.addWeight !== '' ? parseFloat(s.addWeight) : 0;
+        return baseW + addW;
       } else {
-        const w = s.weight || 0;
-        return (w * reps) / 1000;
+        return parseFloat(s.weight) || 0;
       }
     }
 
-    // 1RM計算の実効重量 (種目の自重設定を自動判別)
-    function calcEffectiveWeight(s, exerciseName) {
-      const setting = exerciseSettings[exerciseName];
-      if (setting && setting.isBw) {
-        const latestW = getLatestWeight();
-        const coeff = parseFloat(setting.coeff) || 0.7;
-        return latestW !== null ? (latestW * coeff) + (s.weight || 0) : (s.weight || 0);
-      } else {
-        return s.weight || 0;
-      }
+    // 負荷量計算
+    function calculateSetTonnage(s, exerciseName) {
+      const reps = s.reps || 0;
+      if (reps <= 0) return 0;
+      const effW = calcEffectiveWeightForSet(s, exerciseName);
+      return (effW * reps) / 1000;
     }
 
     function calcRM(w, r) {
@@ -710,7 +711,7 @@
       strengthWorkouts.forEach(w => {
         const exName = w.exercise;
         w.sets.forEach(s => {
-          const effW = calcEffectiveWeight(s, exName);
+          const effW = calcEffectiveWeightForSet(s, exName);
           if (effW > 0 && s.reps > 0) {
             const rmVal = calcRM(effW, s.reps);
             if (!maxMap[exName] || rmVal > maxMap[exName].maxRm) {
@@ -760,7 +761,7 @@
       workouts.forEach(w => {
         if (w.exercise === exerciseName && !w.isCardio && w.sets && w.date < targetDate) {
           w.sets.forEach(s => {
-            const effW = calcEffectiveWeight(s, exerciseName);
+            const effW = calcEffectiveWeightForSet(s, exerciseName);
             const rm = calcRM(effW, s.reps);
             if (rm > historicalMax) historicalMax = rm;
           });
@@ -863,19 +864,30 @@
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 高解像度（Retina対応）スケーリング
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const logicalWidth = rect.width > 0 ? rect.width : 400;
+      const logicalHeight = 180;
+
+      canvas.width = logicalWidth * dpr;
+      canvas.height = logicalHeight * dpr;
+      ctx.scale(dpr, dpr);
+
+      ctx.clearRect(0, 0, logicalWidth, logicalHeight);
 
       if (data.length === 0 || data.every(v => v === 0)) {
         ctx.fillStyle = '#8e8e93';
         ctx.font = '12px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('データがありません', canvas.width / 2, canvas.height / 2);
+        ctx.fillText('データがありません', logicalWidth / 2, logicalHeight / 2);
         return;
       }
 
       const padding = 30;
-      const w = canvas.width - padding * 2;
-      const h = canvas.height - padding * 2;
+      const w = logicalWidth - padding * 2;
+      const h = logicalHeight - padding * 2;
 
       const minVal = Math.min(...data);
       const maxVal = Math.max(...data);
@@ -883,7 +895,7 @@
 
       const points = data.map((val, idx) => {
         const x = padding + (w / (data.length === 1 ? 1 : data.length - 1)) * idx;
-        const y = canvas.height - padding - ((val - minVal) / range) * h;
+        const y = logicalHeight - padding - ((val - minVal) / range) * h;
         return { x, y, val };
       });
 
@@ -892,8 +904,8 @@
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(padding, padding);
-      ctx.lineTo(padding, canvas.height - padding);
-      ctx.lineTo(canvas.width - padding, canvas.height - padding);
+      ctx.lineTo(padding, logicalHeight - padding);
+      ctx.lineTo(logicalWidth - padding, logicalHeight - padding);
       ctx.stroke();
 
       // 折れ線
@@ -1019,7 +1031,7 @@
             const container = document.getElementById('set-inputs-container');
             container.innerHTML = '';
             existing.sets.forEach((s) => {
-              appendSetRow(s.weight, s.reps);
+              appendSetRow(s.weight, s.reps, s.addWeight);
             });
             reindexSetRows();
           }
@@ -1314,7 +1326,76 @@
       }
 
       const exerciseName = select.value;
+      
+      updateSetHeaderAndRows(exerciseName);
       loadLastRecord(part, exerciseName);
+    }
+
+    function updateSetHeaderAndRows(exerciseName) {
+      const headerEl = document.getElementById('set-header-labels');
+      const isBw = isBwExercise(exerciseName);
+
+      if (isBw) {
+        headerEl.innerHTML = `<div>セット</div><div></div><div>体重×係数</div><div></div><div>加重(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>`;
+      } else {
+        headerEl.innerHTML = `<div>セット</div><div></div><div>重さ(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>`;
+      }
+
+      const container = document.getElementById('set-inputs-container');
+      const rows = container.querySelectorAll('.set-row, .bw-row');
+      
+      if (rows.length === 0) {
+        initSetInputs();
+      } else {
+        rows.forEach(row => {
+          const wInput = row.querySelector('.set-weight');
+          const addInput = row.querySelector('.set-add-weight');
+          const rInput = row.querySelector('.set-reps');
+          const wVal = wInput ? wInput.value : '';
+          const rVal = rInput ? rInput.value : '';
+          const addVal = addInput ? addInput.value : '';
+
+          const setNum = row.querySelector('.set-num').textContent;
+          const newDiv = document.createElement('div');
+
+          if (isBw) {
+            newDiv.className = 'set-row bw-row';
+            let autoW = '';
+            if (wVal !== '') {
+              autoW = wVal;
+            } else {
+              const latestW = getLatestWeight() || 0;
+              const coeff = exerciseSettings[exerciseName] ? exerciseSettings[exerciseName].coeff : 0;
+              autoW = (latestW * coeff).toFixed(1);
+            }
+            newDiv.innerHTML = `
+              <div class="set-num">${setNum}</div>
+              <div class="copy-weight-cell"></div>
+              <input type="number" step="0.1" class="set-input set-weight" value="${autoW}" readonly style="background:#18181a; color:var(--text-sub);">
+              <div class="copy-add-cell"></div>
+              <input type="number" step="0.5" class="set-input set-add-weight" value="${addVal}" placeholder="0" oninput="updateRMRow(this)">
+              <div class="copy-reps-cell"></div>
+              <input type="number" class="set-input set-reps" value="${rVal}" placeholder="回" oninput="updateRMRow(this)">
+              <div class="set-rm">-</div>
+              <button type="button" class="delete-set-btn" onclick="removeSetRow(this)">✕</button>
+            `;
+          } else {
+            newDiv.className = 'set-row';
+            newDiv.innerHTML = `
+              <div class="set-num">${setNum}</div>
+              <div class="copy-weight-cell"></div>
+              <input type="number" step="0.5" class="set-input set-weight" value="${wVal}" placeholder="kg" oninput="updateRMRow(this)">
+              <div class="copy-reps-cell"></div>
+              <input type="number" class="set-input set-reps" value="${rVal}" placeholder="回" oninput="updateRMRow(this)">
+              <div class="set-rm">-</div>
+              <button type="button" class="delete-set-btn" onclick="removeSetRow(this)">✕</button>
+            `;
+          }
+          row.replaceWith(newDiv);
+        });
+        reindexSetRows();
+        container.querySelectorAll('.set-weight, .set-add-weight, .set-reps').forEach(inp => updateRMRow(inp));
+      }
     }
 
     function loadLastRecord(part, exercise) {
@@ -1339,11 +1420,17 @@
       if (last.isCardio) {
         boxContent.innerHTML = `時間：${last.cardio.time || '-'}分 / 距離：${last.cardio.distance || '-'}km`;
       } else if (last.sets) {
+        const isBw = isBwExercise(exercise);
         boxContent.innerHTML = last.sets.map((s, idx) => {
-          const wStr = Number(s.weight).toFixed(1);
-          const effW = calcEffectiveWeight(s, exercise);
+          const effW = calcEffectiveWeightForSet(s, exercise);
           const rm = calcRM(effW, s.reps).toFixed(1);
-          return `<div style="margin-top:2px; font-weight:500;">Set ${idx + 1}: ${wStr} kg × ${s.reps} reps (1RM:${rm}kg)</div>`;
+          if (isBw) {
+            const addW = s.addWeight !== undefined && s.addWeight !== '' ? s.addWeight : 0;
+            return `<div style="margin-top:2px; font-weight:500;">Set ${idx + 1}: (体×係数 + ${addW}kg加重) × ${s.reps} reps (1RM:${rm}kg)</div>`;
+          } else {
+            const wStr = Number(s.weight).toFixed(1);
+            return `<div style="margin-top:2px; font-weight:500;">Set ${idx + 1}: ${wStr} kg × ${s.reps} reps (1RM:${rm}kg)</div>`;
+          }
         }).join('');
       }
     }
@@ -1359,7 +1446,7 @@
         const container = document.getElementById('set-inputs-container');
         container.innerHTML = '';
         currentLastRecordData.sets.forEach((s) => {
-          appendSetRow(s.weight, s.reps);
+          appendSetRow(s.weight, s.reps, s.addWeight);
         });
         reindexSetRows();
       }
@@ -1377,32 +1464,57 @@
       reindexSetRows();
     }
 
-    function appendSetRow(weight = '', reps = '') {
+    function appendSetRow(weight = '', reps = '', addWeight = '') {
       const container = document.getElementById('set-inputs-container');
+      const exerciseName = document.getElementById('input-exercise-select').value;
+      const isBw = isBwExercise(exerciseName);
       const div = document.createElement('div');
-      div.className = 'set-row';
       
-      div.innerHTML = `
-        <div class="set-num">1</div>
-        <div class="copy-weight-cell"></div>
-        <input type="number" step="0.5" class="set-input set-weight" value="${weight !== '' ? weight : ''}" placeholder="kg" oninput="updateRMRow(this)">
-        <div class="copy-reps-cell"></div>
-        <input type="number" class="set-input set-reps" value="${reps !== '' ? reps : ''}" placeholder="回" oninput="updateRMRow(this)">
-        <div class="set-rm">-</div>
-        <button type="button" class="delete-set-btn" onclick="removeSetRow(this)">✕</button>
-      `;
+      if (isBw) {
+        div.className = 'set-row bw-row';
+        const latestW = getLatestWeight() || 0;
+        const coeff = exerciseSettings[exerciseName] ? exerciseSettings[exerciseName].coeff : 0;
+        const autoW = (latestW * coeff).toFixed(1);
+        const initialAdd = addWeight !== '' ? addWeight : '';
+
+        div.innerHTML = `
+          <div class="set-num">1</div>
+          <div class="copy-weight-cell"></div>
+          <input type="number" step="0.1" class="set-input set-weight" value="${autoW}" readonly style="background:#18181a; color:var(--text-sub);">
+          <div class="copy-add-cell"></div>
+          <input type="number" step="0.5" class="set-input set-add-weight" value="${initialAdd}" placeholder="0" oninput="updateRMRow(this)">
+          <div class="copy-reps-cell"></div>
+          <input type="number" class="set-input set-reps" value="${reps !== '' ? reps : ''}" placeholder="回" oninput="updateRMRow(this)">
+          <div class="set-rm">-</div>
+          <button type="button" class="delete-set-btn" onclick="removeSetRow(this)">✕</button>
+        `;
+      } else {
+        div.className = 'set-row';
+        div.innerHTML = `
+          <div class="set-num">1</div>
+          <div class="copy-weight-cell"></div>
+          <input type="number" step="0.5" class="set-input set-weight" value="${weight !== '' ? weight : ''}" placeholder="kg" oninput="updateRMRow(this)">
+          <div class="copy-reps-cell"></div>
+          <input type="number" class="set-input set-reps" value="${reps !== '' ? reps : ''}" placeholder="回" oninput="updateRMRow(this)">
+          <div class="set-rm">-</div>
+          <button type="button" class="delete-set-btn" onclick="removeSetRow(this)">✕</button>
+        `;
+      }
       container.appendChild(div);
-      updateRMRow(div.querySelector('.set-weight'));
+      updateRMRow(div.querySelector('.set-reps') || div.querySelector('.set-weight'));
     }
 
     function removeSetRow(btn) {
-      const row = btn.closest('.set-row');
+      const row = btn.closest('.set-row') || btn.closest('.bw-row');
       row.remove();
       reindexSetRows();
     }
 
     function reindexSetRows() {
-      const rows = document.querySelectorAll('.set-row');
+      const rows = document.querySelectorAll('.set-row, .bw-row');
+      const exerciseName = document.getElementById('input-exercise-select').value;
+      const isBw = isBwExercise(exerciseName);
+
       rows.forEach((row, idx) => {
         const setNum = idx + 1;
         row.querySelector('.set-num').textContent = setNum;
@@ -1411,11 +1523,21 @@
         const copyRepsCell = row.querySelector('.copy-reps-cell');
 
         if (setNum > 1) {
-          copyWeightCell.innerHTML = `<button type="button" class="copy-prev-btn" onclick="copyPreviousWeight(${setNum})" title="1つ上の重さをコピー">↪︎</button>`;
           copyRepsCell.innerHTML = `<button type="button" class="copy-prev-btn" onclick="copyPreviousReps(${setNum})" title="1つ上の回数をコピー">↪︎</button>`;
+          if (isBw) {
+            const copyAddCell = row.querySelector('.copy-add-cell');
+            if (copyAddCell) copyAddCell.innerHTML = `<button type="button" class="copy-prev-btn" onclick="copyPreviousAdd(${setNum})" title="1つ上の加重をコピー">↪︎</button>`;
+            copyWeightCell.innerHTML = `<div></div>`;
+          } else {
+            copyWeightCell.innerHTML = `<button type="button" class="copy-prev-btn" onclick="copyPreviousWeight(${setNum})" title="1つ上の重さをコピー">↪︎</button>`;
+          }
         } else {
           copyWeightCell.innerHTML = `<div></div>`;
           copyRepsCell.innerHTML = `<div></div>`;
+          if (isBw) {
+            const copyAddCell = row.querySelector('.copy-add-cell');
+            if (copyAddCell) copyAddCell.innerHTML = `<div></div>`;
+          }
         }
       });
     }
@@ -1429,8 +1551,17 @@
       updateRMRow(currentRow.querySelector('.set-weight'));
     }
 
+    function copyPreviousAdd(setIndex) {
+      const rows = document.querySelectorAll('.bw-row');
+      if (setIndex < 2 || setIndex > rows.length) return;
+      const currentRow = rows[setIndex - 1];
+      const prevRow = rows[setIndex - 2];
+      currentRow.querySelector('.set-add-weight').value = prevRow.querySelector('.set-add-weight').value;
+      updateRMRow(currentRow.querySelector('.set-add-weight'));
+    }
+
     function copyPreviousReps(setIndex) {
-      const rows = document.querySelectorAll('.set-row');
+      const rows = document.querySelectorAll('.set-row, .bw-row');
       if (setIndex < 2 || setIndex > rows.length) return;
       const currentRow = rows[setIndex - 1];
       const prevRow = rows[setIndex - 2];
@@ -1439,17 +1570,26 @@
     }
 
     function updateRMRow(inputEl) {
-      const row = inputEl.closest('.set-row');
+      const row = inputEl.closest('.set-row') || inputEl.closest('.bw-row');
       if (!row) return;
-      const w = parseFloat(row.querySelector('.set-weight').value) || 0;
-      const r = parseInt(row.querySelector('.set-reps').value) || 0;
-      const rmEl = row.querySelector('.set-rm');
-
       const exerciseName = document.getElementById('input-exercise-select').value;
-      const effW = calcEffectiveWeight({ weight: w }, exerciseName);
+      const isBw = isBwExercise(exerciseName);
 
-      if (effW > 0 && r > 0) {
-        const rm = calcRM(effW, r).toFixed(1);
+      let w = 0;
+      let r = parseInt(row.querySelector('.set-reps').value) || 0;
+
+      if (isBw) {
+        const latestW = getLatestWeight() || 0;
+        const coeff = exerciseSettings[exerciseName] ? exerciseSettings[exerciseName].coeff : 0;
+        const addW = parseFloat(row.querySelector('.set-add-weight').value) || 0;
+        w = (latestW * coeff) + addW;
+      } else {
+        w = parseFloat(row.querySelector('.set-weight').value) || 0;
+      }
+
+      const rmEl = row.querySelector('.set-rm');
+      if (w > 0 && r > 0) {
+        const rm = calcRM(w, r).toFixed(1);
         rmEl.textContent = `${rm}kg`;
       } else {
         rmEl.textContent = '-';
@@ -1465,11 +1605,10 @@
       if (!exercise || exercise === '__ADD_NEW__') { alert('種目名を選択してください'); return; }
 
       const isCardio = (part === '有酸素運動');
-      const rows = document.querySelectorAll('.set-row');
+      const rows = document.querySelectorAll('.set-row, .bw-row');
+      const isBw = isBwExercise(exercise);
 
-      // 自重種目で体重未登録時のガード
-      const setting = exerciseSettings[exercise];
-      if (!isCardio && setting && setting.isBw) {
+      if (!isCardio && isBw) {
         let hasReps = false;
         rows.forEach(row => {
           const r = parseInt(row.querySelector('.set-reps').value) || 0;
@@ -1496,10 +1635,18 @@
       } else {
         const setsData = [];
         rows.forEach(row => {
-          const weight = parseFloat(row.querySelector('.set-weight').value) || 0;
-          const reps = parseInt(row.querySelector('.set-reps').value) || 0;
-          if (weight > 0 || reps > 0) {
-            setsData.push({ weight, reps });
+          if (isBw) {
+            const addWeight = parseFloat(row.querySelector('.set-add-weight').value) || 0;
+            const reps = parseInt(row.querySelector('.set-reps').value) || 0;
+            if (addWeight > 0 || reps > 0) {
+              setsData.push({ addWeight, reps });
+            }
+          } else {
+            const weight = parseFloat(row.querySelector('.set-weight').value) || 0;
+            const reps = parseInt(row.querySelector('.set-reps').value) || 0;
+            if (weight > 0 || reps > 0) {
+              setsData.push({ weight, reps });
+            }
           }
         });
 
@@ -1630,7 +1777,7 @@
             const histMax = getHistoricalMaxRM(exName, selectedDate);
             let dayMaxRM = 0;
             const setRms = item.sets.map(s => {
-              const effW = calcEffectiveWeight(s, exName);
+              const effW = calcEffectiveWeightForSet(s, exName);
               const rm = calcRM(effW, s.reps);
               if (rm > dayMaxRM) dayMaxRM = rm;
               return rm;
@@ -1641,7 +1788,8 @@
             let setsHtml = item.sets.map((s, idx) => {
               const currentRM = setRms[idx];
               const currentRMFormatted = currentRM.toFixed(1);
-              const wFormatted = Number(s.weight).toFixed(1) + ' kg';
+              const effW = calcEffectiveWeightForSet(s, exName);
+              const wFormatted = Number(effW).toFixed(1) + ' kg';
               const rFormatted = s.reps + ' reps';
 
               let badgeHtml = '';
@@ -1790,7 +1938,7 @@
             const histMax = getHistoricalMaxRM(w.exercise, w.date);
             let dayMaxRM = 0;
             const setRms = w.sets ? w.sets.map(s => {
-              const effW = calcEffectiveWeight(s, w.exercise);
+              const effW = calcEffectiveWeightForSet(s, w.exercise);
               const rm = calcRM(effW, s.reps);
               if (rm > dayMaxRM) dayMaxRM = rm;
               return rm;
@@ -1801,7 +1949,8 @@
             let setsHtml = w.sets ? w.sets.map((s, idx) => {
               const currentRM = setRms[idx];
               const currentRMFormatted = currentRM.toFixed(1);
-              const wFormatted = Number(s.weight).toFixed(1) + ' kg';
+              const effW = calcEffectiveWeightForSet(s, w.exercise);
+              const wFormatted = Number(effW).toFixed(1) + ' kg';
               const rFormatted = s.reps + ' reps';
 
               let badgeHtml = '';
