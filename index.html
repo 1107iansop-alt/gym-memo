@@ -136,7 +136,7 @@
     .max-rm-val { font-weight: 800; color: var(--accent-red); text-align: right; padding-right: 12px; }
     .max-rm-actual { color: var(--text-sub); font-size: 0.78rem; text-align: left; }
 
-    /* フッターナビゲーション (4タブ対応に修正) */
+    /* フッターナビゲーション (4タブ固定) */
     .footer-nav {
       position: absolute; 
       bottom: 0; 
@@ -210,15 +210,13 @@
 
     .form-row-selectors { display: grid; grid-template-columns: 125px 1fr; gap: 10px; margin-bottom: 0; }
 
-    /* セット行 (自重チェック対応) */
-    .set-row { display: grid; grid-template-columns: 32px 52px 24px 1fr 24px 1fr 48px 28px; gap: 3px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; font-size: 0.75rem; }
+    /* セット行 (自重チェック削除に伴いシンプル化) */
+    .set-row { display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
     .set-num { font-weight: bold; color: var(--accent-red); text-align: center; font-size: 0.85rem; white-space: nowrap; }
-    .set-bw-label { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.6rem; color: var(--text-sub); gap: 1px; cursor: pointer; }
-    .set-bw-check { accent-color: var(--accent-red); width: 14px; height: 14px; cursor: pointer; }
     .set-input { width: 100%; background: #1c1c1e; border: 1px solid var(--border-color); color: white; padding: 8px 2px; border-radius: 8px; font-size: 0.9rem; text-align: center; }
-    .set-rm { font-size: 0.62rem; color: var(--text-sub); text-align: center; white-space: nowrap; overflow: hidden; }
+    .set-rm { font-size: 0.65rem; color: var(--text-sub); text-align: center; white-space: nowrap; overflow: hidden; }
 
-    .copy-prev-btn { background: #2c2c2e; border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px; height: 32px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; }
+    .copy-prev-btn { background: #2c2c2e; border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px; height: 32px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; }
     .copy-prev-btn:active { background: #3a3a3c; }
 
     .delete-set-btn { background: none; border: 1px solid #ff453a; color: #ff453a; border-radius: 6px; height: 32px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; }
@@ -236,13 +234,18 @@
     .summary-box-val { font-size: 1.4rem; font-weight: 800; color: var(--accent-red); }
 
     /* 体組成タブ関連のスタイル */
-    .body-comp-card { background: var(--card-bg); border-radius: 14px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-    .bc-date { font-weight: bold; font-size: 0.9rem; color: var(--accent-red); margin-bottom: 4px; }
-    .bc-grid { display: grid; grid-template-columns: repeat(3, auto); gap: 6px 14px; font-size: 0.78rem; color: var(--text-sub); margin-top: 4px; }
+    .body-comp-card { background: var(--card-bg); border-radius: 14px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--border-color); }
+    .bc-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .bc-date { font-weight: bold; font-size: 0.95rem; color: var(--accent-red); }
+    .bc-edit-link { color: var(--accent-blue); font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
+    
+    /* 測定履歴一覧のレイアウト修正 (改行・崩れ防止) */
+    .bc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 12px; font-size: 0.8rem; color: var(--text-sub); }
+    .bc-grid div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .bc-grid span { color: var(--text-main); font-weight: 600; }
 
     /* 横スクロール・スナップグラフ関連 */
-    .graph-tab-container { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; -webkit-overflow-scrolling: touch; }
+    .graph-tab-container { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; -webkit-overflow-scrolling: touch; }
     .graph-tab-btn { background: #2c2c2e; color: var(--text-sub); border: none; padding: 6px 12px; border-radius: 16px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
     .graph-tab-btn.active { background: var(--accent-red); color: white; }
 
@@ -250,6 +253,11 @@
     .graph-scroll-container::-webkit-scrollbar { display: none; }
     .graph-slide-card { flex: 0 0 100%; width: 100%; scroll-snap-align: center; background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; }
     .graph-slide-title { font-size: 0.85rem; font-weight: bold; color: var(--text-main); margin-bottom: 8px; text-align: center; }
+
+    /* 期間絞り込みボタン群 (グラフの下部) */
+    .period-filter-container { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+    .period-btn { background: #2c2c2e; color: var(--text-sub); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
+    .period-btn.active { background: var(--accent-red); color: white; border-color: var(--accent-red); }
   </style>
 </head>
 <body>
@@ -327,7 +335,7 @@
     </div>
   </div>
 
-  <!-- 体組成タブ (新規追加) -->
+  <!-- 体組成タブ -->
   <div id="tab-body" class="tab-content">
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -367,13 +375,21 @@
           <canvas id="chart-bmr" width="400" height="180" style="width:100%; height:180px;"></canvas>
         </div>
       </div>
+
+      <!-- グラフ下部の期間絞り込みボタン群 -->
+      <div class="period-filter-container">
+        <button class="period-btn" onclick="setPeriodFilter('3m')">3ヶ月</button>
+        <button class="period-btn" onclick="setPeriodFilter('6m')">6ヶ月</button>
+        <button class="period-btn" onclick="setPeriodFilter('1y')">1年</button>
+        <button class="period-btn active" onclick="setPeriodFilter('all')">全期間</button>
+      </div>
     </div>
 
     <div style="font-weight: bold; font-size: 0.9rem; color: var(--accent-red); margin: 16px 0 10px 0;">■ 測定履歴一覧</div>
     <div id="body-history-list"></div>
   </div>
 
-  <!-- フッターナビゲーション (4タブ完全固定) -->
+  <!-- フッターナビゲーション (4タブ固定) -->
   <nav class="footer-nav">
     <button class="nav-item active" onclick="switchTab('home', this)">
       <span class="icon">🏠</span>
@@ -419,8 +435,8 @@
         </div>
 
         <div id="strength-input-area">
-          <div style="display: grid; grid-template-columns: 32px 52px 24px 1fr 24px 1fr 48px 28px; gap: 3px; font-size: 0.62rem; color: var(--text-sub); text-align: center; margin-bottom: 6px;">
-            <div>セット</div><div>自重</div><div></div><div>重さ(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>
+          <div style="display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; font-size: 0.65rem; color: var(--text-sub); text-align: center; margin-bottom: 6px;">
+            <div>セット</div><div></div><div>重さ(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>
           </div>
           <div id="set-inputs-container"></div>
           <button class="add-set-btn" onclick="addSetInput()">＋ セットを追加</button>
@@ -541,7 +557,7 @@
         </div>
 
         <div id="summary-parts-breakdown" style="background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 14px; margin-bottom: 10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:4px;">
             <div style="font-weight: bold; font-size: 0.9rem; color: var(--accent-red);">■ 部位別集計</div>
             <div style="font-size: 0.65rem; color: #ffffff;">（自重含む種目の負荷は参考値）</div>
           </div>
@@ -564,14 +580,31 @@
   </div>
 
   <script>
-    let customParts = JSON.parse(localStorage.getItem('gym_custom_parts')) || ['胸', '背中', '脚', '肩', '腕', '腹', '前腕', 'お尻', '有酸素運動', 'その他'];
-    let customExercises = JSON.parse(localStorage.getItem('gym_custom_exercises')) || {};
-    let exerciseCoefficients = JSON.parse(localStorage.getItem('gym_exercise_coefficients')) || {};
+    const defaultParts = ['胸', '背中', '脚', '肩', '腹', '前腕', '二頭筋', '三頭筋', '有酸素運動', 'その他'];
+    const defaultExercises = {
+      '胸': ['ベンチプレス', 'ペックフライ', 'チェストプレス'],
+      '背中': ['チンニング', 'ハイロー'],
+      '脚': ['レッグプレス'],
+      '肩': ['ショルダープレス(マシン/横)', 'ショルダープレス(マシン/前)', 'ラテラルレイズ(マシン)', 'リアデルトフライ(マシン)'],
+      '腹': ['アブドミラル', 'サイドベント'],
+      '前腕': ['リストカール', 'リバースリストカール', 'ハンマーカール', 'リバースアームカール'],
+      '二頭筋': ['インクラインダンベルカール', 'ダンベルプリチャーカール'],
+      '三頭筋': ['ダンベルキックバック', 'ダンベルフレンチプレス'],
+      '有酸素運動': ['ウォーキング'],
+      'その他': []
+    };
+
+    let customParts = JSON.parse(localStorage.getItem('gym_custom_parts')) || defaultParts;
+    let customExercises = JSON.parse(localStorage.getItem('gym_custom_exercises')) || defaultExercises;
+    let exerciseSettings = JSON.parse(localStorage.getItem('gym_exercise_settings')) || {
+      'チンニング': { isBw: true, coeff: 0.9 }
+    };
     let workouts = JSON.parse(localStorage.getItem('gym_workouts_v2')) || [];
     let bodyCompositions = JSON.parse(localStorage.getItem('gym_body_compositions')) || [];
 
     let currentLastRecordData = null;
     let editingBcId = null;
+    let currentPeriodFilter = 'all'; // グラフ期間フィルタ ('3m', '6m', '1y', 'all')
     
     function getTodayString() {
       const now = new Date();
@@ -628,15 +661,16 @@
       }
     }
 
-    // 有効な負荷量を計算する関数 (自重考慮)
+    // 負荷量計算 (種目の自重設定を自動判別)
     function calculateSetTonnage(s, exerciseName) {
       const reps = s.reps || 0;
       if (reps <= 0) return 0;
 
-      if (s.isBodyweight) {
+      const setting = exerciseSettings[exerciseName];
+      if (setting && setting.isBw) {
         const latestW = getLatestWeight();
-        if (latestW === null) return 0; // 未登録時は0扱い
-        const coeff = exerciseCoefficients[exerciseName] !== undefined ? parseFloat(exerciseCoefficients[exerciseName]) : 0.7;
+        if (latestW === null) return 0;
+        const coeff = parseFloat(setting.coeff) || 0.7;
         const addWeight = s.weight || 0;
         return ((latestW * coeff) + addWeight) * reps / 1000;
       } else {
@@ -645,13 +679,13 @@
       }
     }
 
-    // 1RM計算 (自重＋加重対応)
+    // 1RM計算の実効重量 (種目の自重設定を自動判別)
     function calcEffectiveWeight(s, exerciseName) {
-      if (s.isBodyweight) {
+      const setting = exerciseSettings[exerciseName];
+      if (setting && setting.isBw) {
         const latestW = getLatestWeight();
-        if (latestW === null) return s.weight || 0; // 未登録時は加重分のみか0
-        const coeff = exerciseCoefficients[exerciseName] !== undefined ? parseFloat(exerciseCoefficients[exerciseName]) : 0.7;
-        return (latestW * coeff) + (s.weight || 0);
+        const coeff = parseFloat(setting.coeff) || 0.7;
+        return latestW !== null ? (latestW * coeff) + (s.weight || 0) : (s.weight || 0);
       } else {
         return s.weight || 0;
       }
@@ -684,9 +718,7 @@
                 maxRm: rmVal,
                 date: w.date,
                 weight: effW,
-                reps: s.reps,
-                isBw: s.isBodyweight,
-                rawW: s.weight || 0
+                reps: s.reps
               };
             }
           }
@@ -707,7 +739,6 @@
         const item = maxMap[exName];
         const rmFormatted = item.maxRm.toFixed(1);
         const wFormatted = Number(item.weight).toFixed(1);
-        const detailStr = item.isBw ? `(自重換算 ${wFormatted}kg × ${item.reps})` : `(${wFormatted}kg × ${item.reps})`;
 
         html += `
           <div class="max-rm-card">
@@ -715,7 +746,7 @@
             <div class="max-rm-subrow">
               <div class="max-rm-date">${item.date}</div>
               <div class="max-rm-val">${rmFormatted} kg</div>
-              <div class="max-rm-actual">${detailStr}</div>
+              <div class="max-rm-actual">(${wFormatted}kg × ${item.reps})</div>
             </div>
           </div>
         `;
@@ -738,7 +769,7 @@
       return historicalMax;
     }
 
-    // 体組成タブの描画・グラフ制御
+    // 体組成タブ描画・グラフ制御
     function renderBodyTab() {
       const listEl = document.getElementById('body-history-list');
       bodyCompositions.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -752,19 +783,19 @@
       let html = '';
       bodyCompositions.forEach(bc => {
         html += `
-          <div class="body-comp-card" onclick="openBodyModal('${bc.id}')">
-            <div>
+          <div class="body-comp-card">
+            <div class="bc-card-top">
               <div class="bc-date">${bc.date}</div>
-              <div class="bc-grid">
-                <div>体重: <span>${bc.weight || '-'} kg</span></div>
-                <div>体脂肪率: <span>${bc.fatRate || '-'} %</span></div>
-                <div>筋肉量: <span>${bc.muscle || '-'} kg</span></div>
-                <div>脂肪量: <span>${bc.fat || '-'} kg</span></div>
-                <div>基礎代謝: <span>${bc.bmr || '-'} kcal</span></div>
-                <div>身長: <span>${bc.height || '-'} cm</span></div>
-              </div>
+              <div class="bc-edit-link" onclick="openBodyModal('${bc.id}')">編集 ›</div>
             </div>
-            <div style="color:var(--text-sub); font-size:0.8rem;">編集 ›</div>
+            <div class="bc-grid">
+              <div>体重: <span>${bc.weight || '-'} kg</span></div>
+              <div>体脂肪率: <span>${bc.fatRate || '-'} %</span></div>
+              <div>筋肉量: <span>${bc.muscle || '-'} kg</span></div>
+              <div>脂肪量: <span>${bc.fat || '-'} kg</span></div>
+              <div>基礎代謝: <span>${bc.bmr || '-'} kcal</span></div>
+              <div>身長: <span>${bc.height || '-'} cm</span></div>
+            </div>
           </div>
         `;
       });
@@ -790,8 +821,35 @@
       });
     }
 
+    function setPeriodFilter(period) {
+      currentPeriodFilter = period;
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.includes(getPeriodLabel(period)));
+      });
+      drawCharts();
+    }
+
+    function getPeriodLabel(period) {
+      if (period === '3m') return '3ヶ月';
+      if (period === '6m') return '6ヶ月';
+      if (period === '1y') return '1年';
+      return '全期間';
+    }
+
+    function filterDataByPeriod(data) {
+      if (currentPeriodFilter === 'all') return data;
+      const now = new Date();
+      const cutoff = new Date();
+      if (currentPeriodFilter === '3m') cutoff.setMonth(now.getMonth() - 3);
+      else if (currentPeriodFilter === '6m') cutoff.setMonth(now.getMonth() - 6);
+      else if (currentPeriodFilter === '1y') cutoff.setFullYear(now.getFullYear() - 1);
+
+      return data.filter(b => new Date(b.date) >= cutoff);
+    }
+
     function drawCharts() {
-      const sorted = [...bodyCompositions].sort((a, b) => new Date(a.date) - new Date(b.date));
+      let sorted = [...bodyCompositions].sort((a, b) => new Date(a.date) - new Date(b.date));
+      sorted = filterDataByPeriod(sorted);
       const dates = sorted.map(b => b.date.slice(5)); // MM-DD
 
       drawLineChart('chart-weight', dates, sorted.map(b => parseFloat(b.weight) || 0), 'kg');
@@ -867,7 +925,7 @@
       const deleteBtn = document.getElementById('delete-bc-btn');
 
       if (bcId) {
-        const target = bodyCompositions.find(b => b.id === bcId);
+        const target = bodyCompositions.find(b => String(b.id) === String(bcId));
         if (target) {
           document.getElementById('bc-date').value = target.date;
           document.getElementById('bc-height').value = target.height || '';
@@ -880,7 +938,6 @@
         }
       } else {
         document.getElementById('bc-date').value = getTodayString();
-        // 前回の身長を引き継ぐ
         if (bodyCompositions.length > 0) {
           const sorted = [...bodyCompositions].sort((a, b) => new Date(b.date) - new Date(a.date));
           document.getElementById('bc-height').value = sorted[0].height || '';
@@ -907,7 +964,7 @@
       if (!date) { alert('測定日を入力してください'); return; }
 
       const data = {
-        id: editingBcId || Date.now(),
+        id: editingBcId ? Number(editingBcId) : Date.now(),
         date,
         height: document.getElementById('bc-height').value,
         weight: document.getElementById('bc-weight').value,
@@ -918,7 +975,7 @@
       };
 
       if (editingBcId) {
-        const idx = bodyCompositions.findIndex(b => b.id === editingBcId);
+        const idx = bodyCompositions.findIndex(b => String(b.id) === String(editingBcId));
         if (idx !== -1) bodyCompositions[idx] = data;
       } else {
         bodyCompositions.push(data);
@@ -931,7 +988,7 @@
 
     function deleteBodyComposition() {
       if (confirm('この体組成データを削除しますか？')) {
-        bodyCompositions = bodyCompositions.filter(b => b.id !== editingBcId);
+        bodyCompositions = bodyCompositions.filter(b => String(b.id) !== String(editingBcId));
         localStorage.setItem('gym_body_compositions', JSON.stringify(bodyCompositions));
         closeBodyModal();
         renderBodyTab();
@@ -962,7 +1019,7 @@
             const container = document.getElementById('set-inputs-container');
             container.innerHTML = '';
             existing.sets.forEach((s) => {
-              appendSetRow(s.weight, s.reps, s.isBodyweight);
+              appendSetRow(s.weight, s.reps);
             });
             reindexSetRows();
           }
@@ -1283,7 +1340,7 @@
         boxContent.innerHTML = `時間：${last.cardio.time || '-'}分 / 距離：${last.cardio.distance || '-'}km`;
       } else if (last.sets) {
         boxContent.innerHTML = last.sets.map((s, idx) => {
-          const wStr = s.isBodyweight ? `自重+${Number(s.weight || 0).toFixed(1)}` : Number(s.weight).toFixed(1);
+          const wStr = Number(s.weight).toFixed(1);
           const effW = calcEffectiveWeight(s, exercise);
           const rm = calcRM(effW, s.reps).toFixed(1);
           return `<div style="margin-top:2px; font-weight:500;">Set ${idx + 1}: ${wStr} kg × ${s.reps} reps (1RM:${rm}kg)</div>`;
@@ -1302,7 +1359,7 @@
         const container = document.getElementById('set-inputs-container');
         container.innerHTML = '';
         currentLastRecordData.sets.forEach((s) => {
-          appendSetRow(s.weight, s.reps, s.isBodyweight);
+          appendSetRow(s.weight, s.reps);
         });
         reindexSetRows();
       }
@@ -1320,19 +1377,15 @@
       reindexSetRows();
     }
 
-    function appendSetRow(weight = '', reps = '', isBodyweight = false) {
+    function appendSetRow(weight = '', reps = '') {
       const container = document.getElementById('set-inputs-container');
       const div = document.createElement('div');
       div.className = 'set-row';
       
       div.innerHTML = `
         <div class="set-num">1</div>
-        <label class="set-bw-label">
-          <input type="checkbox" class="set-bw-check" ${isBodyweight ? 'checked' : ''} onchange="toggleBodyweightCheck(this)">
-          <span>自重</span>
-        </label>
         <div class="copy-weight-cell"></div>
-        <input type="number" step="0.5" class="set-input set-weight" value="${weight !== '' ? weight : ''}" placeholder="${isBodyweight ? '加重' : 'kg'}" oninput="updateRMRow(this)">
+        <input type="number" step="0.5" class="set-input set-weight" value="${weight !== '' ? weight : ''}" placeholder="kg" oninput="updateRMRow(this)">
         <div class="copy-reps-cell"></div>
         <input type="number" class="set-input set-reps" value="${reps !== '' ? reps : ''}" placeholder="回" oninput="updateRMRow(this)">
         <div class="set-rm">-</div>
@@ -1340,13 +1393,6 @@
       `;
       container.appendChild(div);
       updateRMRow(div.querySelector('.set-weight'));
-    }
-
-    function toggleBodyweightCheck(checkbox) {
-      const row = checkbox.closest('.set-row');
-      const weightInput = row.querySelector('.set-weight');
-      weightInput.placeholder = checkbox.checked ? '加重' : 'kg';
-      updateRMRow(weightInput);
     }
 
     function removeSetRow(btn) {
@@ -1380,9 +1426,6 @@
       const currentRow = rows[setIndex - 1];
       const prevRow = rows[setIndex - 2];
       currentRow.querySelector('.set-weight').value = prevRow.querySelector('.set-weight').value;
-      const prevBw = prevRow.querySelector('.set-bw-check').checked;
-      currentRow.querySelector('.set-bw-check').checked = prevBw;
-      currentRow.querySelector('.set-weight').placeholder = prevBw ? '加重' : 'kg';
       updateRMRow(currentRow.querySelector('.set-weight'));
     }
 
@@ -1398,21 +1441,12 @@
     function updateRMRow(inputEl) {
       const row = inputEl.closest('.set-row');
       if (!row) return;
-      const isBw = row.querySelector('.set-bw-check').checked;
-      const wVal = parseFloat(row.querySelector('.set-weight').value) || 0;
+      const w = parseFloat(row.querySelector('.set-weight').value) || 0;
       const r = parseInt(row.querySelector('.set-reps').value) || 0;
       const rmEl = row.querySelector('.set-rm');
 
       const exerciseName = document.getElementById('input-exercise-select').value;
-      
-      let effW = 0;
-      if (isBw) {
-        const latestW = getLatestWeight();
-        const coeff = exerciseCoefficients[exerciseName] !== undefined ? parseFloat(exerciseCoefficients[exerciseName]) : 0.7;
-        effW = latestW !== null ? (latestW * coeff) + wVal : wVal;
-      } else {
-        effW = wVal;
-      }
+      const effW = calcEffectiveWeight({ weight: w }, exerciseName);
 
       if (effW > 0 && r > 0) {
         const rm = calcRM(effW, r).toFixed(1);
@@ -1432,18 +1466,16 @@
 
       const isCardio = (part === '有酸素運動');
       const rows = document.querySelectorAll('.set-row');
-      
-      // 未登録状態で自重チェックがある場合のチェック
-      if (!isCardio) {
-        let hasBwWithoutWeight = false;
+
+      // 自重種目で体重未登録時のガード
+      const setting = exerciseSettings[exercise];
+      if (!isCardio && setting && setting.isBw) {
+        let hasReps = false;
         rows.forEach(row => {
-          const isBw = row.querySelector('.set-bw-check').checked;
           const r = parseInt(row.querySelector('.set-reps').value) || 0;
-          if (isBw && r > 0 && getLatestWeight() === null) {
-            hasBwWithoutWeight = true;
-          }
+          if (r > 0) hasReps = true;
         });
-        if (hasBwWithoutWeight) {
+        if (hasReps && getLatestWeight() === null) {
           alert('体組成タブから体重が登録されていません。自重トレーニングを記録するには体重を登録してください。');
           return;
         }
@@ -1464,11 +1496,10 @@
       } else {
         const setsData = [];
         rows.forEach(row => {
-          const isBodyweight = row.querySelector('.set-bw-check').checked;
           const weight = parseFloat(row.querySelector('.set-weight').value) || 0;
           const reps = parseInt(row.querySelector('.set-reps').value) || 0;
-          if (isBodyweight || weight > 0 || reps > 0) {
-            setsData.push({ weight, reps, isBodyweight });
+          if (weight > 0 || reps > 0) {
+            setsData.push({ weight, reps });
           }
         });
 
@@ -1610,7 +1641,7 @@
             let setsHtml = item.sets.map((s, idx) => {
               const currentRM = setRms[idx];
               const currentRMFormatted = currentRM.toFixed(1);
-              const wFormatted = s.isBodyweight ? `自重+${Number(s.weight || 0).toFixed(1)} kg` : Number(s.weight).toFixed(1) + ' kg';
+              const wFormatted = Number(s.weight).toFixed(1) + ' kg';
               const rFormatted = s.reps + ' reps';
 
               let badgeHtml = '';
@@ -1770,7 +1801,7 @@
             let setsHtml = w.sets ? w.sets.map((s, idx) => {
               const currentRM = setRms[idx];
               const currentRMFormatted = currentRM.toFixed(1);
-              const wFormatted = s.isBodyweight ? `自重+${Number(s.weight || 0).toFixed(1)} kg` : Number(s.weight).toFixed(1) + ' kg';
+              const wFormatted = Number(s.weight).toFixed(1) + ' kg';
               const rFormatted = s.reps + ' reps';
 
               let badgeHtml = '';
@@ -1836,7 +1867,7 @@
       });
 
       html += `<div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0 15px 0;">
-        <div style="font-weight:bold; color:var(--accent-red);">【種目リスト（自重係数設定）】</div>
+        <div style="font-weight:bold; color:var(--accent-red);">【種目リスト（自重設定）】</div>
         <button class="manage-btn" style="background:var(--accent-red); color:white;" onclick="addNewExerciseFromManage()">＋ 種目を追加</button>
       </div>`;
 
@@ -1846,14 +1877,14 @@
           hasExercises = true;
           html += `<div style="font-size:0.8rem; color:var(--text-sub); margin-top:8px; margin-bottom:4px;">■ ${part}</div>`;
           customExercises[part].forEach((ex, exIdx) => {
-            const coeff = exerciseCoefficients[ex] !== undefined ? exerciseCoefficients[ex] : 0.7;
+            const setting = exerciseSettings[ex] || { isBw: false, coeff: 0.7 };
             html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; background:#2c2c2e; padding:6px 10px; border-radius:8px;">
               <div>
                 <span style="font-size:0.85rem; font-weight:600;">${ex}</span>
-                <span style="font-size:0.7rem; color:var(--text-sub); margin-left:6px;">係数: ${coeff}</span>
+                <span style="font-size:0.7rem; color:${setting.isBw ? 'var(--accent-red)' : 'var(--text-sub)'}; margin-left:6px;">${setting.isBw ? `[自重(係:${setting.coeff})]` : '[通常]'}</span>
               </div>
               <div>
-                <button class="manage-btn" onclick="editExerciseCoeff('${ex}')" style="background:var(--accent-blue); color:white; margin-right:4px;">係数設定</button>
+                <button class="manage-btn" onclick="toggleExerciseBwSetting('${ex}')" style="background:${setting.isBw ? 'var(--accent-red)' : '#3a3a3c'}; color:white; margin-right:4px;">${setting.isBw ? '自重解除' : '自重設定'}</button>
                 <button class="manage-btn" onclick="moveExercise('${part}', ${exIdx}, -1)">▲</button>
                 <button class="manage-btn" onclick="moveExercise('${part}', ${exIdx}, 1)" style="margin-left:2px;">▼</button>
                 <button class="manage-btn" onclick="renameExercise('${part}', ${exIdx})" style="margin-left:4px;">修正</button>
@@ -1871,14 +1902,23 @@
       document.getElementById('manage-modal').classList.add('open');
     }
 
-    function editExerciseCoeff(exName) {
-      const current = exerciseCoefficients[exName] !== undefined ? exerciseCoefficients[exName] : 0.7;
-      const input = prompt(`「${exName}」の自重係数を入力してください (例: 0.7):`, current);
-      if (input !== null && !isNaN(parseFloat(input))) {
-        exerciseCoefficients[exName] = parseFloat(input);
-        localStorage.setItem('gym_exercise_coefficients', JSON.stringify(exerciseCoefficients));
-        openManageModal();
+    function toggleExerciseBwSetting(exName) {
+      if (!exerciseSettings[exName]) {
+        exerciseSettings[exName] = { isBw: false, coeff: 0.7 };
       }
+      const current = exerciseSettings[exName];
+      if (!current.isBw) {
+        const coeffInput = prompt(`「${exName}」の自重係数を入力してください (例: 0.7):`, current.coeff || 0.7);
+        if (coeffInput !== null && !isNaN(parseFloat(coeffInput))) {
+          exerciseSettings[exName] = { isBw: true, coeff: parseFloat(coeffInput) };
+        } else {
+          return;
+        }
+      } else {
+        exerciseSettings[exName] = { isBw: false, coeff: 0.7 };
+      }
+      localStorage.setItem('gym_exercise_settings', JSON.stringify(exerciseSettings));
+      openManageModal();
     }
 
     function closeManageModal() {
@@ -1921,9 +1961,7 @@
       if (!customExercises[chosenPart]) customExercises[chosenPart] = [];
       if (!customExercises[chosenPart].includes(trimmedEx)) {
         customExercises[chosenPart].push(trimmedEx);
-        exerciseCoefficients[trimmedEx] = 0.7; // デフォルト係数
         localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
-        localStorage.setItem('gym_exercise_coefficients', JSON.stringify(exerciseCoefficients));
         openManageModal();
       } else {
         alert('その種目はすでにその部位に存在します。');
@@ -1986,12 +2024,12 @@
         if (trimmedNewName === oldName) return;
 
         customExercises[part][exIdx] = trimmedNewName;
-        if (exerciseCoefficients[oldName] !== undefined) {
-          exerciseCoefficients[trimmedNewName] = exerciseCoefficients[oldName];
-          delete exerciseCoefficients[oldName];
+        if (exerciseSettings[oldName]) {
+          exerciseSettings[trimmedNewName] = exerciseSettings[oldName];
+          delete exerciseSettings[oldName];
         }
         localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
-        localStorage.setItem('gym_exercise_coefficients', JSON.stringify(exerciseCoefficients));
+        localStorage.setItem('gym_exercise_settings', JSON.stringify(exerciseSettings));
 
         workouts.forEach(w => {
           if (w.part === part && w.exercise === oldName) {
@@ -2008,9 +2046,9 @@
       const target = customExercises[part][exIdx];
       if (confirm(`種目「${target}」を削除しますか？`)) {
         customExercises[part].splice(exIdx, 1);
-        delete exerciseCoefficients[target];
+        delete exerciseSettings[target];
         localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
-        localStorage.setItem('gym_exercise_coefficients', JSON.stringify(exerciseCoefficients));
+        localStorage.setItem('gym_exercise_settings', JSON.stringify(exerciseSettings));
         openManageModal();
       }
     }
