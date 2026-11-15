@@ -136,6 +136,7 @@
     .max-rm-val { font-weight: 800; color: var(--accent-red); text-align: right; padding-right: 12px; }
     .max-rm-actual { color: var(--text-sub); font-size: 0.78rem; text-align: left; }
 
+    /* フッターナビゲーション (4タブ対応に修正) */
     .footer-nav {
       position: absolute; 
       bottom: 0; 
@@ -145,13 +146,13 @@
       background: #1c1c1e; 
       border-top: 1px solid var(--border-color);
       display: grid; 
-      grid-template-columns: repeat(3, 1fr); 
+      grid-template-columns: repeat(4, 1fr); 
       padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px)) 0; 
       min-height: 54px; 
       z-index: 9999;
       flex-shrink: 0;
     }
-    .nav-item { background: none; border: none; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; gap: 2px; cursor: pointer; }
+    .nav-item { background: none; border: none; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; gap: 2px; cursor: pointer; }
     .nav-item.active { color: var(--accent-red); }
     .nav-item span.icon { font-size: 1rem; }
 
@@ -209,12 +210,15 @@
 
     .form-row-selectors { display: grid; grid-template-columns: 125px 1fr; gap: 10px; margin-bottom: 0; }
 
-    .set-row { display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
+    /* セット行 (自重チェック対応) */
+    .set-row { display: grid; grid-template-columns: 32px 52px 24px 1fr 24px 1fr 48px 28px; gap: 3px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; font-size: 0.75rem; }
     .set-num { font-weight: bold; color: var(--accent-red); text-align: center; font-size: 0.85rem; white-space: nowrap; }
+    .set-bw-label { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.6rem; color: var(--text-sub); gap: 1px; cursor: pointer; }
+    .set-bw-check { accent-color: var(--accent-red); width: 14px; height: 14px; cursor: pointer; }
     .set-input { width: 100%; background: #1c1c1e; border: 1px solid var(--border-color); color: white; padding: 8px 2px; border-radius: 8px; font-size: 0.9rem; text-align: center; }
-    .set-rm { font-size: 0.65rem; color: var(--text-sub); text-align: center; white-space: nowrap; overflow: hidden; }
+    .set-rm { font-size: 0.62rem; color: var(--text-sub); text-align: center; white-space: nowrap; overflow: hidden; }
 
-    .copy-prev-btn { background: #2c2c2e; border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px; height: 32px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; }
+    .copy-prev-btn { background: #2c2c2e; border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px; height: 32px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; }
     .copy-prev-btn:active { background: #3a3a3c; }
 
     .delete-set-btn { background: none; border: 1px solid #ff453a; color: #ff453a; border-radius: 6px; height: 32px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; }
@@ -230,6 +234,22 @@
     .summary-box { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 16px; text-align: center; }
     .summary-box-title { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; }
     .summary-box-val { font-size: 1.4rem; font-weight: 800; color: var(--accent-red); }
+
+    /* 体組成タブ関連のスタイル */
+    .body-comp-card { background: var(--card-bg); border-radius: 14px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .bc-date { font-weight: bold; font-size: 0.9rem; color: var(--accent-red); margin-bottom: 4px; }
+    .bc-grid { display: grid; grid-template-columns: repeat(3, auto); gap: 6px 14px; font-size: 0.78rem; color: var(--text-sub); margin-top: 4px; }
+    .bc-grid span { color: var(--text-main); font-weight: 600; }
+
+    /* 横スクロール・スナップグラフ関連 */
+    .graph-tab-container { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; -webkit-overflow-scrolling: touch; }
+    .graph-tab-btn { background: #2c2c2e; color: var(--text-sub); border: none; padding: 6px 12px; border-radius: 16px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+    .graph-tab-btn.active { background: var(--accent-red); color: white; }
+
+    .graph-scroll-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+    .graph-scroll-container::-webkit-scrollbar { display: none; }
+    .graph-slide-card { flex: 0 0 100%; width: 100%; scroll-snap-align: center; background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; }
+    .graph-slide-title { font-size: 0.85rem; font-weight: bold; color: var(--text-main); margin-bottom: 8px; text-align: center; }
   </style>
 </head>
 <body>
@@ -307,7 +327,53 @@
     </div>
   </div>
 
-  <!-- フッターナビゲーション (完全固定) -->
+  <!-- 体組成タブ (新規追加) -->
+  <div id="tab-body" class="tab-content">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="font-weight:bold; color:var(--accent-red); font-size:1rem;">■ 体組成・推移グラフ</div>
+        <button class="mini-btn" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="openBodyModal()">＋ 測定データを記録</button>
+      </div>
+
+      <!-- グラフのスライド切り替えタブ -->
+      <div class="graph-tab-container" id="graph-tab-container">
+        <button class="graph-tab-btn active" onclick="scrollToGraph(0)">体重</button>
+        <button class="graph-tab-btn" onclick="scrollToGraph(1)">筋肉量</button>
+        <button class="graph-tab-btn" onclick="scrollToGraph(2)">脂肪量</button>
+        <button class="graph-tab-btn" onclick="scrollToGraph(3)">体脂肪率</button>
+        <button class="graph-tab-btn" onclick="scrollToGraph(4)">基礎代謝</button>
+      </div>
+
+      <!-- 横スクロールグラフコンテナ -->
+      <div class="graph-scroll-container" id="graph-scroll-container" onscroll="onGraphScroll(this)">
+        <div class="graph-slide-card">
+          <div class="graph-slide-title">体重 (kg)</div>
+          <canvas id="chart-weight" width="400" height="180" style="width:100%; height:180px;"></canvas>
+        </div>
+        <div class="graph-slide-card">
+          <div class="graph-slide-title">筋肉量 (kg)</div>
+          <canvas id="chart-muscle" width="400" height="180" style="width:100%; height:180px;"></canvas>
+        </div>
+        <div class="graph-slide-card">
+          <div class="graph-slide-title">脂肪量 (kg)</div>
+          <canvas id="chart-fat" width="400" height="180" style="width:100%; height:180px;"></canvas>
+        </div>
+        <div class="graph-slide-card">
+          <div class="graph-slide-title">体脂肪率 (%)</div>
+          <canvas id="chart-fatrate" width="400" height="180" style="width:100%; height:180px;"></canvas>
+        </div>
+        <div class="graph-slide-card">
+          <div class="graph-slide-title">基礎代謝 (kcal)</div>
+          <canvas id="chart-bmr" width="400" height="180" style="width:100%; height:180px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-weight: bold; font-size: 0.9rem; color: var(--accent-red); margin: 16px 0 10px 0;">■ 測定履歴一覧</div>
+    <div id="body-history-list"></div>
+  </div>
+
+  <!-- フッターナビゲーション (4タブ完全固定) -->
   <nav class="footer-nav">
     <button class="nav-item active" onclick="switchTab('home', this)">
       <span class="icon">🏠</span>
@@ -321,9 +387,13 @@
       <span class="icon">🏋️</span>
       <span>MAX RM</span>
     </button>
+    <button class="nav-item" onclick="switchTab('body', this)">
+      <span class="icon">📈</span>
+      <span>体組成</span>
+    </button>
   </nav>
 
-  <!-- モーダル類 -->
+  <!-- トレーニング記録モーダル -->
   <div class="modal" id="record-modal">
     <div class="modal-content">
       <div class="modal-sticky-header">
@@ -349,8 +419,8 @@
         </div>
 
         <div id="strength-input-area">
-          <div style="display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; font-size: 0.65rem; color: var(--text-sub); text-align: center; margin-bottom: 6px;">
-            <div>セット</div><div></div><div>重さ(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>
+          <div style="display: grid; grid-template-columns: 32px 52px 24px 1fr 24px 1fr 48px 28px; gap: 3px; font-size: 0.62rem; color: var(--text-sub); text-align: center; margin-bottom: 6px;">
+            <div>セット</div><div>自重</div><div></div><div>重さ(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>
           </div>
           <div id="set-inputs-container"></div>
           <button class="add-set-btn" onclick="addSetInput()">＋ セットを追加</button>
@@ -389,6 +459,46 @@
         <button class="delete-record-btn" id="delete-record-btn" onclick="deleteCurrentRecord()">この記録を削除する</button>
         <button class="close-modal" onclick="closeModal()">キャンセル</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 体組成入力モーダル -->
+  <div class="modal" id="body-modal">
+    <div class="modal-content-scrollable">
+      <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;" id="body-modal-title">体組成データの記録</div>
+      
+      <div class="form-group">
+        <label class="form-label">測定日</label>
+        <input type="date" id="bc-date" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">身長 (cm)</label>
+        <input type="number" step="0.1" id="bc-height" class="form-input" placeholder="例: 170.0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">体重 (kg)</label>
+        <input type="number" step="0.1" id="bc-weight" class="form-input" placeholder="例: 65.0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">基礎代謝 (kcal)</label>
+        <input type="number" id="bc-bmr" class="form-input" placeholder="例: 1500">
+      </div>
+      <div class="form-group">
+        <label class="form-label">筋肉量 (kg)</label>
+        <input type="number" step="0.1" id="bc-muscle" class="form-input" placeholder="例: 52.0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">脂肪量 (kg)</label>
+        <input type="number" step="0.1" id="bc-fat" class="form-input" placeholder="例: 10.5">
+      </div>
+      <div class="form-group">
+        <label class="form-label">体脂肪率 (%)</label>
+        <input type="number" step="0.1" id="bc-fatrate" class="form-input" placeholder="例: 16.0">
+      </div>
+
+      <button class="submit-btn" onclick="saveBodyComposition()">データを保存する</button>
+      <button class="delete-record-btn" id="delete-bc-btn" onclick="deleteBodyComposition()" style="display:none;">このデータを削除する</button>
+      <button class="close-modal" onclick="closeBodyModal()">キャンセル</button>
     </div>
   </div>
 
@@ -431,7 +541,10 @@
         </div>
 
         <div id="summary-parts-breakdown" style="background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 14px; margin-bottom: 10px;">
-          <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 10px; color: var(--accent-red);">■ 部位別集計</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div style="font-weight: bold; font-size: 0.9rem; color: var(--accent-red);">■ 部位別集計</div>
+            <div style="font-size: 0.65rem; color: #ffffff;">（自重含む種目の負荷は参考値）</div>
+          </div>
           <div id="summary-parts-list" style="font-size: 0.85rem; color: var(--text-sub);">集計データはありません</div>
         </div>
       </div>
@@ -453,9 +566,12 @@
   <script>
     let customParts = JSON.parse(localStorage.getItem('gym_custom_parts')) || ['胸', '背中', '脚', '肩', '腕', '腹', '前腕', 'お尻', '有酸素運動', 'その他'];
     let customExercises = JSON.parse(localStorage.getItem('gym_custom_exercises')) || {};
+    let exerciseCoefficients = JSON.parse(localStorage.getItem('gym_exercise_coefficients')) || {};
     let workouts = JSON.parse(localStorage.getItem('gym_workouts_v2')) || [];
+    let bodyCompositions = JSON.parse(localStorage.getItem('gym_body_compositions')) || [];
 
     let currentLastRecordData = null;
+    let editingBcId = null;
     
     function getTodayString() {
       const now = new Date();
@@ -489,6 +605,12 @@
       return [...new Set(customParts)];
     }
 
+    function getLatestWeight() {
+      if (!bodyCompositions || bodyCompositions.length === 0) return null;
+      const sorted = [...bodyCompositions].sort((a, b) => new Date(b.date) - new Date(a.date));
+      return sorted[0].weight ? parseFloat(sorted[0].weight) : null;
+    }
+
     function switchTab(tabId, el) {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -501,6 +623,37 @@
         renderHistoryCalendar();
       } else if (tabId === 'maxrm') {
         renderMaxRMTab();
+      } else if (tabId === 'body') {
+        renderBodyTab();
+      }
+    }
+
+    // 有効な負荷量を計算する関数 (自重考慮)
+    function calculateSetTonnage(s, exerciseName) {
+      const reps = s.reps || 0;
+      if (reps <= 0) return 0;
+
+      if (s.isBodyweight) {
+        const latestW = getLatestWeight();
+        if (latestW === null) return 0; // 未登録時は0扱い
+        const coeff = exerciseCoefficients[exerciseName] !== undefined ? parseFloat(exerciseCoefficients[exerciseName]) : 0.7;
+        const addWeight = s.weight || 0;
+        return ((latestW * coeff) + addWeight) * reps / 1000;
+      } else {
+        const w = s.weight || 0;
+        return (w * reps) / 1000;
+      }
+    }
+
+    // 1RM計算 (自重＋加重対応)
+    function calcEffectiveWeight(s, exerciseName) {
+      if (s.isBodyweight) {
+        const latestW = getLatestWeight();
+        if (latestW === null) return s.weight || 0; // 未登録時は加重分のみか0
+        const coeff = exerciseCoefficients[exerciseName] !== undefined ? parseFloat(exerciseCoefficients[exerciseName]) : 0.7;
+        return (latestW * coeff) + (s.weight || 0);
+      } else {
+        return s.weight || 0;
       }
     }
 
@@ -523,14 +676,17 @@
       strengthWorkouts.forEach(w => {
         const exName = w.exercise;
         w.sets.forEach(s => {
-          if (s.weight > 0 && s.reps > 0) {
-            const rmVal = calcRM(s.weight, s.reps);
+          const effW = calcEffectiveWeight(s, exName);
+          if (effW > 0 && s.reps > 0) {
+            const rmVal = calcRM(effW, s.reps);
             if (!maxMap[exName] || rmVal > maxMap[exName].maxRm) {
               maxMap[exName] = {
                 maxRm: rmVal,
                 date: w.date,
-                weight: s.weight,
-                reps: s.reps
+                weight: effW,
+                reps: s.reps,
+                isBw: s.isBodyweight,
+                rawW: s.weight || 0
               };
             }
           }
@@ -551,6 +707,7 @@
         const item = maxMap[exName];
         const rmFormatted = item.maxRm.toFixed(1);
         const wFormatted = Number(item.weight).toFixed(1);
+        const detailStr = item.isBw ? `(自重換算 ${wFormatted}kg × ${item.reps})` : `(${wFormatted}kg × ${item.reps})`;
 
         html += `
           <div class="max-rm-card">
@@ -558,7 +715,7 @@
             <div class="max-rm-subrow">
               <div class="max-rm-date">${item.date}</div>
               <div class="max-rm-val">${rmFormatted} kg</div>
-              <div class="max-rm-actual">(${wFormatted}kg × ${item.reps})</div>
+              <div class="max-rm-actual">${detailStr}</div>
             </div>
           </div>
         `;
@@ -572,12 +729,213 @@
       workouts.forEach(w => {
         if (w.exercise === exerciseName && !w.isCardio && w.sets && w.date < targetDate) {
           w.sets.forEach(s => {
-            const rm = calcRM(s.weight, s.reps);
+            const effW = calcEffectiveWeight(s, exerciseName);
+            const rm = calcRM(effW, s.reps);
             if (rm > historicalMax) historicalMax = rm;
           });
         }
       });
       return historicalMax;
+    }
+
+    // 体組成タブの描画・グラフ制御
+    function renderBodyTab() {
+      const listEl = document.getElementById('body-history-list');
+      bodyCompositions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (bodyCompositions.length === 0) {
+        listEl.innerHTML = `<div class="empty-state">体組成データがありません。「＋ 測定データを記録」から追加してください。</div>`;
+        drawCharts();
+        return;
+      }
+
+      let html = '';
+      bodyCompositions.forEach(bc => {
+        html += `
+          <div class="body-comp-card" onclick="openBodyModal('${bc.id}')">
+            <div>
+              <div class="bc-date">${bc.date}</div>
+              <div class="bc-grid">
+                <div>体重: <span>${bc.weight || '-'} kg</span></div>
+                <div>体脂肪率: <span>${bc.fatRate || '-'} %</span></div>
+                <div>筋肉量: <span>${bc.muscle || '-'} kg</span></div>
+                <div>脂肪量: <span>${bc.fat || '-'} kg</span></div>
+                <div>基礎代謝: <span>${bc.bmr || '-'} kcal</span></div>
+                <div>身長: <span>${bc.height || '-'} cm</span></div>
+              </div>
+            </div>
+            <div style="color:var(--text-sub); font-size:0.8rem;">編集 ›</div>
+          </div>
+        `;
+      });
+      listEl.innerHTML = html;
+      drawCharts();
+    }
+
+    function scrollToGraph(index) {
+      const container = document.getElementById('graph-scroll-container');
+      const slideWidth = container.clientWidth;
+      container.scrollTo({ left: slideWidth * index, behavior: 'smooth' });
+
+      document.querySelectorAll('.graph-tab-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === index);
+      });
+    }
+
+    function onGraphScroll(container) {
+      const slideWidth = container.clientWidth;
+      const index = Math.round(container.scrollLeft / slideWidth);
+      document.querySelectorAll('.graph-tab-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === index);
+      });
+    }
+
+    function drawCharts() {
+      const sorted = [...bodyCompositions].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const dates = sorted.map(b => b.date.slice(5)); // MM-DD
+
+      drawLineChart('chart-weight', dates, sorted.map(b => parseFloat(b.weight) || 0), 'kg');
+      drawLineChart('chart-muscle', dates, sorted.map(b => parseFloat(b.muscle) || 0), 'kg');
+      drawLineChart('chart-fat', dates, sorted.map(b => parseFloat(b.fat) || 0), 'kg');
+      drawLineChart('chart-fatrate', dates, sorted.map(b => parseFloat(b.fatRate) || 0), '%');
+      drawLineChart('chart-bmr', dates, sorted.map(b => parseFloat(b.bmr) || 0), 'kcal');
+    }
+
+    function drawLineChart(canvasId, labels, data, unit) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (data.length === 0 || data.every(v => v === 0)) {
+        ctx.fillStyle = '#8e8e93';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('データがありません', canvas.width / 2, canvas.height / 2);
+        return;
+      }
+
+      const padding = 30;
+      const w = canvas.width - padding * 2;
+      const h = canvas.height - padding * 2;
+
+      const minVal = Math.min(...data);
+      const maxVal = Math.max(...data);
+      const range = maxVal - minVal === 0 ? 1 : maxVal - minVal;
+
+      const points = data.map((val, idx) => {
+        const x = padding + (w / (data.length === 1 ? 1 : data.length - 1)) * idx;
+        const y = canvas.height - padding - ((val - minVal) / range) * h;
+        return { x, y, val };
+      });
+
+      // グリッド線
+      ctx.strokeStyle = '#2c2c2e';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding, padding);
+      ctx.lineTo(padding, canvas.height - padding);
+      ctx.lineTo(canvas.width - padding, canvas.height - padding);
+      ctx.stroke();
+
+      // 折れ線
+      ctx.strokeStyle = '#ff453a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      points.forEach((pt, idx) => {
+        if (idx === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      });
+      ctx.stroke();
+
+      // プロット点と数値
+      points.forEach(pt => {
+        ctx.fillStyle = '#ff453a';
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${pt.val}${unit}`, pt.x, pt.y - 8);
+      });
+    }
+
+    function openBodyModal(bcId = null) {
+      editingBcId = bcId;
+      const deleteBtn = document.getElementById('delete-bc-btn');
+
+      if (bcId) {
+        const target = bodyCompositions.find(b => b.id === bcId);
+        if (target) {
+          document.getElementById('bc-date').value = target.date;
+          document.getElementById('bc-height').value = target.height || '';
+          document.getElementById('bc-weight').value = target.weight || '';
+          document.getElementById('bc-bmr').value = target.bmr || '';
+          document.getElementById('bc-muscle').value = target.muscle || '';
+          document.getElementById('bc-fat').value = target.fat || '';
+          document.getElementById('bc-fatrate').value = target.fatRate || '';
+          deleteBtn.style.display = 'block';
+        }
+      } else {
+        document.getElementById('bc-date').value = getTodayString();
+        // 前回の身長を引き継ぐ
+        if (bodyCompositions.length > 0) {
+          const sorted = [...bodyCompositions].sort((a, b) => new Date(b.date) - new Date(a.date));
+          document.getElementById('bc-height').value = sorted[0].height || '';
+        } else {
+          document.getElementById('bc-height').value = '';
+        }
+        document.getElementById('bc-weight').value = '';
+        document.getElementById('bc-bmr').value = '';
+        document.getElementById('bc-muscle').value = '';
+        document.getElementById('bc-fat').value = '';
+        document.getElementById('bc-fatrate').value = '';
+        deleteBtn.style.display = 'none';
+      }
+
+      document.getElementById('body-modal').classList.add('open');
+    }
+
+    function closeBodyModal() {
+      document.getElementById('body-modal').classList.remove('open');
+    }
+
+    function saveBodyComposition() {
+      const date = document.getElementById('bc-date').value;
+      if (!date) { alert('測定日を入力してください'); return; }
+
+      const data = {
+        id: editingBcId || Date.now(),
+        date,
+        height: document.getElementById('bc-height').value,
+        weight: document.getElementById('bc-weight').value,
+        bmr: document.getElementById('bc-bmr').value,
+        muscle: document.getElementById('bc-muscle').value,
+        fat: document.getElementById('bc-fat').value,
+        fatRate: document.getElementById('bc-fatrate').value
+      };
+
+      if (editingBcId) {
+        const idx = bodyCompositions.findIndex(b => b.id === editingBcId);
+        if (idx !== -1) bodyCompositions[idx] = data;
+      } else {
+        bodyCompositions.push(data);
+      }
+
+      localStorage.setItem('gym_body_compositions', JSON.stringify(bodyCompositions));
+      closeBodyModal();
+      renderBodyTab();
+    }
+
+    function deleteBodyComposition() {
+      if (confirm('この体組成データを削除しますか？')) {
+        bodyCompositions = bodyCompositions.filter(b => b.id !== editingBcId);
+        localStorage.setItem('gym_body_compositions', JSON.stringify(bodyCompositions));
+        closeBodyModal();
+        renderBodyTab();
+      }
     }
 
     function openModal(targetPart = null, targetExercise = null, isEdit = false) {
@@ -604,7 +962,7 @@
             const container = document.getElementById('set-inputs-container');
             container.innerHTML = '';
             existing.sets.forEach((s) => {
-              appendSetRow(s.weight, s.reps);
+              appendSetRow(s.weight, s.reps, s.isBodyweight);
             });
             reindexSetRows();
           }
@@ -683,7 +1041,7 @@
           }
         } else if (w.sets) {
           w.sets.forEach(s => {
-            const ton = (s.weight * s.reps) / 1000;
+            const ton = calculateSetTonnage(s, w.exercise);
             totalTonnage += ton;
             totalSetsCount++;
             totalRepsCount += s.reps;
@@ -719,7 +1077,6 @@
           const label = isCardioPart ? '時間：' : '負荷：';
           const valText = isCardioPart ? `${st.time}分` : `${st.tonnage.toFixed(2)}t`;
 
-          // ご要望通りのグリッドレイアウト（「セット：」の「セ」位置合わせ、数値左揃え、ラベル位置合わせ、単位右詰め）
           pHtml += `
             <div style="display: grid; grid-template-columns: 88px 52px 26px 56px 1fr; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #2c2c2e; padding-bottom: 4px; font-size: 0.85rem;">
               <div style="color:var(--text-main); font-weight:600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p}</div>
@@ -926,8 +1283,9 @@
         boxContent.innerHTML = `時間：${last.cardio.time || '-'}分 / 距離：${last.cardio.distance || '-'}km`;
       } else if (last.sets) {
         boxContent.innerHTML = last.sets.map((s, idx) => {
-          const wStr = Number(s.weight).toFixed(1);
-          const rm = calcRM(s.weight, s.reps).toFixed(1);
+          const wStr = s.isBodyweight ? `自重+${Number(s.weight || 0).toFixed(1)}` : Number(s.weight).toFixed(1);
+          const effW = calcEffectiveWeight(s, exercise);
+          const rm = calcRM(effW, s.reps).toFixed(1);
           return `<div style="margin-top:2px; font-weight:500;">Set ${idx + 1}: ${wStr} kg × ${s.reps} reps (1RM:${rm}kg)</div>`;
         }).join('');
       }
@@ -944,7 +1302,7 @@
         const container = document.getElementById('set-inputs-container');
         container.innerHTML = '';
         currentLastRecordData.sets.forEach((s) => {
-          appendSetRow(s.weight, s.reps);
+          appendSetRow(s.weight, s.reps, s.isBodyweight);
         });
         reindexSetRows();
       }
@@ -962,15 +1320,19 @@
       reindexSetRows();
     }
 
-    function appendSetRow(weight = '', reps = '') {
+    function appendSetRow(weight = '', reps = '', isBodyweight = false) {
       const container = document.getElementById('set-inputs-container');
       const div = document.createElement('div');
       div.className = 'set-row';
       
       div.innerHTML = `
         <div class="set-num">1</div>
+        <label class="set-bw-label">
+          <input type="checkbox" class="set-bw-check" ${isBodyweight ? 'checked' : ''} onchange="toggleBodyweightCheck(this)">
+          <span>自重</span>
+        </label>
         <div class="copy-weight-cell"></div>
-        <input type="number" step="0.5" class="set-input set-weight" value="${weight !== '' ? weight : ''}" placeholder="kg" oninput="updateRMRow(this)">
+        <input type="number" step="0.5" class="set-input set-weight" value="${weight !== '' ? weight : ''}" placeholder="${isBodyweight ? '加重' : 'kg'}" oninput="updateRMRow(this)">
         <div class="copy-reps-cell"></div>
         <input type="number" class="set-input set-reps" value="${reps !== '' ? reps : ''}" placeholder="回" oninput="updateRMRow(this)">
         <div class="set-rm">-</div>
@@ -978,6 +1340,13 @@
       `;
       container.appendChild(div);
       updateRMRow(div.querySelector('.set-weight'));
+    }
+
+    function toggleBodyweightCheck(checkbox) {
+      const row = checkbox.closest('.set-row');
+      const weightInput = row.querySelector('.set-weight');
+      weightInput.placeholder = checkbox.checked ? '加重' : 'kg';
+      updateRMRow(weightInput);
     }
 
     function removeSetRow(btn) {
@@ -1011,6 +1380,9 @@
       const currentRow = rows[setIndex - 1];
       const prevRow = rows[setIndex - 2];
       currentRow.querySelector('.set-weight').value = prevRow.querySelector('.set-weight').value;
+      const prevBw = prevRow.querySelector('.set-bw-check').checked;
+      currentRow.querySelector('.set-bw-check').checked = prevBw;
+      currentRow.querySelector('.set-weight').placeholder = prevBw ? '加重' : 'kg';
       updateRMRow(currentRow.querySelector('.set-weight'));
     }
 
@@ -1026,11 +1398,24 @@
     function updateRMRow(inputEl) {
       const row = inputEl.closest('.set-row');
       if (!row) return;
-      const w = parseFloat(row.querySelector('.set-weight').value) || 0;
+      const isBw = row.querySelector('.set-bw-check').checked;
+      const wVal = parseFloat(row.querySelector('.set-weight').value) || 0;
       const r = parseInt(row.querySelector('.set-reps').value) || 0;
       const rmEl = row.querySelector('.set-rm');
-      if (w > 0 && r > 0) {
-        const rm = calcRM(w, r).toFixed(1);
+
+      const exerciseName = document.getElementById('input-exercise-select').value;
+      
+      let effW = 0;
+      if (isBw) {
+        const latestW = getLatestWeight();
+        const coeff = exerciseCoefficients[exerciseName] !== undefined ? parseFloat(exerciseCoefficients[exerciseName]) : 0.7;
+        effW = latestW !== null ? (latestW * coeff) + wVal : wVal;
+      } else {
+        effW = wVal;
+      }
+
+      if (effW > 0 && r > 0) {
+        const rm = calcRM(effW, r).toFixed(1);
         rmEl.textContent = `${rm}kg`;
       } else {
         rmEl.textContent = '-';
@@ -1046,9 +1431,25 @@
       if (!exercise || exercise === '__ADD_NEW__') { alert('種目名を選択してください'); return; }
 
       const isCardio = (part === '有酸素運動');
+      const rows = document.querySelectorAll('.set-row');
+      
+      // 未登録状態で自重チェックがある場合のチェック
+      if (!isCardio) {
+        let hasBwWithoutWeight = false;
+        rows.forEach(row => {
+          const isBw = row.querySelector('.set-bw-check').checked;
+          const r = parseInt(row.querySelector('.set-reps').value) || 0;
+          if (isBw && r > 0 && getLatestWeight() === null) {
+            hasBwWithoutWeight = true;
+          }
+        });
+        if (hasBwWithoutWeight) {
+          alert('体組成タブから体重が登録されていません。自重トレーニングを記録するには体重を登録してください。');
+          return;
+        }
+      }
 
       const existingIndex = workouts.findIndex(w => w.date === date && w.part === part && w.exercise === exercise);
-
       let newRecordData = null;
 
       if (isCardio) {
@@ -1061,13 +1462,13 @@
           newRecordData = { id: Date.now(), date, part, exercise, isCardio, memo, cardio: { time, speed, distance, cal } };
         }
       } else {
-        const rows = document.querySelectorAll('.set-row');
         const setsData = [];
         rows.forEach(row => {
+          const isBodyweight = row.querySelector('.set-bw-check').checked;
           const weight = parseFloat(row.querySelector('.set-weight').value) || 0;
           const reps = parseInt(row.querySelector('.set-reps').value) || 0;
-          if (weight > 0 || reps > 0) {
-            setsData.push({ weight, reps });
+          if (isBodyweight || weight > 0 || reps > 0) {
+            setsData.push({ weight, reps, isBodyweight });
           }
         });
 
@@ -1198,7 +1599,8 @@
             const histMax = getHistoricalMaxRM(exName, selectedDate);
             let dayMaxRM = 0;
             const setRms = item.sets.map(s => {
-              const rm = calcRM(s.weight, s.reps);
+              const effW = calcEffectiveWeight(s, exName);
+              const rm = calcRM(effW, s.reps);
               if (rm > dayMaxRM) dayMaxRM = rm;
               return rm;
             });
@@ -1208,7 +1610,7 @@
             let setsHtml = item.sets.map((s, idx) => {
               const currentRM = setRms[idx];
               const currentRMFormatted = currentRM.toFixed(1);
-              const wFormatted = Number(s.weight).toFixed(1) + ' kg';
+              const wFormatted = s.isBodyweight ? `自重+${Number(s.weight || 0).toFixed(1)} kg` : Number(s.weight).toFixed(1) + ' kg';
               const rFormatted = s.reps + ' reps';
 
               let badgeHtml = '';
@@ -1357,7 +1759,8 @@
             const histMax = getHistoricalMaxRM(w.exercise, w.date);
             let dayMaxRM = 0;
             const setRms = w.sets ? w.sets.map(s => {
-              const rm = calcRM(s.weight, s.reps);
+              const effW = calcEffectiveWeight(s, w.exercise);
+              const rm = calcRM(effW, s.reps);
               if (rm > dayMaxRM) dayMaxRM = rm;
               return rm;
             }) : [];
@@ -1367,7 +1770,7 @@
             let setsHtml = w.sets ? w.sets.map((s, idx) => {
               const currentRM = setRms[idx];
               const currentRMFormatted = currentRM.toFixed(1);
-              const wFormatted = Number(s.weight).toFixed(1) + ' kg';
+              const wFormatted = s.isBodyweight ? `自重+${Number(s.weight || 0).toFixed(1)} kg` : Number(s.weight).toFixed(1) + ' kg';
               const rFormatted = s.reps + ' reps';
 
               let badgeHtml = '';
@@ -1433,7 +1836,7 @@
       });
 
       html += `<div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0 15px 0;">
-        <div style="font-weight:bold; color:var(--accent-red);">【種目リスト】</div>
+        <div style="font-weight:bold; color:var(--accent-red);">【種目リスト（自重係数設定）】</div>
         <button class="manage-btn" style="background:var(--accent-red); color:white;" onclick="addNewExerciseFromManage()">＋ 種目を追加</button>
       </div>`;
 
@@ -1443,12 +1846,16 @@
           hasExercises = true;
           html += `<div style="font-size:0.8rem; color:var(--text-sub); margin-top:8px; margin-bottom:4px;">■ ${part}</div>`;
           customExercises[part].forEach((ex, exIdx) => {
+            const coeff = exerciseCoefficients[ex] !== undefined ? exerciseCoefficients[ex] : 0.7;
             html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; background:#2c2c2e; padding:6px 10px; border-radius:8px;">
-              <span style="font-size:0.85rem;">${ex}</span>
               <div>
+                <span style="font-size:0.85rem; font-weight:600;">${ex}</span>
+                <span style="font-size:0.7rem; color:var(--text-sub); margin-left:6px;">係数: ${coeff}</span>
+              </div>
+              <div>
+                <button class="manage-btn" onclick="editExerciseCoeff('${ex}')" style="background:var(--accent-blue); color:white; margin-right:4px;">係数設定</button>
                 <button class="manage-btn" onclick="moveExercise('${part}', ${exIdx}, -1)">▲</button>
                 <button class="manage-btn" onclick="moveExercise('${part}', ${exIdx}, 1)" style="margin-left:2px;">▼</button>
-                <button class="manage-btn" onclick="changeExerciseParent('${part}', ${exIdx})" style="margin-left:4px;">移動</button>
                 <button class="manage-btn" onclick="renameExercise('${part}', ${exIdx})" style="margin-left:4px;">修正</button>
                 <button class="manage-btn" style="color:#ff453a; margin-left:4px;" onclick="deleteExercise('${part}', ${exIdx})">削除</button>
               </div>
@@ -1462,6 +1869,16 @@
 
       area.innerHTML = html;
       document.getElementById('manage-modal').classList.add('open');
+    }
+
+    function editExerciseCoeff(exName) {
+      const current = exerciseCoefficients[exName] !== undefined ? exerciseCoefficients[exName] : 0.7;
+      const input = prompt(`「${exName}」の自重係数を入力してください (例: 0.7):`, current);
+      if (input !== null && !isNaN(parseFloat(input))) {
+        exerciseCoefficients[exName] = parseFloat(input);
+        localStorage.setItem('gym_exercise_coefficients', JSON.stringify(exerciseCoefficients));
+        openManageModal();
+      }
     }
 
     function closeManageModal() {
@@ -1504,7 +1921,9 @@
       if (!customExercises[chosenPart]) customExercises[chosenPart] = [];
       if (!customExercises[chosenPart].includes(trimmedEx)) {
         customExercises[chosenPart].push(trimmedEx);
+        exerciseCoefficients[trimmedEx] = 0.7; // デフォルト係数
         localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+        localStorage.setItem('gym_exercise_coefficients', JSON.stringify(exerciseCoefficients));
         openManageModal();
       } else {
         alert('その種目はすでにその部位に存在します。');
@@ -1530,23 +1949,6 @@
       list[targetIdx] = temp;
       localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
       openManageModal();
-    }
-
-    function changeExerciseParent(oldPart, exIdx) {
-      const exName = customExercises[oldPart][exIdx];
-      const newPart = prompt(`「${exName}」の移動先（新しい部位名）を入力してください:`, oldPart);
-      if (newPart && newPart.trim() !== '' && newPart !== oldPart) {
-        const trimmed = newPart.trim();
-        if (!customParts.includes(trimmed)) {
-          customParts.push(trimmed);
-          localStorage.setItem('gym_custom_parts', JSON.stringify(customParts));
-        }
-        customExercises[oldPart].splice(exIdx, 1);
-        if (!customExercises[trimmed]) customExercises[trimmed] = [];
-        customExercises[trimmed].push(exName);
-        localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
-        openManageModal();
-      }
     }
 
     function renamePart(idx) {
@@ -1584,7 +1986,12 @@
         if (trimmedNewName === oldName) return;
 
         customExercises[part][exIdx] = trimmedNewName;
+        if (exerciseCoefficients[oldName] !== undefined) {
+          exerciseCoefficients[trimmedNewName] = exerciseCoefficients[oldName];
+          delete exerciseCoefficients[oldName];
+        }
         localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+        localStorage.setItem('gym_exercise_coefficients', JSON.stringify(exerciseCoefficients));
 
         workouts.forEach(w => {
           if (w.part === part && w.exercise === oldName) {
@@ -1601,7 +2008,9 @@
       const target = customExercises[part][exIdx];
       if (confirm(`種目「${target}」を削除しますか？`)) {
         customExercises[part].splice(exIdx, 1);
+        delete exerciseCoefficients[target];
         localStorage.setItem('gym_custom_exercises', JSON.stringify(customExercises));
+        localStorage.setItem('gym_exercise_coefficients', JSON.stringify(exerciseCoefficients));
         openManageModal();
       }
     }
