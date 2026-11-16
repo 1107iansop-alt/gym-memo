@@ -208,7 +208,18 @@
 
     .form-group { margin-bottom: 14px; }
     .form-label { font-size: 0.80rem; color: var(--text-sub); margin-bottom: 6px; display: block; }
-    .form-input, .form-select { width: 100%; background: #2c2c2e; border: 1px solid var(--border-color); color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; padding: 12px; border-radius: 10px; font-size: 0.95rem; }
+    .form-input, .form-select { 
+      width: 100%; 
+      background: #2c2c2e; 
+      border: 1px solid var(--border-color); 
+      color: #ffffff !important; 
+      -webkit-text-fill-color: #ffffff !important; 
+      padding: 12px; 
+      border-radius: 10px; 
+      font-size: 0.95rem; 
+      -webkit-appearance: none;
+      appearance: none;
+    }
 
     .form-row-selectors { display: grid; grid-template-columns: 125px 1fr; gap: 10px; margin-bottom: 0; }
 
@@ -347,15 +358,15 @@
     </div>
   </div>
 
-  <!-- カロリータブ (新設) -->
+  <!-- カロリータブ -->
   <div id="tab-calorie" class="tab-content">
     <div class="card">
       <div style="font-weight:bold; color:var(--accent-red); font-size:1rem; margin-bottom:10px;">■ カロリー収支推移</div>
       
-      <!-- 期間絞り込みボタン群 (1ヶ月(週別) / 過去1年) -->
+      <!-- 期間絞り込みボタン群 (1ヶ月(週別) / 直近1年) -->
       <div class="period-filter-container" style="margin-bottom: 12px;">
         <button class="period-btn active" onclick="setCaloriePeriod('weekly')">1ヶ月(週別)</button>
-        <button class="period-btn" onclick="setCaloriePeriod('year')">過去1年</button>
+        <button class="period-btn" onclick="setCaloriePeriod('year')">直近1年</button>
       </div>
 
       <!-- 週別グラフ用の月切り替えヘッダー -->
@@ -416,12 +427,11 @@
         </div>
       </div>
 
-      <!-- グラフ下部の期間絞り込みボタン群 -->
+      <!-- グラフ下部の期間絞り込みボタン群（全期間を削除し「直近」に統一） -->
       <div class="period-filter-container">
-        <button class="period-btn" onclick="setPeriodFilter('3m')">3ヶ月</button>
-        <button class="period-btn" onclick="setPeriodFilter('6m')">6ヶ月</button>
-        <button class="period-btn" onclick="setPeriodFilter('1y')">1年</button>
-        <button class="period-btn active" onclick="setPeriodFilter('all')">全期間</button>
+        <button class="period-btn active" onclick="setPeriodFilter('3m')">直近3ヶ月</button>
+        <button class="period-btn" onclick="setPeriodFilter('6m')">直近6ヶ月</button>
+        <button class="period-btn" onclick="setPeriodFilter('1y')">直近1年</button>
       </div>
     </div>
 
@@ -522,7 +532,7 @@
     </div>
   </div>
 
-  <!-- 今日のトレーニング時間・カロリー入力モーダル (新設) -->
+  <!-- 今日のトレーニング時間・カロリー入力モーダル -->
   <div class="modal" id="calorie-record-modal">
     <div class="modal-content-scrollable">
       <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;">今日のトレーニング時間・カロリー記録</div>
@@ -685,7 +695,7 @@
 
     let currentLastRecordData = null;
     let editingBcId = null;
-    let currentPeriodFilter = 'all'; // 体組成グラフ期間フィルタ
+    let currentPeriodFilter = '3m'; // デフォルトを直近3ヶ月に変更
     let currentCaloriePeriod = 'weekly'; // カロリーグラフ期間フィルタ ('weekly', 'year')
     
     function getTodayString() {
@@ -947,7 +957,7 @@
 
     function getCaloriePeriodLabel(period) {
       if (period === 'weekly') return '1ヶ月(週別)';
-      return '過去1年';
+      return '直近1年';
     }
 
     function changeCalorieViewMonth(dir) {
@@ -1250,14 +1260,12 @@
     }
 
     function getPeriodLabel(period) {
-      if (period === '3m') return '3ヶ月';
-      if (period === '6m') return '6ヶ月';
-      if (period === '1y') return '1年';
-      return '全期間';
+      if (period === '3m') return '直近3ヶ月';
+      if (period === '6m') return '直近6ヶ月';
+      return '直近1年';
     }
 
     function filterDataByPeriod(data) {
-      if (currentPeriodFilter === 'all') return data;
       const now = new Date();
       const cutoff = new Date();
       if (currentPeriodFilter === '3m') cutoff.setMonth(now.getMonth() - 3);
@@ -1270,14 +1278,19 @@
     function drawCharts() {
       let sorted = [...bodyCompositions].sort((a, b) => new Date(a.date) - new Date(b.date));
       sorted = filterDataByPeriod(sorted);
-      const dates = sorted.map(b => b.date.slice(5));
+      
+      // yy/MM 形式のラベル作成
+      const labels = sorted.map(b => {
+        const yy = b.date.slice(2, 4);
+        const mm = b.date.slice(5, 7);
+        return `${yy}/${mm}`;
+      });
 
-      // グラフ上の各データポイントから単位を削除し、数値のみを表示するよう修正
-      drawLineChart('chart-weight', dates, sorted.map(b => parseFloat(b.weight) || 0));
-      drawLineChart('chart-muscle', dates, sorted.map(b => parseFloat(b.muscle) || 0));
-      drawLineChart('chart-fat', dates, sorted.map(b => parseFloat(b.fat) || 0));
-      drawLineChart('chart-fatrate', dates, sorted.map(b => parseFloat(b.fatRate) || 0));
-      drawLineChart('chart-bmr', dates, sorted.map(b => parseFloat(b.bmr) || 0));
+      drawLineChart('chart-weight', labels, sorted.map(b => parseFloat(b.weight) || 0));
+      drawLineChart('chart-muscle', labels, sorted.map(b => parseFloat(b.muscle) || 0));
+      drawLineChart('chart-fat', labels, sorted.map(b => parseFloat(b.fat) || 0));
+      drawLineChart('chart-fatrate', labels, sorted.map(b => parseFloat(b.fatRate) || 0));
+      drawLineChart('chart-bmr', labels, sorted.map(b => parseFloat(b.bmr) || 0));
     }
 
     function drawLineChart(canvasId, labels, data) {
@@ -1304,26 +1317,30 @@
         return;
       }
 
-      const padding = 30;
-      const w = logicalWidth - padding * 2;
-      const h = logicalHeight - padding * 2;
+      const paddingLeft = 30;
+      const paddingRight = 30;
+      const paddingTop = 25;
+      const paddingBottom = 40; // 斜めラベル表示用の下部パディング確保
+
+      const w = logicalWidth - paddingLeft - paddingRight;
+      const h = logicalHeight - paddingTop - paddingBottom;
 
       const minVal = Math.min(...data);
       const maxVal = Math.max(...data);
       const range = maxVal - minVal === 0 ? 1 : maxVal - minVal;
 
       const points = data.map((val, idx) => {
-        const x = padding + (w / (data.length === 1 ? 1 : data.length - 1)) * idx;
-        const y = logicalHeight - padding - ((val - minVal) / range) * h;
+        const x = paddingLeft + (w / (data.length === 1 ? 1 : data.length - 1)) * idx;
+        const y = paddingTop + h - ((val - minVal) / range) * h;
         return { x, y, val };
       });
 
       ctx.strokeStyle = '#2c2c2e';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(padding, padding);
-      ctx.lineTo(padding, logicalHeight - padding);
-      ctx.lineTo(logicalWidth - padding, logicalHeight - padding);
+      ctx.moveTo(paddingLeft, paddingTop);
+      ctx.lineTo(paddingLeft, paddingTop + h);
+      ctx.lineTo(logicalWidth - paddingRight, paddingTop + h);
       ctx.stroke();
 
       ctx.strokeStyle = '#ff453a';
@@ -1335,7 +1352,7 @@
       });
       ctx.stroke();
 
-      points.forEach(pt => {
+      points.forEach((pt, idx) => {
         ctx.fillStyle = '#ff453a';
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
@@ -1344,8 +1361,20 @@
         ctx.fillStyle = '#ffffff';
         ctx.font = '10px sans-serif';
         ctx.textAlign = 'center';
-        // タイトルに単位があるため、数値のみを表示
         ctx.fillText(`${pt.val}`, pt.x, pt.y - 8);
+
+        // カロリーグラフと同様に斜め（yy/MM形式）で該当月を表示
+        ctx.save();
+        ctx.fillStyle = '#8e8e93';
+        ctx.font = '9px sans-serif';
+        const labelX = pt.x;
+        const labelY = logicalHeight - paddingBottom + 8;
+        ctx.translate(labelX, labelY);
+        ctx.rotate(-Math.PI / 6); // 30度傾斜
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(labels[idx], 0, 0);
+        ctx.restore();
       });
     }
 
