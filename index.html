@@ -365,7 +365,7 @@
         <button class="cal-btn" onclick="changeCalorieViewMonth(1)">▶</button>
       </div>
 
-      <!-- カロリー収支グラフ描画エリア (バー＆数値の完全0非表示対応) -->
+      <!-- カロリー収支グラフ描画エリア -->
       <div style="background:#121214; border:1px solid var(--border-color); border-radius:14px; padding:12px;">
         <canvas id="chart-calorie" width="400" height="220" style="width:100%; height:220px;"></canvas>
       </div>
@@ -1115,19 +1115,17 @@
 
       const paddingLeft = 20;
       const paddingRight = 20;
-      const paddingTop = 25; // データラベル表示用の余白
+      const paddingTop = 25;
       const paddingBottom = periodType === 'year' ? 45 : 30;
 
       const w = logicalWidth - paddingLeft - paddingRight;
       const h = logicalHeight - paddingTop - paddingBottom;
       const centerY = paddingTop + h / 2;
 
-      // ベースレンジと上下余白対応
       let baseMax = (periodType === 'weekly') ? 1800 : 8000;
       let dataMax = Math.max(...data.map(v => Math.abs(v)), 1);
       let scaleMax = Math.max(baseMax, dataMax) * 1.25;
 
-      // Y軸メモリ数値を廃止し、0の中央基準線のみ描画
       ctx.lineWidth = 1;
       ctx.strokeStyle = '#3a3a3c';
       ctx.beginPath();
@@ -1140,7 +1138,6 @@
       data.forEach((val, idx) => {
         const x = paddingLeft + (w / data.length) * idx + (w / data.length - barWidth) / 2;
         
-        // 収支が0ではない場合のみ、バーと数値ラベルを描画する
         if (val !== 0) {
           const barHeight = (Math.abs(val) / scaleMax) * (h / 2);
           let y = centerY;
@@ -1154,7 +1151,6 @@
 
           ctx.fillRect(x, y, barWidth, barHeight);
 
-          // 各棒グラフの先端に実際の数値を連動して表示
           ctx.save();
           ctx.font = '8px sans-serif';
           ctx.textAlign = 'center';
@@ -1172,22 +1168,19 @@
           ctx.restore();
         }
 
-        // X軸ラベル描画（常に表示）
         ctx.save();
         ctx.fillStyle = '#8e8e93';
         ctx.font = '9px sans-serif';
         
         if (periodType === 'year') {
-          // 月別は文字を少し斜めに傾けて描画
           const labelX = x + barWidth / 2;
           const labelY = logicalHeight - paddingBottom + 8;
           ctx.translate(labelX, labelY);
-          ctx.rotate(-Math.PI / 6); // 30度傾斜
+          ctx.rotate(-Math.PI / 6);
           ctx.textAlign = 'right';
           ctx.textBaseline = 'middle';
           ctx.fillText(labels[idx], 0, 0);
         } else {
-          // 週別は水平表示
           ctx.textAlign = 'center';
           ctx.textBaseline = 'top';
           ctx.fillText(labels[idx], x + barWidth / 2, logicalHeight - paddingBottom + 6);
@@ -1279,14 +1272,15 @@
       sorted = filterDataByPeriod(sorted);
       const dates = sorted.map(b => b.date.slice(5));
 
-      drawLineChart('chart-weight', dates, sorted.map(b => parseFloat(b.weight) || 0), 'kg');
-      drawLineChart('chart-muscle', dates, sorted.map(b => parseFloat(b.muscle) || 0), 'kg');
-      drawLineChart('chart-fat', dates, sorted.map(b => parseFloat(b.fat) || 0), 'kg');
-      drawLineChart('chart-fatrate', dates, sorted.map(b => parseFloat(b.fatRate) || 0), '%');
-      drawLineChart('chart-bmr', dates, sorted.map(b => parseFloat(b.bmr) || 0), 'kcal');
+      // グラフ上の各データポイントから単位を削除し、数値のみを表示するよう修正
+      drawLineChart('chart-weight', dates, sorted.map(b => parseFloat(b.weight) || 0));
+      drawLineChart('chart-muscle', dates, sorted.map(b => parseFloat(b.muscle) || 0));
+      drawLineChart('chart-fat', dates, sorted.map(b => parseFloat(b.fat) || 0));
+      drawLineChart('chart-fatrate', dates, sorted.map(b => parseFloat(b.fatRate) || 0));
+      drawLineChart('chart-bmr', dates, sorted.map(b => parseFloat(b.bmr) || 0));
     }
 
-    function drawLineChart(canvasId, labels, data, unit) {
+    function drawLineChart(canvasId, labels, data) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -1350,7 +1344,8 @@
         ctx.fillStyle = '#ffffff';
         ctx.font = '10px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(`${pt.val}${unit}`, pt.x, pt.y - 8);
+        // タイトルに単位があるため、数値のみを表示
+        ctx.fillText(`${pt.val}`, pt.x, pt.y - 8);
       });
     }
 
