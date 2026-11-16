@@ -365,7 +365,7 @@
         <button class="cal-btn" onclick="changeCalorieViewMonth(1)">▶</button>
       </div>
 
-      <!-- カロリー収支グラフ描画エリア (Y軸メモリ廃止・実数値連動非表示対応) -->
+      <!-- カロリー収支グラフ描画エリア (バー＆数値の完全0非表示対応) -->
       <div style="background:#121214; border:1px solid var(--border-color); border-radius:14px; padding:12px;">
         <canvas id="chart-calorie" width="400" height="220" style="width:100%; height:220px;"></canvas>
       </div>
@@ -1139,21 +1139,22 @@
 
       data.forEach((val, idx) => {
         const x = paddingLeft + (w / data.length) * idx + (w / data.length - barWidth) / 2;
-        const barHeight = (Math.abs(val) / scaleMax) * (h / 2);
         
-        let y = centerY;
-        if (val >= 0) {
-          y = centerY - barHeight;
-          ctx.fillStyle = '#0a84ff';
-        } else {
-          y = centerY;
-          ctx.fillStyle = '#ff453a';
-        }
-
-        ctx.fillRect(x, y, barWidth, Math.max(1, barHeight));
-
-        // 収支が0ではない場合のみ、各棒グラフの先端に実際の数値を連動して表示
+        // 収支が0ではない場合のみ、バーと数値ラベルを描画する
         if (val !== 0) {
+          const barHeight = (Math.abs(val) / scaleMax) * (h / 2);
+          let y = centerY;
+          if (val > 0) {
+            y = centerY - barHeight;
+            ctx.fillStyle = '#0a84ff';
+          } else {
+            y = centerY;
+            ctx.fillStyle = '#ff453a';
+          }
+
+          ctx.fillRect(x, y, barWidth, barHeight);
+
+          // 各棒グラフの先端に実際の数値を連動して表示
           ctx.save();
           ctx.font = '8px sans-serif';
           ctx.textAlign = 'center';
@@ -1171,7 +1172,7 @@
           ctx.restore();
         }
 
-        // X軸ラベル描画
+        // X軸ラベル描画（常に表示）
         ctx.save();
         ctx.fillStyle = '#8e8e93';
         ctx.font = '9px sans-serif';
