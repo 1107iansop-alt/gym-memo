@@ -96,6 +96,8 @@
     .action-btn-list { display: flex; flex-direction: column; gap: 5px; }
     .mini-btn { background-color: var(--accent-red); color: white; border: none; border-radius: 8px; padding: 7px 6px; font-weight: bold; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; width: 100%; }
     .mini-btn-secondary { background-color: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); }
+    
+    .btn-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
 
     .empty-state { background-color: var(--card-bg); border-radius: 12px; padding: 30px 20px; text-align: center; color: var(--text-sub); font-size: 0.9rem; margin-bottom: 16px; }
 
@@ -136,7 +138,7 @@
     .max-rm-val { font-weight: 800; color: var(--accent-red); text-align: right; padding-right: 12px; }
     .max-rm-actual { color: var(--text-sub); font-size: 0.78rem; text-align: left; }
 
-    /* フッターナビゲーション (4タブ固定) */
+    /* フッターナビゲーション (5タブ固定) */
     .footer-nav {
       position: absolute; 
       bottom: 0; 
@@ -146,13 +148,13 @@
       background: #1c1c1e; 
       border-top: 1px solid var(--border-color);
       display: grid; 
-      grid-template-columns: repeat(4, 1fr); 
+      grid-template-columns: repeat(5, 1fr); 
       padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px)) 0; 
       min-height: 54px; 
       z-index: 9999;
       flex-shrink: 0;
     }
-    .nav-item { background: none; border: none; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; gap: 2px; cursor: pointer; }
+    .nav-item { background: none; border: none; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.6rem; gap: 2px; cursor: pointer; }
     .nav-item.active { color: var(--accent-red); }
     .nav-item span.icon { font-size: 1rem; }
 
@@ -212,7 +214,7 @@
 
     /* セット行 (通常種目用) */
     .set-row { display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
-    /* セット行 (自重種目用: 重さ、加重、回数が並ぶため微調整) */
+    /* セット行 (自重種目用) */
     .set-row.bw-row { display: grid; grid-template-columns: 32px 22px 64px 22px 54px 22px 48px 44px 26px; gap: 3px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
     
     .set-num { font-weight: bold; color: var(--accent-red); text-align: center; font-size: 0.85rem; white-space: nowrap; }
@@ -242,7 +244,6 @@
     .bc-date { font-weight: bold; font-size: 0.95rem; color: var(--accent-red); }
     .bc-edit-link { color: var(--accent-blue); font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
     
-    /* 測定履歴一覧のレイアウト修正 (改行・崩れ防止) */
     .bc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 12px; font-size: 0.8rem; color: var(--text-sub); }
     .bc-grid div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .bc-grid span { color: var(--text-main); font-weight: 600; }
@@ -257,10 +258,15 @@
     .graph-slide-card { flex: 0 0 100%; width: 100%; scroll-snap-align: center; background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; }
     .graph-slide-title { font-size: 0.85rem; font-weight: bold; color: var(--text-main); margin-bottom: 8px; text-align: center; }
 
-    /* 期間絞り込みボタン群 (グラフの下部) - 4つ均等配置・大きさ統一 */
     .period-filter-container { display: flex; gap: 8px; width: 100%; margin-top: 10px; }
     .period-btn { flex: 1; background: #2c2c2e; color: var(--text-sub); border: 1px solid var(--border-color); padding: 6px 0; border-radius: 8px; font-size: 0.75rem; font-weight: 600; text-align: center; cursor: pointer; white-space: nowrap; }
     .period-btn.active { background: var(--accent-red); color: white; border-color: var(--accent-red); }
+
+    /* カロリータブ関連のスタイル */
+    .calorie-history-card { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+    .calorie-card-header { font-weight: bold; font-size: 0.9rem; color: var(--accent-red); margin-bottom: 6px; }
+    .calorie-card-row { display: grid; grid-template-columns: 1fr 1fr; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 3px; }
+    .calorie-card-row span { color: var(--text-main); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -275,7 +281,7 @@
         <div class="calendar-container">
           <div class="cal-header">
             <button class="cal-btn" onclick="changeMonth(-1)">◀</button>
-            <span id="cal-title">2026年 11月</span>
+            <span id="cal-title">2026-11</span>
             <button class="cal-btn" onclick="changeMonth(1)">▶</button>
           </div>
           <div class="calendar-grid" id="calendar-grid">
@@ -299,8 +305,11 @@
 
           <div class="action-btn-list">
             <button class="mini-btn" onclick="openModal()">今日のトレーニング追加</button>
-            <button class="mini-btn mini-btn-secondary" onclick="shareCurrentDay()">当日サマリ</button>
-            <button class="mini-btn mini-btn-secondary" onclick="openSummaryModal()">月間サマリ</button>
+            <button class="mini-btn" onclick="openCalorieRecordModal()">今日のトレーニング時間</button>
+            <div class="btn-row-2">
+              <button class="mini-btn mini-btn-secondary" onclick="shareCurrentDay()">当日サマリ</button>
+              <button class="mini-btn mini-btn-secondary" onclick="openSummaryModal()">月間サマリ</button>
+            </div>
             <button class="mini-btn mini-btn-secondary" onclick="openManageModal()">部位/種目の管理</button>
           </div>
         </div>
@@ -317,7 +326,7 @@
     <div class="card">
       <div class="cal-header">
         <button class="cal-btn" onclick="changeHistoryMonth(-1)">◀</button>
-        <span id="history-cal-title">2026年 11月</span>
+        <span id="history-cal-title">2026-11</span>
         <button class="cal-btn" onclick="changeHistoryMonth(1)">▶</button>
       </div>
       <div class="calendar-grid" id="history-calendar-grid">
@@ -336,6 +345,29 @@
       <div class="max-rm-header">種目別 MAX RM (Epley式)</div>
       <div id="max-rm-list-display"></div>
     </div>
+  </div>
+
+  <!-- カロリータブ (新設) -->
+  <div id="tab-calorie" class="tab-content">
+    <div class="card">
+      <div style="font-weight:bold; color:var(--accent-red); font-size:1rem; margin-bottom:10px;">■ 収支カロリー推移</div>
+      
+      <!-- 期間絞り込みボタン群 (1ヶ月 / 1年 / 全期間) -->
+      <div class="period-filter-container" style="margin-bottom: 12px;">
+        <button class="period-btn active" onclick="setCaloriePeriod('1m')">1ヶ月</button>
+        <button class="period-btn" onclick="setCaloriePeriod('1y')">1年</button>
+        <button class="period-btn" onclick="setCaloriePeriod('all')">全期間</button>
+      </div>
+
+      <!-- 収支カロリー グラフ描画エリア (Retina対応) -->
+      <div style="background:#121214; border:1px solid var(--border-color); border-radius:14px; padding:12px;">
+        <div class="graph-slide-title" id="calorie-chart-title">収支カロリー (日毎)</div>
+        <canvas id="chart-calorie" width="400" height="200" style="width:100%; height:200px;"></canvas>
+      </div>
+    </div>
+
+    <div style="font-weight: bold; font-size: 0.9rem; color: var(--accent-red); margin: 16px 0 10px 0;">■ 収支カロリー履歴一覧 (月別)</div>
+    <div id="calorie-history-list"></div>
   </div>
 
   <!-- 体組成タブ -->
@@ -392,7 +424,7 @@
     <div id="body-history-list"></div>
   </div>
 
-  <!-- フッターナビゲーション (4タブ固定) -->
+  <!-- フッターナビゲーション (5タブ固定) -->
   <nav class="footer-nav">
     <button class="nav-item active" onclick="switchTab('home', this)">
       <span class="icon">🏠</span>
@@ -405,6 +437,10 @@
     <button class="nav-item" onclick="switchTab('maxrm', this)">
       <span class="icon">🏋️</span>
       <span>MAX RM</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('calorie', this)">
+      <span class="icon">📊</span>
+      <span>カロリー</span>
     </button>
     <button class="nav-item" onclick="switchTab('body', this)">
       <span class="icon">📈</span>
@@ -481,6 +517,42 @@
     </div>
   </div>
 
+  <!-- 今日のトレーニング時間・カロリー入力モーダル (新設) -->
+  <div class="modal" id="calorie-record-modal">
+    <div class="modal-content-scrollable">
+      <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;">今日のトレーニング時間・カロリー記録</div>
+      
+      <div class="form-group">
+        <label class="form-label">日付</label>
+        <input type="date" id="cr-date" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">筋トレ時間 (分)</label>
+        <input type="number" id="cr-training-minutes" class="form-input" placeholder="例: 60">
+      </div>
+      <div class="form-group">
+        <label class="form-label">摂取カロリー (kcal)</label>
+        <input type="number" id="cr-intake-calories" class="form-input" placeholder="例: 2000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">活動量</label>
+        <select id="cr-activity-level" class="form-select">
+          <option value="low">低：休日外出なし (250 kcal)</option>
+          <option value="mid" selected>中：休日外出あり (450 kcal)</option>
+          <option value="high">高：仕事日 (750 kcal)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">追加の消費カロリー (kcal ※任意)</label>
+        <input type="number" id="cr-additional-calories" class="form-input" placeholder="例: 200 (未入力時は0)">
+      </div>
+
+      <button class="submit-btn" onclick="saveCalorieRecord()">データを保存する</button>
+      <button class="delete-record-btn" id="delete-cr-btn" onclick="deleteCalorieRecord()" style="display:none;">この日のカロリーデータを削除</button>
+      <button class="close-modal" onclick="closeCalorieRecordModal()">キャンセル</button>
+    </div>
+  </div>
+
   <!-- 体組成入力モーダル -->
   <div class="modal" id="body-modal">
     <div class="modal-content-scrollable">
@@ -525,12 +597,12 @@
   <div class="modal" id="summary-modal">
     <div class="modal-content-scrollable">
       <div id="summary-capture-target" style="padding: 10px; background: var(--card-bg); border-radius: 16px;">
-        <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;" id="summary-modal-main-title">2026年 11月 サマリ</div>
+        <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent-red); text-align: center; margin-bottom: 15px;" id="summary-modal-main-title">2026-11 サマリ</div>
         
         <div class="card" style="margin-bottom: 16px;">
           <div class="cal-header">
             <button class="cal-btn" onclick="changeSummaryMonth(-1)">◀</button>
-            <span id="summary-cal-title">2026年 11月</span>
+            <span id="summary-cal-title">2026-11</span>
             <button class="cal-btn" onclick="changeSummaryMonth(1)">▶</button>
           </div>
           <div class="calendar-grid" id="summary-calendar-grid">
@@ -604,10 +676,12 @@
     };
     let workouts = JSON.parse(localStorage.getItem('gym_workouts_v2')) || [];
     let bodyCompositions = JSON.parse(localStorage.getItem('gym_body_compositions')) || [];
+    let calorieRecords = JSON.parse(localStorage.getItem('gym_calorie_records')) || [];
 
     let currentLastRecordData = null;
     let editingBcId = null;
-    let currentPeriodFilter = 'all'; // グラフ期間フィルタ ('3m', '6m', '1y', 'all')
+    let currentPeriodFilter = 'all'; // 体組成グラフ期間フィルタ
+    let currentCaloriePeriod = '1m'; // カロリーグラフ期間フィルタ ('1m', '1y', 'all')
     
     function getTodayString() {
       const now = new Date();
@@ -623,6 +697,10 @@
     let summaryViewMonth = new Date().getMonth();
 
     let currentHistoryPart = 'ALL';
+
+    function formatYM(y, m) {
+      return `${y}-${String(m + 1).padStart(2, '0')}`;
+    }
 
     function calculateCardioSpeed() {
       const timeVal = parseFloat(document.getElementById('cardio-time').value);
@@ -647,6 +725,12 @@
       return sorted[0].weight ? parseFloat(sorted[0].weight) : null;
     }
 
+    function getLatestBmr() {
+      if (!bodyCompositions || bodyCompositions.length === 0) return 1500; // デフォルト値
+      const sorted = [...bodyCompositions].sort((a, b) => new Date(b.date) - new Date(a.date));
+      return sorted[0].bmr ? parseFloat(sorted[0].bmr) : 1500;
+    }
+
     function switchTab(tabId, el) {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -659,18 +743,18 @@
         renderHistoryCalendar();
       } else if (tabId === 'maxrm') {
         renderMaxRMTab();
+      } else if (tabId === 'calorie') {
+        renderCalorieTab();
       } else if (tabId === 'body') {
         renderBodyTab();
       }
     }
 
-    // 該当種目が自重設定されているか判定
     function isBwExercise(exerciseName) {
       const setting = exerciseSettings[exerciseName];
       return setting && setting.isBw;
     }
 
-    // セットの実効重量計算 (自重設定ありなら (体重×係数) + 加重、通常なら weight)
     function calcEffectiveWeightForSet(s, exerciseName) {
       const setting = exerciseSettings[exerciseName];
       if (setting && setting.isBw) {
@@ -684,7 +768,6 @@
       }
     }
 
-    // 負荷量計算
     function calculateSetTonnage(s, exerciseName) {
       const reps = s.reps || 0;
       if (reps <= 0) return 0;
@@ -770,7 +853,279 @@
       return historicalMax;
     }
 
-    // 体組成タブ描画・グラフ制御
+    // --- カロリータブ関連のロジック ---
+    function openCalorieRecordModal() {
+      const existing = calorieRecords.find(c => c.date === selectedDate);
+      document.getElementById('cr-date').value = selectedDate;
+      const delBtn = document.getElementById('delete-cr-btn');
+
+      if (existing) {
+        document.getElementById('cr-training-minutes').value = existing.trainingMinutes || '';
+        document.getElementById('cr-intake-calories').value = existing.intakeCalories || '';
+        document.getElementById('cr-activity-level').value = existing.activityLevel || 'mid';
+        document.getElementById('cr-additional-calories').value = existing.additionalCalories || '';
+        delBtn.style.display = 'block';
+      } else {
+        // 当日の筋トレ時間がワークアウト記録からあれば自動反映
+        let totalMin = 0;
+        workouts.filter(w => w.date === selectedDate).forEach(w => {
+          if (!w.isCardio && w.sets) {
+            totalMin += w.sets.length * 3; // 1セット約3分と仮定（または0でも可。お好みで）
+          } else if (w.isCardio && w.cardio && w.cardio.time) {
+            totalMin += parseFloat(w.cardio.time) || 0;
+          }
+        });
+
+        document.getElementById('cr-training-minutes').value = totalMin > 0 ? totalMin : '';
+        document.getElementById('cr-intake-calories').value = '';
+        document.getElementById('cr-activity-level').value = 'mid';
+        document.getElementById('cr-additional-calories').value = '';
+        delBtn.style.display = 'none';
+      }
+
+      document.getElementById('calorie-record-modal').classList.add('open');
+    }
+
+    function closeCalorieRecordModal() {
+      document.getElementById('calorie-record-modal').classList.remove('open');
+    }
+
+    function saveCalorieRecord() {
+      const date = document.getElementById('cr-date').value;
+      if (!date) { alert('日付を入力してください'); return; }
+
+      const trainingMinutes = parseFloat(document.getElementById('cr-training-minutes').value) || 0;
+      const intakeCalories = parseFloat(document.getElementById('cr-intake-calories').value) || 0;
+      const activityLevel = document.getElementById('cr-activity-level').value;
+      const additionalCalories = parseFloat(document.getElementById('cr-additional-calories').value) || 0;
+
+      const record = {
+        id: Date.now(),
+        date,
+        trainingMinutes,
+        intakeCalories,
+        activityLevel,
+        additionalCalories
+      };
+
+      const idx = calorieRecords.findIndex(c => c.date === date);
+      if (idx !== -1) {
+        calorieRecords[idx] = record;
+      } else {
+        calorieRecords.push(record);
+      }
+
+      localStorage.setItem('gym_calorie_records', JSON.stringify(calorieRecords));
+      closeCalorieRecordModal();
+      renderCalorieTab();
+    }
+
+    function deleteCalorieRecord() {
+      const date = document.getElementById('cr-date').value;
+      if (confirm(`${date} のカロリーデータを削除しますか？`)) {
+        calorieRecords = calorieRecords.filter(c => c.date !== date);
+        localStorage.setItem('gym_calorie_records', JSON.stringify(calorieRecords));
+        closeCalorieRecordModal();
+        renderCalorieTab();
+      }
+    }
+
+    function setCaloriePeriod(period) {
+      currentCaloriePeriod = period;
+      document.querySelectorAll('#tab-calorie .period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.includes(getCaloriePeriodLabel(period)));
+      });
+      renderCalorieTab();
+    }
+
+    function getCaloriePeriodLabel(period) {
+      if (period === '1m') return '1ヶ月';
+      if (period === '1y') return '1年';
+      return '全期間';
+    }
+
+    function calculateDailyBalance(cRec) {
+      const latestW = getLatestWeight() || 65; // デフォルト65kg
+      const bmr = getLatestBmr();
+
+      // 筋トレ消費： 4.5 × 最新体重 × (入力時間 / 60) × 1.05
+      const strengthCal = 4.5 * latestW * (cRec.trainingMinutes / 60) * 1.05;
+
+      // 活動消費マッピング (低:250 / 中:450 / 高:750)
+      let activityCal = 450;
+      if (cRec.activityLevel === 'low') activityCal = 250;
+      else if (cRec.activityLevel === 'high') activityCal = 750;
+
+      // 有酸素の入力カロリー合算
+      let cardioCal = 0;
+      workouts.filter(w => w.date === cRec.date && w.isCardio && w.cardio && w.cardio.cal).forEach(w => {
+        cardioCal += parseFloat(w.cardio.cal) || 0;
+      });
+
+      const addCal = cRec.additionalCalories || 0;
+
+      const totalSpent = bmr + activityCal + strengthCal + cardioCal + addCal;
+      const balance = cRec.intakeCalories - totalSpent;
+
+      return {
+        intake: cRec.intakeCalories,
+        spent: totalSpent,
+        balance: balance,
+        trainingMinutes: cRec.trainingMinutes,
+        strengthCal
+      };
+    }
+
+    function renderCalorieTab() {
+      const listEl = document.getElementById('calorie-history-list');
+      const chartTitleEl = document.getElementById('calorie-chart-title');
+
+      if (calorieRecords.length === 0) {
+        listEl.innerHTML = `<div class="empty-state">カロリーデータがありません。ホームの「今日のトレーニング時間」から記録してください。</div>`;
+        drawCalorieChart([], [], '1m');
+        return;
+      }
+
+      let sorted = [...calorieRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      // 期間フィルター適用 (グラフ用)
+      let chartData = [];
+      if (currentCaloriePeriod === '1m') {
+        chartTitleEl.textContent = '収支カロリー (日毎・直近30日)';
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 30);
+        chartData = sorted.filter(c => new Date(c.date) >= cutoff).map(c => {
+          const res = calculateDailyBalance(c);
+          return { label: c.date.slice(5), balance: res.balance };
+        });
+      } else if (currentCaloriePeriod === '1y') {
+        chartTitleEl.textContent = '収支カロリー (月毎・過去1年)';
+        chartData = getMonthlyAggregatedData(sorted, 12);
+      } else {
+        chartTitleEl.textContent = '収支カロリー (月毎・全期間)';
+        chartData = getMonthlyAggregatedData(sorted, 999);
+      }
+
+      drawCalorieChart(chartData.map(d => d.label), chartData.map(d => d.balance), currentCaloriePeriod);
+
+      // 月別履歴一覧リストの作成
+      let monthlyMap = {};
+      sorted.forEach(c => {
+        const ym = c.date.slice(0, 7); // YYYY-MM
+        if (!monthlyMap[ym]) {
+          monthlyMap[ym] = { totalMin: 0, totalSpent: 0, totalIntake: 0, totalBalance: 0, count: 0 };
+        }
+        const res = calculateDailyBalance(c);
+        monthlyMap[ym].totalMin += c.trainingMinutes;
+        monthlyMap[ym].totalSpent += res.spent;
+        monthlyMap[ym].totalIntake += res.intake;
+        monthlyMap[ym].totalBalance += res.balance;
+        monthlyMap[ym].count++;
+      });
+
+      const ymKeys = Object.keys(monthlyMap).sort().reverse();
+      let listHtml = '';
+      ymKeys.forEach(ym => {
+        const m = monthlyMap[ym];
+        listHtml += `
+          <div class="calorie-history-card">
+            <div class="calorie-card-header">${ym}</div>
+            <div class="calorie-card-row">
+              <div>筋トレ時間: <span>${m.totalMin} 分</span></div>
+              <div>消費カロリー: <span>${Math.round(m.totalSpent)} kcal</span></div>
+            </div>
+            <div class="calorie-card-row">
+              <div>摂取カロリー: <span>${Math.round(m.totalIntake)} kcal</span></div>
+              <div>収支カロリー: <span style="color:${m.totalBalance >= 0 ? '#0a84ff' : '#ff453a'};">${Math.round(m.totalBalance)} kcal</span></div>
+            </div>
+          </div>
+        `;
+      });
+
+      listEl.innerHTML = listHtml;
+    }
+
+    function getMonthlyAggregatedData(sortedRecords, maxMonths) {
+      let map = {};
+      sortedRecords.forEach(c => {
+        const ym = c.date.slice(0, 7);
+        if (!map[ym]) map[ym] = { balanceSum: 0 };
+        const res = calculateDailyBalance(c);
+        map[ym].balanceSum += res.balance;
+      });
+
+      let keys = Object.keys(map).sort();
+      if (keys.length > maxMonths) {
+        keys = keys.slice(keys.length - maxMonths);
+      }
+
+      return keys.map(ym => ({
+        label: ym,
+        balance: Math.round(map[ym].balanceSum)
+      }));
+    }
+
+    function drawCalorieChart(labels, data, periodType) {
+      const canvas = document.getElementById('chart-calorie');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const logicalWidth = rect.width > 0 ? rect.width : 400;
+      const logicalHeight = 200;
+
+      canvas.width = logicalWidth * dpr;
+      canvas.height = logicalHeight * dpr;
+      ctx.scale(dpr, dpr);
+
+      ctx.clearRect(0, 0, logicalWidth, logicalHeight);
+
+      if (data.length === 0) {
+        ctx.fillStyle = '#8e8e93';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('データがありません', logicalWidth / 2, logicalHeight / 2);
+        return;
+      }
+
+      const padding = 35;
+      const w = logicalWidth - padding * 2;
+      const h = logicalHeight - padding * 2;
+      const centerY = padding + h / 2;
+
+      // 最大絶対値からスケール算出
+      const absMax = Math.max(500, ...data.map(v => Math.abs(v)));
+
+      // ゼロ基準中央ライン
+      ctx.strokeStyle = '#3a3a3c';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding, centerY);
+      ctx.lineTo(logicalWidth - padding, centerY);
+      ctx.stroke();
+
+      // 棒グラフの描画
+      const barWidth = Math.max(4, Math.min(24, (w / data.length) - 4));
+
+      data.forEach((val, idx) => {
+        const x = padding + (w / data.length) * idx + (w / data.length - barWidth) / 2;
+        const barHeight = (Math.abs(val) / absMax) * (h / 2);
+        
+        let y = centerY;
+        if (val >= 0) {
+          y = centerY - barHeight;
+          ctx.fillStyle = '#0a84ff'; // プラスは上向き青棒
+        } else {
+          y = centerY;
+          ctx.fillStyle = '#ff453a'; // マイナスは下向き赤棒
+        }
+
+        ctx.fillRect(x, y, barWidth, barHeight);
+      });
+    }
+
+    // --- 体組成タブ描画・グラフ制御 ---
     function renderBodyTab() {
       const listEl = document.getElementById('body-history-list');
       bodyCompositions.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -824,7 +1179,7 @@
 
     function setPeriodFilter(period) {
       currentPeriodFilter = period;
-      document.querySelectorAll('.period-btn').forEach(btn => {
+      document.querySelectorAll('#tab-body .period-btn').forEach(btn => {
         btn.classList.toggle('active', btn.textContent.includes(getPeriodLabel(period)));
       });
       drawCharts();
@@ -865,7 +1220,6 @@
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       
-      // 高解像度（Retina対応）スケーリング
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
       const logicalWidth = rect.width > 0 ? rect.width : 400;
@@ -899,7 +1253,6 @@
         return { x, y, val };
       });
 
-      // グリッド線
       ctx.strokeStyle = '#2c2c2e';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -908,7 +1261,6 @@
       ctx.lineTo(logicalWidth - padding, logicalHeight - padding);
       ctx.stroke();
 
-      // 折れ線
       ctx.strokeStyle = '#ff453a';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -918,7 +1270,6 @@
       });
       ctx.stroke();
 
-      // プロット点と数値
       points.forEach(pt => {
         ctx.fillStyle = '#ff453a';
         ctx.beginPath();
@@ -1081,8 +1432,9 @@
     }
 
     function updateSummaryModalContent() {
-      document.getElementById('summary-modal-main-title').textContent = `${summaryViewYear}年 ${summaryViewMonth + 1}月 サマリ`;
-      document.getElementById('summary-cal-title').textContent = `${summaryViewYear}年 ${summaryViewMonth + 1}月`;
+      const ymStr = formatYM(summaryViewYear, summaryViewMonth);
+      document.getElementById('summary-modal-main-title').textContent = `${ymStr} サマリ`;
+      document.getElementById('summary-cal-title').textContent = ymStr;
 
       const monthWorkouts = workouts.filter(w => {
         const d = new Date(w.date);
@@ -1215,6 +1567,7 @@
 
     function shareSummaryMonthImage() {
       const target = document.getElementById('summary-capture-target');
+      const ymStr = formatYM(summaryViewYear, summaryViewMonth);
       html2canvas(target, { 
         backgroundColor: '#1c1c1e', 
         scale: 2,
@@ -1222,16 +1575,16 @@
         windowHeight: target.scrollHeight
       }).then(canvas => {
         canvas.toBlob(blob => {
-          const file = new File([blob], `Workout-Log_月間サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`, { type: 'image/png' });
+          const file = new File([blob], `Workout-Log_月間サマリ_${ymStr}.png`, { type: 'image/png' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({
               files: [file],
-              title: `${summaryViewYear}年${summaryViewMonth + 1}月 月間サマリ`,
+              title: `${ymStr} 月間サマリ`,
               text: 'Workout-Log 月間サマリ'
             }).catch(() => {});
           } else {
             const link = document.createElement('a');
-            link.download = `Workout-Log_月間サマリ_${summaryViewYear}年${summaryViewMonth + 1}月.png`;
+            link.download = `Workout-Log_月間サマリ_${ymStr}.png`;
             link.href = canvas.toDataURL();
             link.click();
           }
@@ -1692,7 +2045,7 @@
     }
 
     function renderHome() {
-      document.getElementById('cal-title').textContent = `${viewYear}年 ${viewMonth + 1}月`;
+      document.getElementById('cal-title').textContent = formatYM(viewYear, viewMonth);
 
       const activeDaysSet = new Set(workouts.map(w => w.date));
 
@@ -1850,7 +2203,7 @@
     }
 
     function renderHistoryCalendar() {
-      document.getElementById('history-cal-title').textContent = `${historyViewYear}年 ${historyViewMonth + 1}月`;
+      document.getElementById('history-cal-title').textContent = formatYM(historyViewYear, historyViewMonth);
 
       let targetWorkoutsForCalendar = workouts;
       if (currentHistoryPart !== 'ALL') {
