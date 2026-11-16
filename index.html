@@ -365,9 +365,9 @@
         <button class="cal-btn" onclick="changeCalorieViewMonth(1)">▶</button>
       </div>
 
-      <!-- カロリー収支グラフ描画エリア (Y軸メモリ対応) -->
+      <!-- カロリー収支グラフ描画エリア (Y軸メモリ廃止・実数値連動表示対応) -->
       <div style="background:#121214; border:1px solid var(--border-color); border-radius:14px; padding:12px;">
-        <canvas id="chart-calorie" width="400" height="210" style="width:100%; height:210px;"></canvas>
+        <canvas id="chart-calorie" width="400" height="220" style="width:100%; height:220px;"></canvas>
       </div>
     </div>
 
@@ -1113,41 +1113,29 @@
         return;
       }
 
-      const paddingLeft = 50;
+      const paddingLeft = 20;
       const paddingRight = 20;
-      const paddingTop = 15;
+      const paddingTop = 25; // データラベル表示用の余白
       const paddingBottom = periodType === 'year' ? 45 : 30;
 
       const w = logicalWidth - paddingLeft - paddingRight;
       const h = logicalHeight - paddingTop - paddingBottom;
       const centerY = paddingTop + h / 2;
 
-      // ベースレンジと余白対応
+      // ベースレンジと上下余白対応
       let baseMax = (periodType === 'weekly') ? 1800 : 8000;
       let dataMax = Math.max(...data.map(v => Math.abs(v)), 1);
-      let scaleMax = Math.max(baseMax, dataMax) * 1.15; // 上下余白
+      let scaleMax = Math.max(baseMax, dataMax) * 1.25;
 
-      // メモリ目盛りの決定
-      let ticks = (periodType === 'weekly') ? [1800, 900, 0, -900, -1800] : [8000, 4000, 0, -4000, -8000];
-
-      // グリッドとY軸メモリの描画
+      // Y軸メモリ数値を廃止し、0の中央基準線のみ描画
       ctx.lineWidth = 1;
-      ticks.forEach(tickVal => {
-        const y = centerY - (tickVal / scaleMax) * (h / 2);
-        ctx.strokeStyle = (tickVal === 0) ? '#555558' : '#2c2c2e';
-        ctx.beginPath();
-        ctx.moveTo(paddingLeft, y);
-        ctx.lineTo(logicalWidth - paddingRight, y);
-        ctx.stroke();
+      ctx.strokeStyle = '#3a3a3c';
+      ctx.beginPath();
+      ctx.moveTo(paddingLeft, centerY);
+      ctx.lineTo(logicalWidth - paddingRight, centerY);
+      ctx.stroke();
 
-        ctx.fillStyle = '#8e8e93';
-        ctx.font = '9px sans-serif';
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(tickVal, paddingLeft - 6, y);
-      });
-
-      const barWidth = Math.max(4, Math.min(24, (w / data.length) - 4));
+      const barWidth = Math.max(6, Math.min(24, (w / data.length) - 6));
 
       data.forEach((val, idx) => {
         const x = paddingLeft + (w / data.length) * idx + (w / data.length - barWidth) / 2;
@@ -1162,9 +1150,26 @@
           ctx.fillStyle = '#ff453a';
         }
 
-        ctx.fillRect(x, y, barWidth, barHeight);
+        ctx.fillRect(x, y, barWidth, Math.max(1, barHeight));
 
-        // ラベル描画
+        // 各棒グラフの先端に実際の数値を連動して表示
+        ctx.save();
+        ctx.font = '8px sans-serif';
+        ctx.textAlign = 'center';
+        const textVal = (val > 0 ? `+${val}` : `${val}`);
+
+        if (val >= 0) {
+          ctx.fillStyle = '#0a84ff';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(textVal, x + barWidth / 2, y - 3);
+        } else {
+          ctx.fillStyle = '#ff453a';
+          ctx.textBaseline = 'top';
+          ctx.fillText(textVal, x + barWidth / 2, y + barHeight + 3);
+        }
+        ctx.restore();
+
+        // X軸ラベル描画
         ctx.save();
         ctx.fillStyle = '#8e8e93';
         ctx.font = '9px sans-serif';
