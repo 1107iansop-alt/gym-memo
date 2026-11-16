@@ -365,7 +365,7 @@
         <button class="cal-btn" onclick="changeCalorieViewMonth(1)">▶</button>
       </div>
 
-      <!-- カロリー収支グラフ描画エリア (Y軸メモリ廃止・実数値連動表示対応) -->
+      <!-- カロリー収支グラフ描画エリア (Y軸メモリ廃止・実数値連動非表示対応) -->
       <div style="background:#121214; border:1px solid var(--border-color); border-radius:14px; padding:12px;">
         <canvas id="chart-calorie" width="400" height="220" style="width:100%; height:220px;"></canvas>
       </div>
@@ -1152,22 +1152,24 @@
 
         ctx.fillRect(x, y, barWidth, Math.max(1, barHeight));
 
-        // 各棒グラフの先端に実際の数値を連動して表示
-        ctx.save();
-        ctx.font = '8px sans-serif';
-        ctx.textAlign = 'center';
-        const textVal = (val > 0 ? `+${val}` : `${val}`);
+        // 収支が0ではない場合のみ、各棒グラフの先端に実際の数値を連動して表示
+        if (val !== 0) {
+          ctx.save();
+          ctx.font = '8px sans-serif';
+          ctx.textAlign = 'center';
+          const textVal = (val > 0 ? `+${val}` : `${val}`);
 
-        if (val >= 0) {
-          ctx.fillStyle = '#0a84ff';
-          ctx.textBaseline = 'bottom';
-          ctx.fillText(textVal, x + barWidth / 2, y - 3);
-        } else {
-          ctx.fillStyle = '#ff453a';
-          ctx.textBaseline = 'top';
-          ctx.fillText(textVal, x + barWidth / 2, y + barHeight + 3);
+          if (val > 0) {
+            ctx.fillStyle = '#0a84ff';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(textVal, x + barWidth / 2, y - 3);
+          } else {
+            ctx.fillStyle = '#ff453a';
+            ctx.textBaseline = 'top';
+            ctx.fillText(textVal, x + barWidth / 2, y + barHeight + 3);
+          }
+          ctx.restore();
         }
-        ctx.restore();
 
         // X軸ラベル描画
         ctx.save();
