@@ -244,7 +244,7 @@
     .close-modal { width: 100%; background: #2c2c2e; color: var(--text-main); border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 8px; cursor: pointer; }
     .manage-btn { background: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
 
-    /* 月間サマリカード用 3列2段グリッド */
+    /* 月間サマリカード用 3列グリッド (計8個で3段目に2つ並ぶ構成) */
     .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
     .summary-box { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 4px; text-align: center; }
     .summary-box-title { font-size: 0.65rem; color: var(--text-sub); margin-bottom: 4px; white-space: nowrap; }
@@ -628,10 +628,10 @@
           </div>
         </div>
 
-        <!-- 2段構成のサマリーカードグリッド (総日数・有酸素総距離・有酸素総時間 / 総セット数・総レップ数・総負荷量) -->
+        <!-- 3列グリッドサマリーカード (計8個: 3段目に総消費カロリー・総カロリー収支) -->
         <div class="summary-grid">
           <div class="summary-box">
-            <div class="summary-box-title">総日数</div>
+            <div class="summary-box-title">筋トレ 総日数</div>
             <div class="summary-box-val" id="sum-days">0 days</div>
           </div>
           <div class="summary-box">
@@ -653,6 +653,14 @@
           <div class="summary-box">
             <div class="summary-box-title">総負荷量</div>
             <div class="summary-box-val" id="sum-ton">0.00 t</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-box-title">総消費カロリー</div>
+            <div class="summary-box-val" id="sum-spent-cal">0 kcal</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-box-title">総カロリー収支</div>
+            <div class="summary-box-val" id="sum-cal-balance">0 kcal</div>
           </div>
         </div>
 
@@ -1545,7 +1553,7 @@
 
       let totalTonnage = 0;
       let activeDaysSet = new Set();
-      let totalSetsCount = 0; // 筋トレのみのセット数
+      let totalSetsCount = 0;
       let totalRepsCount = 0;
       let totalCardioDistance = 0;
       let totalCardioTime = 0;
@@ -1572,7 +1580,7 @@
           w.sets.forEach(s => {
             const ton = calculateSetTonnage(s, w.exercise);
             totalTonnage += ton;
-            totalSetsCount++; // 有酸素を除外した筋トレセット数
+            totalSetsCount++;
             totalRepsCount += s.reps;
             partStats[w.part].sets++;
             partStats[w.part].tonnage += ton;
@@ -1580,13 +1588,29 @@
         }
       });
 
-      // サマリーカードの値を更新（2段構成の6項目）
+      // 月内のカロリーレコード集計
+      let totalSpentCalories = 0;
+      let totalCalorieBalance = 0;
+      const monthCalorieRecords = calorieRecords.filter(c => {
+        const d = new Date(c.date);
+        return d.getFullYear() === summaryViewYear && d.getMonth() === summaryViewMonth;
+      });
+
+      monthCalorieRecords.forEach(c => {
+        const res = calculateDailyBalance(c);
+        totalSpentCalories += res.spent;
+        totalCalorieBalance += res.balance;
+      });
+
+      // サマリーカードの値を更新（計8個）
       document.getElementById('sum-days').textContent = `${activeDaysSet.size} days`;
       document.getElementById('sum-cardio-dist').textContent = `${totalCardioDistance.toFixed(2)} km`;
       document.getElementById('sum-cardio-time').textContent = `${totalCardioTime} 分`;
       document.getElementById('sum-sets').textContent = `${totalSetsCount} sets`;
       document.getElementById('sum-reps').textContent = `${totalRepsCount} reps`;
       document.getElementById('sum-ton').textContent = `${totalTonnage.toFixed(2)} t`;
+      document.getElementById('sum-spent-cal').textContent = `${Math.round(totalSpentCalories)} kcal`;
+      document.getElementById('sum-cal-balance').textContent = `${Math.round(totalCalorieBalance)} kcal`;
 
       const partsListEl = document.getElementById('summary-parts-list');
       const partsKeys = Object.keys(partStats);
