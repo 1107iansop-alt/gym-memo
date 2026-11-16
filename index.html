@@ -244,10 +244,11 @@
     .close-modal { width: 100%; background: #2c2c2e; color: var(--text-main); border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 8px; cursor: pointer; }
     .manage-btn { background: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
 
-    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    .summary-box { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 16px; text-align: center; }
-    .summary-box-title { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; }
-    .summary-box-val { font-size: 1.4rem; font-weight: 800; color: var(--accent-red); }
+    /* 月間サマリカード用 3列2段グリッド */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+    .summary-box { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 4px; text-align: center; }
+    .summary-box-title { font-size: 0.65rem; color: var(--text-sub); margin-bottom: 4px; white-space: nowrap; }
+    .summary-box-val { font-size: 1.1rem; font-weight: 800; color: var(--accent-red); }
 
     /* 体組成タブ関連のスタイル */
     .body-comp-card { background: var(--card-bg); border-radius: 14px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--border-color); }
@@ -427,7 +428,7 @@
         </div>
       </div>
 
-      <!-- グラフ下部の期間絞り込みボタン群（全期間を削除し「直近」に統一） -->
+      <!-- グラフ下部の期間絞り込みボタン群 -->
       <div class="period-filter-container">
         <button class="period-btn active" onclick="setPeriodFilter('3m')">直近3ヶ月</button>
         <button class="period-btn" onclick="setPeriodFilter('6m')">直近6ヶ月</button>
@@ -627,22 +628,31 @@
           </div>
         </div>
 
+        <!-- 2段構成のサマリーカードグリッド (総日数・有酸素総距離・有酸素総時間 / 総セット数・総レップ数・総負荷量) -->
         <div class="summary-grid">
           <div class="summary-box">
-            <div class="summary-box-title">合計筋トレ日数</div>
+            <div class="summary-box-title">総日数</div>
             <div class="summary-box-val" id="sum-days">0 days</div>
           </div>
           <div class="summary-box">
-            <div class="summary-box-title">合計負荷量</div>
-            <div class="summary-box-val" id="sum-ton">0.00 t</div>
+            <div class="summary-box-title">有酸素 総距離</div>
+            <div class="summary-box-val" id="sum-cardio-dist">0.00 km</div>
           </div>
           <div class="summary-box">
-            <div class="summary-box-title">合計セット数</div>
+            <div class="summary-box-title">有酸素 総時間</div>
+            <div class="summary-box-val" id="sum-cardio-time">0 分</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-box-title">総セット数</div>
             <div class="summary-box-val" id="sum-sets">0 sets</div>
           </div>
           <div class="summary-box">
-            <div class="summary-box-title">合計レップ数</div>
+            <div class="summary-box-title">総レップ数</div>
             <div class="summary-box-val" id="sum-reps">0 reps</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-box-title">総負荷量</div>
+            <div class="summary-box-val" id="sum-ton">0.00 t</div>
           </div>
         </div>
 
@@ -695,8 +705,8 @@
 
     let currentLastRecordData = null;
     let editingBcId = null;
-    let currentPeriodFilter = '3m'; // デフォルトを直近3ヶ月に変更
-    let currentCaloriePeriod = 'weekly'; // カロリーグラフ期間フィルタ ('weekly', 'year')
+    let currentPeriodFilter = '3m';
+    let currentCaloriePeriod = 'weekly';
     
     function getTodayString() {
       const now = new Date();
@@ -1062,7 +1072,6 @@
 
       drawCalorieChart(chartLabels, chartData, currentCaloriePeriod);
 
-      // 月別履歴一覧リストの作成
       let monthlyMapList = {};
       sorted.forEach(c => {
         const ym = c.date.slice(0, 7);
@@ -1279,7 +1288,6 @@
       let sorted = [...bodyCompositions].sort((a, b) => new Date(a.date) - new Date(b.date));
       sorted = filterDataByPeriod(sorted);
       
-      // yy/MM 形式のラベル作成
       const labels = sorted.map(b => {
         const yy = b.date.slice(2, 4);
         const mm = b.date.slice(5, 7);
@@ -1320,7 +1328,7 @@
       const paddingLeft = 30;
       const paddingRight = 30;
       const paddingTop = 25;
-      const paddingBottom = 40; // 斜めラベル表示用の下部パディング確保
+      const paddingBottom = 40;
 
       const w = logicalWidth - paddingLeft - paddingRight;
       const h = logicalHeight - paddingTop - paddingBottom;
@@ -1363,14 +1371,13 @@
         ctx.textAlign = 'center';
         ctx.fillText(`${pt.val}`, pt.x, pt.y - 8);
 
-        // カロリーグラフと同様に斜め（yy/MM形式）で該当月を表示
         ctx.save();
         ctx.fillStyle = '#8e8e93';
         ctx.font = '9px sans-serif';
         const labelX = pt.x;
         const labelY = logicalHeight - paddingBottom + 8;
         ctx.translate(labelX, labelY);
-        ctx.rotate(-Math.PI / 6); // 30度傾斜
+        ctx.rotate(-Math.PI / 6);
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
         ctx.fillText(labels[idx], 0, 0);
@@ -1538,28 +1545,34 @@
 
       let totalTonnage = 0;
       let activeDaysSet = new Set();
-      let totalSetsCount = 0;
+      let totalSetsCount = 0; // 筋トレのみのセット数
       let totalRepsCount = 0;
+      let totalCardioDistance = 0;
+      let totalCardioTime = 0;
       let partStats = {};
 
       monthWorkouts.forEach(w => {
         activeDaysSet.add(w.date);
         if (!partStats[w.part]) {
-          partStats[w.part] = { days: new Set(), sets: 0, tonnage: 0, time: 0 };
+          partStats[w.part] = { days: new Set(), sets: 0, tonnage: 0, time: 0, distance: 0 };
         }
         partStats[w.part].days.add(w.date);
 
         if (w.isCardio) {
-          totalSetsCount++;
           partStats[w.part].sets++;
-          if (w.cardio && w.cardio.time) {
-            partStats[w.part].time += (parseFloat(w.cardio.time) || 0);
+          if (w.cardio) {
+            const t = parseFloat(w.cardio.time) || 0;
+            const d = parseFloat(w.cardio.distance) || 0;
+            totalCardioTime += t;
+            totalCardioDistance += d;
+            partStats[w.part].time += t;
+            partStats[w.part].distance += d;
           }
         } else if (w.sets) {
           w.sets.forEach(s => {
             const ton = calculateSetTonnage(s, w.exercise);
             totalTonnage += ton;
-            totalSetsCount++;
+            totalSetsCount++; // 有酸素を除外した筋トレセット数
             totalRepsCount += s.reps;
             partStats[w.part].sets++;
             partStats[w.part].tonnage += ton;
@@ -1567,10 +1580,13 @@
         }
       });
 
+      // サマリーカードの値を更新（2段構成の6項目）
       document.getElementById('sum-days').textContent = `${activeDaysSet.size} days`;
-      document.getElementById('sum-ton').textContent = `${totalTonnage.toFixed(2)} t`;
+      document.getElementById('sum-cardio-dist').textContent = `${totalCardioDistance.toFixed(2)} km`;
+      document.getElementById('sum-cardio-time').textContent = `${totalCardioTime} 分`;
       document.getElementById('sum-sets').textContent = `${totalSetsCount} sets`;
       document.getElementById('sum-reps').textContent = `${totalRepsCount} reps`;
+      document.getElementById('sum-ton').textContent = `${totalTonnage.toFixed(2)} t`;
 
       const partsListEl = document.getElementById('summary-parts-list');
       const partsKeys = Object.keys(partStats);
@@ -1590,16 +1606,18 @@
         partsKeys.forEach(p => {
           const st = partStats[p];
           const isCardioPart = (p === '有酸素運動');
-          const label = isCardioPart ? '時間：' : '負荷：';
-          const valText = isCardioPart ? `${st.time}分` : `${st.tonnage.toFixed(2)}t`;
+          const label1 = isCardioPart ? '総日数：' : 'セット：';
+          const val1 = isCardioPart ? `${st.days.size}` : `${st.sets}`;
+          const label2 = isCardioPart ? '時間：' : '負荷：';
+          const val2 = isCardioPart ? `${st.time}分` : `${st.tonnage.toFixed(2)}t`;
 
           pHtml += `
             <div style="display: grid; grid-template-columns: 88px 52px 26px 56px 1fr; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #2c2c2e; padding-bottom: 4px; font-size: 0.85rem;">
               <div style="color:var(--text-main); font-weight:600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p}</div>
-              <div style="text-align: left;">セット：</div>
-              <div style="text-align: left; font-variant-numeric: tabular-nums;">${st.sets}</div>
-              <div style="text-align: left; padding-left: 4px;">${label}</div>
-              <div style="text-align: right; font-variant-numeric: tabular-nums;">${valText}</div>
+              <div style="text-align: left;">${label1}</div>
+              <div style="text-align: left; font-variant-numeric: tabular-nums;">${val1}</div>
+              <div style="text-align: left; padding-left: 4px;">${label2}</div>
+              <div style="text-align: right; font-variant-numeric: tabular-nums;">${val2}</div>
             </div>
           `;
         });
