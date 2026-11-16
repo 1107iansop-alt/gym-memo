@@ -350,29 +350,28 @@
   <!-- カロリータブ (新設) -->
   <div id="tab-calorie" class="tab-content">
     <div class="card">
-      <div style="font-weight:bold; color:var(--accent-red); font-size:1rem; margin-bottom:10px;">■ 収支カロリー推移</div>
+      <div style="font-weight:bold; color:var(--accent-red); font-size:1rem; margin-bottom:10px;">■ カロリー収支推移</div>
       
-      <!-- 期間絞り込みボタン群 (週別 / 過去1年) -->
+      <!-- 期間絞り込みボタン群 (1ヶ月(週別) / 過去1年) -->
       <div class="period-filter-container" style="margin-bottom: 12px;">
-        <button class="period-btn active" onclick="setCaloriePeriod('weekly')">週別</button>
+        <button class="period-btn active" onclick="setCaloriePeriod('weekly')">1ヶ月(週別)</button>
         <button class="period-btn" onclick="setCaloriePeriod('year')">過去1年</button>
       </div>
 
-      <!-- 週別グラフ用の月切り替えヘッダー (過去1年表示時は非表示または切替可能) -->
+      <!-- 週別グラフ用の月切り替えヘッダー -->
       <div id="calorie-month-nav" class="cal-header" style="margin-bottom: 8px;">
         <button class="cal-btn" onclick="changeCalorieViewMonth(-1)">◀</button>
         <span id="calorie-cal-title">2026-11</span>
         <button class="cal-btn" onclick="changeCalorieViewMonth(1)">▶</button>
       </div>
 
-      <!-- 収支カロリー グラフ描画エリア (Retina対応) -->
+      <!-- カロリー収支グラフ描画エリア (Y軸メモリ対応) -->
       <div style="background:#121214; border:1px solid var(--border-color); border-radius:14px; padding:12px;">
-        <div class="graph-slide-title" id="calorie-chart-title">収支カロリー (週別)</div>
-        <canvas id="chart-calorie" width="400" height="200" style="width:100%; height:200px;"></canvas>
+        <canvas id="chart-calorie" width="400" height="210" style="width:100%; height:210px;"></canvas>
       </div>
     </div>
 
-    <div style="font-weight: bold; font-size: 0.9rem; color: var(--accent-red); margin: 16px 0 10px 0;">■ 収支カロリー履歴一覧 (月別)</div>
+    <div style="font-weight: bold; font-size: 0.9rem; color: var(--accent-red); margin: 16px 0 10px 0;">■ カロリー収支履歴一覧 (月別)</div>
     <div id="calorie-history-list"></div>
   </div>
 
@@ -947,7 +946,7 @@
     }
 
     function getCaloriePeriodLabel(period) {
-      if (period === 'weekly') return '週別';
+      if (period === 'weekly') return '1ヶ月(週別)';
       return '過去1年';
     }
 
@@ -986,7 +985,6 @@
 
     function renderCalorieTab() {
       const listEl = document.getElementById('calorie-history-list');
-      const chartTitleEl = document.getElementById('calorie-chart-title');
       document.getElementById('calorie-cal-title').textContent = formatYM(calorieViewYear, calorieViewMonth);
 
       let sorted = [...calorieRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -995,31 +993,19 @@
       let chartData = [];
 
       if (currentCaloriePeriod === 'weekly') {
-        chartTitleEl.textContent = '収支カロリー (週別)';
-        // 日曜起算の週別集計 (最大6週)
         const firstDay = new Date(calorieViewYear, calorieViewMonth, 1);
         const lastDay = new Date(calorieViewYear, calorieViewMonth + 1, 0);
         
-        // 週の区切り生成
-        let weeks = [];
-        let curr = new Date(firstDay);
-        // 最初の日曜まで戻るか、あるいは月内の週に分割
-        // シンプルに月内の日曜日を境界として週配列を作成
         let weekMap = {};
         let weekLabels = [];
-        let wIdx = 1;
 
-        // 月の全日をループ
         let d = new Date(firstDay);
         while(d <= lastDay) {
-          let dayOfWeek = d.getDay(); // 0:日
-          // 週のグループキーを作成（日曜起算の週番号）
-          // または単純に月内の週 (第1週〜第6週)
           let weekNum = Math.ceil((d.getDate() + firstDay.getDay()) / 7);
           let wKey = `第${weekNum}週`;
           
           if (!weekMap[wKey]) {
-            weekMap[wKey] = { balanceSum: 0, count: 0 };
+            weekMap[wKey] = { balanceSum: 0 };
             weekLabels.push(wKey);
           }
 
@@ -1037,8 +1023,6 @@
         chartData = weekLabels.map(wKey => Math.round(weekMap[wKey].balanceSum));
 
       } else {
-        chartTitleEl.textContent = '収支カロリー (月別・過去1年)';
-        // 過去12ヶ月分を左詰めで生成 (calorieViewYear/calorieViewMonth を起点、または直近過去12ヶ月)
         let monthlyMap = {};
         sorted.forEach(c => {
           let ym = c.date.slice(0, 7);
@@ -1054,7 +1038,6 @@
           let y = dt.getFullYear();
           let m = dt.getMonth() + 1;
           let ymFull = `${y}-${String(m).padStart(2, '0')}`;
-          // 25/11 形式
           let yy = String(y).slice(-2);
           let label = `${yy}/${String(m).padStart(2, '0')}`;
           
@@ -1097,7 +1080,7 @@
             </div>
             <div class="calorie-card-row">
               <div>摂取カロリー: <span>${Math.round(m.totalIntake)} kcal</span></div>
-              <div>収支カロリー: <span style="color:${m.totalBalance >= 0 ? '#0a84ff' : '#ff453a'};">${Math.round(m.totalBalance)} kcal</span></div>
+              <div>カロリー収支: <span style="color:${m.totalBalance >= 0 ? '#0a84ff' : '#ff453a'};">${Math.round(m.totalBalance)} kcal</span></div>
             </div>
           </div>
         `;
@@ -1114,7 +1097,7 @@
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
       const logicalWidth = rect.width > 0 ? rect.width : 400;
-      const logicalHeight = 200;
+      const logicalHeight = 220;
 
       canvas.width = logicalWidth * dpr;
       canvas.height = logicalHeight * dpr;
@@ -1130,25 +1113,45 @@
         return;
       }
 
-      const padding = 35;
-      const w = logicalWidth - padding * 2;
-      const h = logicalHeight - padding * 2 - 15;
-      const centerY = padding + h / 2;
+      const paddingLeft = 50;
+      const paddingRight = 20;
+      const paddingTop = 15;
+      const paddingBottom = periodType === 'year' ? 45 : 30;
 
-      const absMax = Math.max(500, ...data.map(v => Math.abs(v)));
+      const w = logicalWidth - paddingLeft - paddingRight;
+      const h = logicalHeight - paddingTop - paddingBottom;
+      const centerY = paddingTop + h / 2;
 
-      ctx.strokeStyle = '#3a3a3c';
+      // ベースレンジと余白対応
+      let baseMax = (periodType === 'weekly') ? 1800 : 8000;
+      let dataMax = Math.max(...data.map(v => Math.abs(v)), 1);
+      let scaleMax = Math.max(baseMax, dataMax) * 1.15; // 上下余白
+
+      // メモリ目盛りの決定
+      let ticks = (periodType === 'weekly') ? [1800, 900, 0, -900, -1800] : [8000, 4000, 0, -4000, -8000];
+
+      // グリッドとY軸メモリの描画
       ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(padding, centerY);
-      ctx.lineTo(logicalWidth - padding, centerY);
-      ctx.stroke();
+      ticks.forEach(tickVal => {
+        const y = centerY - (tickVal / scaleMax) * (h / 2);
+        ctx.strokeStyle = (tickVal === 0) ? '#555558' : '#2c2c2e';
+        ctx.beginPath();
+        ctx.moveTo(paddingLeft, y);
+        ctx.lineTo(logicalWidth - paddingRight, y);
+        ctx.stroke();
 
-      const barWidth = Math.max(6, Math.min(28, (w / data.length) - 6));
+        ctx.fillStyle = '#8e8e93';
+        ctx.font = '9px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(tickVal, paddingLeft - 6, y);
+      });
+
+      const barWidth = Math.max(4, Math.min(24, (w / data.length) - 4));
 
       data.forEach((val, idx) => {
-        const x = padding + (w / data.length) * idx + (w / data.length - barWidth) / 2;
-        const barHeight = (Math.abs(val) / absMax) * (h / 2);
+        const x = paddingLeft + (w / data.length) * idx + (w / data.length - barWidth) / 2;
+        const barHeight = (Math.abs(val) / scaleMax) * (h / 2);
         
         let y = centerY;
         if (val >= 0) {
@@ -1161,11 +1164,27 @@
 
         ctx.fillRect(x, y, barWidth, barHeight);
 
-        // 棒グラフ下のラベル描画
+        // ラベル描画
+        ctx.save();
         ctx.fillStyle = '#8e8e93';
         ctx.font = '9px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(labels[idx], x + barWidth / 2, logicalHeight - 8);
+        
+        if (periodType === 'year') {
+          // 月別は文字を少し斜めに傾けて描画
+          const labelX = x + barWidth / 2;
+          const labelY = logicalHeight - paddingBottom + 8;
+          ctx.translate(labelX, labelY);
+          ctx.rotate(-Math.PI / 6); // 30度傾斜
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(labels[idx], 0, 0);
+        } else {
+          // 週別は水平表示
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(labels[idx], x + barWidth / 2, logicalHeight - paddingBottom + 6);
+        }
+        ctx.restore();
       });
     }
 
