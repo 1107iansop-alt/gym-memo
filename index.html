@@ -244,9 +244,11 @@
     .close-modal { width: 100%; background: #2c2c2e; color: var(--text-main); border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 8px; cursor: pointer; }
     .manage-btn { background: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
 
-    /* 月間サマリカード用 3列グリッド (計8個で3段目に2つ並ぶ構成) */
-    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+    /* 月間サマリカード用 6分割グリッド (上2段は各2列=3列構成、3段目は各3列=2分割で長さを一致) */
+    .summary-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
     .summary-box { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 4px; text-align: center; }
+    .summary-box:nth-child(-n+6) { grid-column: span 2; }
+    .summary-box:nth-last-child(-n+2) { grid-column: span 3; }
     .summary-box-title { font-size: 0.65rem; color: var(--text-sub); margin-bottom: 4px; white-space: nowrap; }
     .summary-box-val { font-size: 1.1rem; font-weight: 800; color: var(--accent-red); }
 
@@ -628,7 +630,7 @@
           </div>
         </div>
 
-        <!-- 3列グリッドサマリーカード (計8個: 3段目に総消費カロリー・総カロリー収支) -->
+        <!-- 6分割グリッドサマリーカード (上2段:各2列=3列構成, 3段目:各3列=2分割) -->
         <div class="summary-grid">
           <div class="summary-box">
             <div class="summary-box-title">筋トレ 総日数</div>
@@ -655,11 +657,11 @@
             <div class="summary-box-val" id="sum-ton">0.00 t</div>
           </div>
           <div class="summary-box">
-            <div class="summary-box-title">総消費カロリー</div>
+            <div class="summary-box-title">推定総消費カロリー</div>
             <div class="summary-box-val" id="sum-spent-cal">0 kcal</div>
           </div>
           <div class="summary-box">
-            <div class="summary-box-title">総カロリー収支</div>
+            <div class="summary-box-title">推定総カロリー収支</div>
             <div class="summary-box-val" id="sum-cal-balance">0 kcal</div>
           </div>
         </div>
@@ -1588,7 +1590,7 @@
         }
       });
 
-      // 月内のカロリーレコード集計
+      // 月内のカロリーレコード集計（推定総消費カロリー：筋トレ＆有酸素の運動消費のみ）
       let totalSpentCalories = 0;
       let totalCalorieBalance = 0;
       const monthCalorieRecords = calorieRecords.filter(c => {
@@ -1596,10 +1598,19 @@
         return d.getFullYear() === summaryViewYear && d.getMonth() === summaryViewMonth;
       });
 
+      const latestW = getLatestWeight() || 65;
       monthCalorieRecords.forEach(c => {
-        const res = calculateDailyBalance(c);
-        totalSpentCalories += res.spent;
-        totalCalorieBalance += res.balance;
+        const strengthCal = 4.5 * latestW * ((c.trainingMinutes || 0) / 60) * 1.05;
+        let cardioCal = 0;
+        workouts.filter(w => w.date === c.date && w.isCardio && w.cardio && w.cardio.cal).forEach(w => {
+          cardioCal += parseFloat(w.cardio.cal) || 0;
+        });
+        const exerciseSpent = strengthCal + cardioCal;
+        const intake = parseFloat(c.intakeCalories) || 0;
+        const balance = intake - exerciseSpent;
+
+        totalSpentCalories += exerciseSpent;
+        totalCalorieBalance += balance;
       });
 
       // サマリーカードの値を更新（計8個）
