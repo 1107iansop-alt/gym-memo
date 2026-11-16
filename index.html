@@ -1590,7 +1590,7 @@
         }
       });
 
-      // 月内のカロリーレコード集計（推定総消費カロリー：筋トレ＆有酸素の運動消費のみ）
+      // 月内のカロリーレコード集計
       let totalSpentCalories = 0;
       let totalCalorieBalance = 0;
       const monthCalorieRecords = calorieRecords.filter(c => {
@@ -1600,17 +1600,18 @@
 
       const latestW = getLatestWeight() || 65;
       monthCalorieRecords.forEach(c => {
+        // 推定総消費カロリー：筋トレ＆有酸素の運動消費のみ
         const strengthCal = 4.5 * latestW * ((c.trainingMinutes || 0) / 60) * 1.05;
         let cardioCal = 0;
         workouts.filter(w => w.date === c.date && w.isCardio && w.cardio && w.cardio.cal).forEach(w => {
           cardioCal += parseFloat(w.cardio.cal) || 0;
         });
         const exerciseSpent = strengthCal + cardioCal;
-        const intake = parseFloat(c.intakeCalories) || 0;
-        const balance = intake - exerciseSpent;
-
         totalSpentCalories += exerciseSpent;
-        totalCalorieBalance += balance;
+
+        // 推定総カロリー収支：修正前の正常に作動していたトータル収支計算（基礎代謝・活動量込み）
+        const res = calculateDailyBalance(c);
+        totalCalorieBalance += res.balance;
       });
 
       // サマリーカードの値を更新（計8個）
