@@ -352,16 +352,22 @@
     <div class="card">
       <div style="font-weight:bold; color:var(--accent-red); font-size:1rem; margin-bottom:10px;">■ 収支カロリー推移</div>
       
-      <!-- 期間絞り込みボタン群 (1ヶ月 / 1年 / 全期間) -->
+      <!-- 期間絞り込みボタン群 (週別 / 過去1年) -->
       <div class="period-filter-container" style="margin-bottom: 12px;">
-        <button class="period-btn active" onclick="setCaloriePeriod('1m')">1ヶ月</button>
-        <button class="period-btn" onclick="setCaloriePeriod('1y')">1年</button>
-        <button class="period-btn" onclick="setCaloriePeriod('all')">全期間</button>
+        <button class="period-btn active" onclick="setCaloriePeriod('weekly')">週別</button>
+        <button class="period-btn" onclick="setCaloriePeriod('year')">過去1年</button>
+      </div>
+
+      <!-- 週別グラフ用の月切り替えヘッダー (過去1年表示時は非表示または切替可能) -->
+      <div id="calorie-month-nav" class="cal-header" style="margin-bottom: 8px;">
+        <button class="cal-btn" onclick="changeCalorieViewMonth(-1)">◀</button>
+        <span id="calorie-cal-title">2026-11</span>
+        <button class="cal-btn" onclick="changeCalorieViewMonth(1)">▶</button>
       </div>
 
       <!-- 収支カロリー グラフ描画エリア (Retina対応) -->
       <div style="background:#121214; border:1px solid var(--border-color); border-radius:14px; padding:12px;">
-        <div class="graph-slide-title" id="calorie-chart-title">収支カロリー (日毎)</div>
+        <div class="graph-slide-title" id="calorie-chart-title">収支カロリー (週別)</div>
         <canvas id="chart-calorie" width="400" height="200" style="width:100%; height:200px;"></canvas>
       </div>
     </div>
@@ -681,7 +687,7 @@
     let currentLastRecordData = null;
     let editingBcId = null;
     let currentPeriodFilter = 'all'; // 体組成グラフ期間フィルタ
-    let currentCaloriePeriod = '1m'; // カロリーグラフ期間フィルタ ('1m', '1y', 'all')
+    let currentCaloriePeriod = 'weekly'; // カロリーグラフ期間フィルタ ('weekly', 'year')
     
     function getTodayString() {
       const now = new Date();
@@ -695,6 +701,8 @@
     let historyViewMonth = new Date().getMonth();
     let summaryViewYear = new Date().getFullYear();
     let summaryViewMonth = new Date().getMonth();
+    let calorieViewYear = new Date().getFullYear();
+    let calorieViewMonth = new Date().getMonth();
 
     let currentHistoryPart = 'ALL';
 
@@ -726,7 +734,7 @@
     }
 
     function getLatestBmr() {
-      if (!bodyCompositions || bodyCompositions.length === 0) return 1500; // デフォルト値
+      if (!bodyCompositions || bodyCompositions.length === 0) return 1500;
       const sorted = [...bodyCompositions].sort((a, b) => new Date(b.date) - new Date(a.date));
       return sorted[0].bmr ? parseFloat(sorted[0].bmr) : 1500;
     }
@@ -866,11 +874,10 @@
         document.getElementById('cr-additional-calories').value = existing.additionalCalories || '';
         delBtn.style.display = 'block';
       } else {
-        // 当日の筋トレ時間がワークアウト記録からあれば自動反映
         let totalMin = 0;
         workouts.filter(w => w.date === selectedDate).forEach(w => {
           if (!w.isCardio && w.sets) {
-            totalMin += w.sets.length * 3; // 1セット約3分と仮定（または0でも可。お好みで）
+            totalMin += w.sets.length * 3;
           } else if (w.isCardio && w.cardio && w.cardio.time) {
             totalMin += parseFloat(w.cardio.time) || 0;
           }
@@ -935,35 +942,37 @@
       document.querySelectorAll('#tab-calorie .period-btn').forEach(btn => {
         btn.classList.toggle('active', btn.textContent.includes(getCaloriePeriodLabel(period)));
       });
+      document.getElementById('calorie-month-nav').style.display = (period === 'weekly') ? 'flex' : 'none';
       renderCalorieTab();
     }
 
     function getCaloriePeriodLabel(period) {
-      if (period === '1m') return '1ヶ月';
-      if (period === '1y') return '1年';
-      return '全期間';
+      if (period === 'weekly') return '週別';
+      return '過去1年';
+    }
+
+    function changeCalorieViewMonth(dir) {
+      calorieViewMonth += dir;
+      if (calorieViewMonth > 11) { calorieViewMonth = 0; calorieViewYear++; }
+      if (calorieViewMonth < 0) { calorieViewMonth = 11; calorieViewYear--; }
+      renderCalorieTab();
     }
 
     function calculateDailyBalance(cRec) {
-      const latestW = getLatestWeight() || 65; // デフォルト65kg
+      const latestW = getLatestWeight() || 65;
       const bmr = getLatestBmr();
-
-      // 筋トレ消費： 4.5 × 最新体重 × (入力時間 / 60) × 1.05
       const strengthCal = 4.5 * latestW * (cRec.trainingMinutes / 60) * 1.05;
 
-      // 活動消費マッピング (低:250 / 中:450 / 高:750)
       let activityCal = 450;
       if (cRec.activityLevel === 'low') activityCal = 250;
       else if (cRec.activityLevel === 'high') activityCal = 750;
 
-      // 有酸素の入力カロリー合算
       let cardioCal = 0;
       workouts.filter(w => w.date === cRec.date && w.isCardio && w.cardio && w.cardio.cal).forEach(w => {
         cardioCal += parseFloat(w.cardio.cal) || 0;
       });
 
       const addCal = cRec.additionalCalories || 0;
-
       const totalSpent = bmr + activityCal + strengthCal + cardioCal + addCal;
       const balance = cRec.intakeCalories - totalSpent;
 
@@ -971,62 +980,114 @@
         intake: cRec.intakeCalories,
         spent: totalSpent,
         balance: balance,
-        trainingMinutes: cRec.trainingMinutes,
-        strengthCal
+        trainingMinutes: cRec.trainingMinutes
       };
     }
 
     function renderCalorieTab() {
       const listEl = document.getElementById('calorie-history-list');
       const chartTitleEl = document.getElementById('calorie-chart-title');
-
-      if (calorieRecords.length === 0) {
-        listEl.innerHTML = `<div class="empty-state">カロリーデータがありません。ホームの「今日のトレーニング時間」から記録してください。</div>`;
-        drawCalorieChart([], [], '1m');
-        return;
-      }
+      document.getElementById('calorie-cal-title').textContent = formatYM(calorieViewYear, calorieViewMonth);
 
       let sorted = [...calorieRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      // 期間フィルター適用 (グラフ用)
+      let chartLabels = [];
       let chartData = [];
-      if (currentCaloriePeriod === '1m') {
-        chartTitleEl.textContent = '収支カロリー (日毎・直近30日)';
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - 30);
-        chartData = sorted.filter(c => new Date(c.date) >= cutoff).map(c => {
-          const res = calculateDailyBalance(c);
-          return { label: c.date.slice(5), balance: res.balance };
-        });
-      } else if (currentCaloriePeriod === '1y') {
-        chartTitleEl.textContent = '収支カロリー (月毎・過去1年)';
-        chartData = getMonthlyAggregatedData(sorted, 12);
+
+      if (currentCaloriePeriod === 'weekly') {
+        chartTitleEl.textContent = '収支カロリー (週別)';
+        // 日曜起算の週別集計 (最大6週)
+        const firstDay = new Date(calorieViewYear, calorieViewMonth, 1);
+        const lastDay = new Date(calorieViewYear, calorieViewMonth + 1, 0);
+        
+        // 週の区切り生成
+        let weeks = [];
+        let curr = new Date(firstDay);
+        // 最初の日曜まで戻るか、あるいは月内の週に分割
+        // シンプルに月内の日曜日を境界として週配列を作成
+        let weekMap = {};
+        let weekLabels = [];
+        let wIdx = 1;
+
+        // 月の全日をループ
+        let d = new Date(firstDay);
+        while(d <= lastDay) {
+          let dayOfWeek = d.getDay(); // 0:日
+          // 週のグループキーを作成（日曜起算の週番号）
+          // または単純に月内の週 (第1週〜第6週)
+          let weekNum = Math.ceil((d.getDate() + firstDay.getDay()) / 7);
+          let wKey = `第${weekNum}週`;
+          
+          if (!weekMap[wKey]) {
+            weekMap[wKey] = { balanceSum: 0, count: 0 };
+            weekLabels.push(wKey);
+          }
+
+          let dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          let rec = sorted.find(c => c.date === dateStr);
+          if (rec) {
+            let res = calculateDailyBalance(rec);
+            weekMap[wKey].balanceSum += res.balance;
+          }
+
+          d.setDate(d.getDate() + 1);
+        }
+
+        chartLabels = weekLabels;
+        chartData = weekLabels.map(wKey => Math.round(weekMap[wKey].balanceSum));
+
       } else {
-        chartTitleEl.textContent = '収支カロリー (月毎・全期間)';
-        chartData = getMonthlyAggregatedData(sorted, 999);
+        chartTitleEl.textContent = '収支カロリー (月別・過去1年)';
+        // 過去12ヶ月分を左詰めで生成 (calorieViewYear/calorieViewMonth を起点、または直近過去12ヶ月)
+        let monthlyMap = {};
+        sorted.forEach(c => {
+          let ym = c.date.slice(0, 7);
+          if (!monthlyMap[ym]) monthlyMap[ym] = 0;
+          let res = calculateDailyBalance(c);
+          monthlyMap[ym] += res.balance;
+        });
+
+        let targetMonths = [];
+        let baseDate = new Date(calorieViewYear, calorieViewMonth, 1);
+        for (let i = 11; i >= 0; i--) {
+          let dt = new Date(baseDate.getFullYear(), baseDate.getMonth() - i, 1);
+          let y = dt.getFullYear();
+          let m = dt.getMonth() + 1;
+          let ymFull = `${y}-${String(m).padStart(2, '0')}`;
+          // 25/11 形式
+          let yy = String(y).slice(-2);
+          let label = `${yy}/${String(m).padStart(2, '0')}`;
+          
+          targetMonths.push({
+            label: label,
+            balance: Math.round(monthlyMap[ymFull] || 0)
+          });
+        }
+        chartLabels = targetMonths.map(t => t.label);
+        chartData = targetMonths.map(t => t.balance);
       }
 
-      drawCalorieChart(chartData.map(d => d.label), chartData.map(d => d.balance), currentCaloriePeriod);
+      drawCalorieChart(chartLabels, chartData, currentCaloriePeriod);
 
       // 月別履歴一覧リストの作成
-      let monthlyMap = {};
+      let monthlyMapList = {};
       sorted.forEach(c => {
-        const ym = c.date.slice(0, 7); // YYYY-MM
-        if (!monthlyMap[ym]) {
-          monthlyMap[ym] = { totalMin: 0, totalSpent: 0, totalIntake: 0, totalBalance: 0, count: 0 };
+        const ym = c.date.slice(0, 7);
+        if (!monthlyMapList[ym]) {
+          monthlyMapList[ym] = { totalMin: 0, totalSpent: 0, totalIntake: 0, totalBalance: 0, count: 0 };
         }
         const res = calculateDailyBalance(c);
-        monthlyMap[ym].totalMin += c.trainingMinutes;
-        monthlyMap[ym].totalSpent += res.spent;
-        monthlyMap[ym].totalIntake += res.intake;
-        monthlyMap[ym].totalBalance += res.balance;
-        monthlyMap[ym].count++;
+        monthlyMapList[ym].totalMin += c.trainingMinutes;
+        monthlyMapList[ym].totalSpent += res.spent;
+        monthlyMapList[ym].totalIntake += res.intake;
+        monthlyMapList[ym].totalBalance += res.balance;
+        monthlyMapList[ym].count++;
       });
 
-      const ymKeys = Object.keys(monthlyMap).sort().reverse();
+      const ymKeys = Object.keys(monthlyMapList).sort().reverse();
       let listHtml = '';
       ymKeys.forEach(ym => {
-        const m = monthlyMap[ym];
+        const m = monthlyMapList[ym];
         listHtml += `
           <div class="calorie-history-card">
             <div class="calorie-card-header">${ym}</div>
@@ -1043,26 +1104,6 @@
       });
 
       listEl.innerHTML = listHtml;
-    }
-
-    function getMonthlyAggregatedData(sortedRecords, maxMonths) {
-      let map = {};
-      sortedRecords.forEach(c => {
-        const ym = c.date.slice(0, 7);
-        if (!map[ym]) map[ym] = { balanceSum: 0 };
-        const res = calculateDailyBalance(c);
-        map[ym].balanceSum += res.balance;
-      });
-
-      let keys = Object.keys(map).sort();
-      if (keys.length > maxMonths) {
-        keys = keys.slice(keys.length - maxMonths);
-      }
-
-      return keys.map(ym => ({
-        label: ym,
-        balance: Math.round(map[ym].balanceSum)
-      }));
     }
 
     function drawCalorieChart(labels, data, periodType) {
@@ -1091,13 +1132,11 @@
 
       const padding = 35;
       const w = logicalWidth - padding * 2;
-      const h = logicalHeight - padding * 2;
+      const h = logicalHeight - padding * 2 - 15;
       const centerY = padding + h / 2;
 
-      // 最大絶対値からスケール算出
       const absMax = Math.max(500, ...data.map(v => Math.abs(v)));
 
-      // ゼロ基準中央ライン
       ctx.strokeStyle = '#3a3a3c';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -1105,8 +1144,7 @@
       ctx.lineTo(logicalWidth - padding, centerY);
       ctx.stroke();
 
-      // 棒グラフの描画
-      const barWidth = Math.max(4, Math.min(24, (w / data.length) - 4));
+      const barWidth = Math.max(6, Math.min(28, (w / data.length) - 6));
 
       data.forEach((val, idx) => {
         const x = padding + (w / data.length) * idx + (w / data.length - barWidth) / 2;
@@ -1115,13 +1153,19 @@
         let y = centerY;
         if (val >= 0) {
           y = centerY - barHeight;
-          ctx.fillStyle = '#0a84ff'; // プラスは上向き青棒
+          ctx.fillStyle = '#0a84ff';
         } else {
           y = centerY;
-          ctx.fillStyle = '#ff453a'; // マイナスは下向き赤棒
+          ctx.fillStyle = '#ff453a';
         }
 
         ctx.fillRect(x, y, barWidth, barHeight);
+
+        // 棒グラフ下のラベル描画
+        ctx.fillStyle = '#8e8e93';
+        ctx.font = '9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(labels[idx], x + barWidth / 2, logicalHeight - 8);
       });
     }
 
@@ -1206,7 +1250,7 @@
     function drawCharts() {
       let sorted = [...bodyCompositions].sort((a, b) => new Date(a.date) - new Date(b.date));
       sorted = filterDataByPeriod(sorted);
-      const dates = sorted.map(b => b.date.slice(5)); // MM-DD
+      const dates = sorted.map(b => b.date.slice(5));
 
       drawLineChart('chart-weight', dates, sorted.map(b => parseFloat(b.weight) || 0), 'kg');
       drawLineChart('chart-muscle', dates, sorted.map(b => parseFloat(b.muscle) || 0), 'kg');
