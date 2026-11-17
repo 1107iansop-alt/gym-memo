@@ -555,9 +555,9 @@
       <div class="form-group">
         <label class="form-label">活動量</label>
         <select id="cr-activity-level" class="form-select">
+          <option value="high" selected>高：仕事日 (550 kcal)</option>
+          <option value="mid">中：休日外出あり (450 kcal)</option>
           <option value="low">低：休日外出なし (250 kcal)</option>
-          <option value="mid" selected>中：休日外出あり (450 kcal)</option>
-          <option value="high">高：仕事日 (750 kcal)</option>
         </select>
       </div>
       <div class="form-group">
@@ -899,7 +899,7 @@
       if (existing) {
         document.getElementById('cr-training-minutes').value = existing.trainingMinutes || '';
         document.getElementById('cr-intake-calories').value = existing.intakeCalories || '';
-        document.getElementById('cr-activity-level').value = existing.activityLevel || 'mid';
+        document.getElementById('cr-activity-level').value = existing.activityLevel || 'high';
         document.getElementById('cr-additional-calories').value = existing.additionalCalories || '';
         delBtn.style.display = 'block';
       } else {
@@ -914,7 +914,7 @@
 
         document.getElementById('cr-training-minutes').value = totalMin > 0 ? totalMin : '';
         document.getElementById('cr-intake-calories').value = '';
-        document.getElementById('cr-activity-level').value = 'mid';
+        document.getElementById('cr-activity-level').value = 'high';
         document.getElementById('cr-additional-calories').value = '';
         delBtn.style.display = 'none';
       }
@@ -994,7 +994,7 @@
 
       let activityCal = 450;
       if (cRec.activityLevel === 'low') activityCal = 250;
-      else if (cRec.activityLevel === 'high') activityCal = 750;
+      else if (cRec.activityLevel === 'high') activityCal = 550;
 
       let cardioCal = 0;
       workouts.filter(w => w.date === cRec.date && w.isCardio && w.cardio && w.cardio.cal).forEach(w => {
