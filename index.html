@@ -224,9 +224,9 @@
     .form-row-selectors { display: grid; grid-template-columns: 125px 1fr; gap: 10px; margin-bottom: 0; }
 
     /* セット行 (通常種目用) */
-    .set-row { display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
+    .set-row { display: grid; grid-template-columns: 32px 24px 1fr 24px 1fr 52px 28px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
     /* セット行 (自重種目用) */
-    .set-row.bw-row { display: grid; grid-template-columns: 32px 22px 64px 22px 54px 22px 48px 44px 26px; gap: 3px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
+    .set-row.bw-row { display: grid; grid-template-columns: 28px 20px 58px 20px 48px 20px 42px 50px 26px; gap: 3px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
     
     .set-num { font-weight: bold; color: var(--accent-red); text-align: center; font-size: 0.85rem; white-space: nowrap; }
     .set-input { width: 100%; background: #1c1c1e; border: 1px solid var(--border-color); color: white; padding: 8px 2px; border-radius: 8px; font-size: 0.85rem; text-align: center; }
@@ -244,7 +244,7 @@
     .close-modal { width: 100%; background: #2c2c2e; color: var(--text-main); border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 8px; cursor: pointer; }
     .manage-btn { background: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
 
-    /* 月間サマリカード用 6分割グリッド (上2段は各2列=3列構成、3段目は各3列=2分割で長さを一致) */
+    /* 月間サマリカード用 6分割グリッド */
     .summary-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
     .summary-box { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 4px; text-align: center; }
     .summary-box:nth-child(-n+6) { grid-column: span 2; }
@@ -366,20 +366,17 @@
     <div class="card">
       <div style="font-weight:bold; color:var(--accent-red); font-size:1rem; margin-bottom:10px;">■ カロリー収支推移</div>
       
-      <!-- 期間絞り込みボタン群 (1ヶ月(週別) / 直近1年) -->
       <div class="period-filter-container" style="margin-bottom: 12px;">
         <button class="period-btn active" onclick="setCaloriePeriod('weekly')">1ヶ月(週別)</button>
         <button class="period-btn" onclick="setCaloriePeriod('year')">直近1年</button>
       </div>
 
-      <!-- 週別グラフ用の月切り替えヘッダー -->
       <div id="calorie-month-nav" class="cal-header" style="margin-bottom: 8px;">
         <button class="cal-btn" onclick="changeCalorieViewMonth(-1)">◀</button>
         <span id="calorie-cal-title">2026-11</span>
         <button class="cal-btn" onclick="changeCalorieViewMonth(1)">▶</button>
       </div>
 
-      <!-- カロリー収支グラフ描画エリア -->
       <div style="background:#121214; border:1px solid var(--border-color); border-radius:14px; padding:12px;">
         <canvas id="chart-calorie" width="400" height="220" style="width:100%; height:220px;"></canvas>
       </div>
@@ -397,7 +394,6 @@
         <button class="mini-btn" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="openBodyModal()">＋ 測定データを記録</button>
       </div>
 
-      <!-- グラフのスライド切り替えタブ -->
       <div class="graph-tab-container" id="graph-tab-container">
         <button class="graph-tab-btn active" onclick="scrollToGraph(0)">体重</button>
         <button class="graph-tab-btn" onclick="scrollToGraph(1)">筋肉量</button>
@@ -406,7 +402,6 @@
         <button class="graph-tab-btn" onclick="scrollToGraph(4)">基礎代謝</button>
       </div>
 
-      <!-- 横スクロールグラフコンテナ -->
       <div class="graph-scroll-container" id="graph-scroll-container" onscroll="onGraphScroll(this)">
         <div class="graph-slide-card">
           <div class="graph-slide-title">体重 (kg)</div>
@@ -430,7 +425,6 @@
         </div>
       </div>
 
-      <!-- グラフ下部の期間絞り込みボタン群 -->
       <div class="period-filter-container">
         <button class="period-btn active" onclick="setPeriodFilter('3m')">直近3ヶ月</button>
         <button class="period-btn" onclick="setPeriodFilter('6m')">直近6ヶ月</button>
@@ -492,7 +486,7 @@
         </div>
 
         <div id="strength-input-area">
-          <div id="set-header-labels" style="display: grid; grid-template-columns: 36px 26px 1fr 26px 1fr 52px 30px; gap: 4px; font-size: 0.65rem; color: var(--text-sub); text-align: center; margin-bottom: 6px;">
+          <div id="set-header-labels" style="display: grid; grid-template-columns: 32px 24px 1fr 24px 1fr 52px 28px; gap: 4px; font-size: 0.65rem; color: var(--text-sub); text-align: center; margin-bottom: 6px;">
             <div>セット</div><div></div><div>重さ(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>
           </div>
           <div id="set-inputs-container"></div>
@@ -630,7 +624,6 @@
           </div>
         </div>
 
-        <!-- 6分割グリッドサマリーカード (上2段:各2列=3列構成, 3段目:各3列=2分割) -->
         <div class="summary-grid">
           <div class="summary-box">
             <div class="summary-box-title">筋トレ 総日数</div>
@@ -890,7 +883,6 @@
       return historicalMax;
     }
 
-    // --- カロリータブ関連のロジック ---
     function openCalorieRecordModal() {
       const existing = calorieRecords.find(c => c.date === selectedDate);
       document.getElementById('cr-date').value = selectedDate;
@@ -1218,7 +1210,6 @@
       });
     }
 
-    // --- 体組成タブ描画・グラフ制御 ---
     function renderBodyTab() {
       const listEl = document.getElementById('body-history-list');
       bodyCompositions.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -1590,7 +1581,6 @@
         }
       });
 
-      // 月内のカロリーレコード集計
       let totalSpentCalories = 0;
       let totalCalorieBalance = 0;
       const monthCalorieRecords = calorieRecords.filter(c => {
@@ -1600,7 +1590,6 @@
 
       const latestW = getLatestWeight() || 65;
       monthCalorieRecords.forEach(c => {
-        // 推定総消費カロリー：筋トレ＆有酸素の運動消費のみ
         const strengthCal = 4.5 * latestW * ((c.trainingMinutes || 0) / 60) * 1.05;
         let cardioCal = 0;
         workouts.filter(w => w.date === c.date && w.isCardio && w.cardio && w.cardio.cal).forEach(w => {
@@ -1609,12 +1598,10 @@
         const exerciseSpent = strengthCal + cardioCal;
         totalSpentCalories += exerciseSpent;
 
-        // 推定総カロリー収支：修正前の正常に作動していたトータル収支計算（基礎代謝・活動量込み）
         const res = calculateDailyBalance(c);
         totalCalorieBalance += res.balance;
       });
 
-      // サマリーカードの値を更新（計8個）
       document.getElementById('sum-days').textContent = `${activeDaysSet.size} days`;
       document.getElementById('sum-cardio-dist').textContent = `${totalCardioDistance.toFixed(2)} km`;
       document.getElementById('sum-cardio-time').textContent = `${totalCardioTime} 分`;
@@ -1838,66 +1825,21 @@
       const isBw = isBwExercise(exerciseName);
 
       if (isBw) {
-        headerEl.innerHTML = `<div>セット</div><div></div><div>体重×係数</div><div></div><div>加重(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>`;
+        headerEl.style.display = 'grid';
+        headerEl.style.gridTemplateColumns = '28px 20px 58px 20px 48px 20px 42px 50px 26px';
+        headerEl.innerHTML = `<div>セット</div><div></div><div>体重×係数</div><div></div><div>加重</div><div></div><div>回数</div><div>推定1RM</div><div></div>`;
       } else {
+        headerEl.style.display = 'grid';
+        headerEl.style.gridTemplateColumns = '32px 24px 1fr 24px 1fr 52px 28px';
         headerEl.innerHTML = `<div>セット</div><div></div><div>重さ(kg)</div><div></div><div>回数</div><div>推定1RM</div><div></div>`;
       }
 
       const container = document.getElementById('set-inputs-container');
-      const rows = container.querySelectorAll('.set-row, .bw-row');
-      
-      if (rows.length === 0) {
-        initSetInputs();
-      } else {
-        rows.forEach(row => {
-          const wInput = row.querySelector('.set-weight');
-          const addInput = row.querySelector('.set-add-weight');
-          const rInput = row.querySelector('.set-reps');
-          const wVal = wInput ? wInput.value : '';
-          const rVal = rInput ? rInput.value : '';
-          const addVal = addInput ? addInput.value : '';
-
-          const setNum = row.querySelector('.set-num').textContent;
-          const newDiv = document.createElement('div');
-
-          if (isBw) {
-            newDiv.className = 'set-row bw-row';
-            let autoW = '';
-            if (wVal !== '') {
-              autoW = wVal;
-            } else {
-              const latestW = getLatestWeight() || 0;
-              const coeff = exerciseSettings[exerciseName] ? exerciseSettings[exerciseName].coeff : 0;
-              autoW = (latestW * coeff).toFixed(1);
-            }
-            newDiv.innerHTML = `
-              <div class="set-num">${setNum}</div>
-              <div class="copy-weight-cell"></div>
-              <input type="number" step="0.1" class="set-input set-weight" value="${autoW}" readonly style="background:#18181a; color:var(--text-sub);">
-              <div class="copy-add-cell"></div>
-              <input type="number" step="0.5" class="set-input set-add-weight" value="${addVal}" placeholder="0" oninput="updateRMRow(this)">
-              <div class="copy-reps-cell"></div>
-              <input type="number" class="set-input set-reps" value="${rVal}" placeholder="回" oninput="updateRMRow(this)">
-              <div class="set-rm">-</div>
-              <button type="button" class="delete-set-btn" onclick="removeSetRow(this)">✕</button>
-            `;
-          } else {
-            newDiv.className = 'set-row';
-            newDiv.innerHTML = `
-              <div class="set-num">${setNum}</div>
-              <div class="copy-weight-cell"></div>
-              <input type="number" step="0.5" class="set-input set-weight" value="${wVal}" placeholder="kg" oninput="updateRMRow(this)">
-              <div class="copy-reps-cell"></div>
-              <input type="number" class="set-input set-reps" value="${rVal}" placeholder="回" oninput="updateRMRow(this)">
-              <div class="set-rm">-</div>
-              <button type="button" class="delete-set-btn" onclick="removeSetRow(this)">✕</button>
-            `;
-          }
-          row.replaceWith(newDiv);
-        });
-        reindexSetRows();
-        container.querySelectorAll('.set-weight, .set-add-weight, .set-reps').forEach(inp => updateRMRow(inp));
+      container.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        appendSetRow('', '', '');
       }
+      reindexSetRows();
     }
 
     function loadLastRecord(part, exercise) {
