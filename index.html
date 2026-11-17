@@ -223,10 +223,10 @@
 
     .form-row-selectors { display: grid; grid-template-columns: 125px 1fr; gap: 10px; margin-bottom: 0; }
 
-    /* セット行 (通常種目用) */
+    /* セット行 (通常種目用) : 32px + 24px + 1fr + 24px + 1fr + 52px + 28px */
     .set-row { display: grid; grid-template-columns: 32px 24px 1fr 24px 1fr 52px 28px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
-    /* セット行 (自重種目用) */
-    .set-row.bw-row { display: grid; grid-template-columns: 28px 20px 58px 20px 48px 20px 42px 50px 26px; gap: 3px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
+    /* セット行 (自重種目用) : ヘッダーと完全に一致させる (32px + 24px + 58px + 24px + 48px + 24px + 42px + 52px + 28px) */
+    .set-row.bw-row { display: grid; grid-template-columns: 32px 24px 58px 24px 48px 24px 42px 52px 28px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
     
     .set-num { font-weight: bold; color: var(--accent-red); text-align: center; font-size: 0.85rem; white-space: nowrap; }
     .set-input { width: 100%; background: #1c1c1e; border: 1px solid var(--border-color); color: white; padding: 8px 2px; border-radius: 8px; font-size: 0.85rem; text-align: center; }
@@ -1826,7 +1826,7 @@
 
       if (isBw) {
         headerEl.style.display = 'grid';
-        headerEl.style.gridTemplateColumns = '28px 20px 58px 20px 48px 20px 42px 50px 26px';
+        headerEl.style.gridTemplateColumns = '32px 24px 58px 24px 48px 24px 42px 52px 28px';
         headerEl.innerHTML = `<div>セット</div><div></div><div>体重×係数</div><div></div><div>加重</div><div></div><div>回数</div><div>推定1RM</div><div></div>`;
       } else {
         headerEl.style.display = 'grid';
