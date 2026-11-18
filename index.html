@@ -7,7 +7,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Workout-Log">
   <title>Workout-Log</title>
-  <!-- 画像ダウンロード・シェア用ライブラリ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
@@ -27,6 +26,11 @@
       -webkit-tap-highlight-color: transparent; 
     }
     
+    /* すべての数値を等幅にして縦のラインを揃える */
+    body, input, select, button, .set-num, .set-weight, .set-reps, .set-rm, .max-rm-val, .stat-val, .summary-box-val, .history-set-row {
+      font-variant-numeric: tabular-nums;
+    }
+
     html {
       background-color: var(--bg-dark);
       height: 100%;
@@ -138,7 +142,6 @@
     .max-rm-val { font-weight: 800; color: var(--accent-red); text-align: right; padding-right: 12px; }
     .max-rm-actual { color: var(--text-sub); font-size: 0.78rem; text-align: left; }
 
-    /* フッターナビゲーション (5タブ固定) */
     .footer-nav {
       position: absolute; 
       bottom: 0; 
@@ -223,9 +226,7 @@
 
     .form-row-selectors { display: grid; grid-template-columns: 125px 1fr; gap: 10px; margin-bottom: 0; }
 
-    /* セット行 (通常種目用) : 32px + 24px + 1fr + 24px + 1fr + 52px + 28px */
     .set-row { display: grid; grid-template-columns: 32px 24px 1fr 24px 1fr 52px 28px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
-    /* セット行 (自重種目用) : ヘッダーと完全に一致させる (32px + 24px + 58px + 24px + 48px + 24px + 42px + 52px + 28px) */
     .set-row.bw-row { display: grid; grid-template-columns: 32px 24px 58px 24px 48px 24px 42px 52px 28px; gap: 4px; align-items: center; margin-bottom: 10px; background: #252528; padding: 8px 4px; border-radius: 10px; }
     
     .set-num { font-weight: bold; color: var(--accent-red); text-align: center; font-size: 0.85rem; white-space: nowrap; }
@@ -244,7 +245,6 @@
     .close-modal { width: 100%; background: #2c2c2e; color: var(--text-main); border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; margin-top: 8px; cursor: pointer; }
     .manage-btn { background: #2c2c2e; color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
 
-    /* 月間サマリカード用 6分割グリッド */
     .summary-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
     .summary-box { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 4px; text-align: center; }
     .summary-box:nth-child(-n+6) { grid-column: span 2; }
@@ -252,7 +252,6 @@
     .summary-box-title { font-size: 0.65rem; color: var(--text-sub); margin-bottom: 4px; white-space: nowrap; }
     .summary-box-val { font-size: 1.1rem; font-weight: 800; color: var(--accent-red); }
 
-    /* 体組成タブ関連のスタイル */
     .body-comp-card { background: var(--card-bg); border-radius: 14px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--border-color); }
     .bc-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .bc-date { font-weight: bold; font-size: 0.95rem; color: var(--accent-red); }
@@ -262,7 +261,6 @@
     .bc-grid div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .bc-grid span { color: var(--text-main); font-weight: 600; }
 
-    /* 横スクロール・スナップグラフ関連 */
     .graph-tab-container { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; -webkit-overflow-scrolling: touch; }
     .graph-tab-btn { background: #2c2c2e; color: var(--text-sub); border: none; padding: 6px 12px; border-radius: 16px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
     .graph-tab-btn.active { background: var(--accent-red); color: white; }
@@ -276,7 +274,6 @@
     .period-btn { flex: 1; background: #2c2c2e; color: var(--text-sub); border: 1px solid var(--border-color); padding: 6px 0; border-radius: 8px; font-size: 0.75rem; font-weight: 600; text-align: center; cursor: pointer; white-space: nowrap; }
     .period-btn.active { background: var(--accent-red); color: white; border-color: var(--accent-red); }
 
-    /* カロリータブ関連のスタイル */
     .calorie-history-card { background: #121214; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
     .calorie-card-header { font-weight: bold; font-size: 0.9rem; color: var(--accent-red); margin-bottom: 6px; }
     .calorie-card-row { display: grid; grid-template-columns: 1fr 1fr; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 3px; }
@@ -436,7 +433,7 @@
     <div id="body-history-list"></div>
   </div>
 
-  <!-- フッターナビゲーション (5タブ固定) -->
+  <!-- フッターナビゲーション -->
   <nav class="footer-nav">
     <button class="nav-item active" onclick="switchTab('home', this)">
       <span class="icon">🏠</span>
@@ -493,7 +490,7 @@
           <button class="add-set-btn" onclick="addSetInput()">＋ セットを追加</button>
         </div>
 
-        <!-- 有酸素運動入力欄 -->
+        <!-- 有酸素運動入力欄（速度と距離の位置を入れ替え済み） -->
         <div id="cardio-input-area" style="display: none;">
           <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
@@ -501,14 +498,14 @@
               <input type="number" id="cardio-time" class="form-input" oninput="calculateCardioSpeed()">
             </div>
             <div class="form-group">
-              <label class="form-label">速度 (km/h)</label>
-              <input type="number" step="0.1" id="cardio-speed" class="form-input">
+              <label class="form-label">距離 (km)</label>
+              <input type="number" step="0.01" inputmode="decimal" id="cardio-distance" class="form-input" oninput="calculateCardioSpeed()">
             </div>
           </div>
           <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
-              <label class="form-label">距離 (km)</label>
-              <input type="number" step="0.01" inputmode="decimal" id="cardio-distance" class="form-input" oninput="calculateCardioSpeed()">
+              <label class="form-label">速度 (km/h)</label>
+              <input type="number" step="0.1" id="cardio-speed" class="form-input">
             </div>
             <div class="form-group">
               <label class="form-label">消費カロリー (kcal)</label>
@@ -895,16 +892,7 @@
         document.getElementById('cr-additional-calories').value = existing.additionalCalories || '';
         delBtn.style.display = 'block';
       } else {
-        let totalMin = 0;
-        workouts.filter(w => w.date === selectedDate).forEach(w => {
-          if (!w.isCardio && w.sets) {
-            totalMin += w.sets.length * 3;
-          } else if (w.isCardio && w.cardio && w.cardio.time) {
-            totalMin += parseFloat(w.cardio.time) || 0;
-          }
-        });
-
-        document.getElementById('cr-training-minutes').value = totalMin > 0 ? totalMin : '';
+        document.getElementById('cr-training-minutes').value = '';
         document.getElementById('cr-intake-calories').value = '';
         document.getElementById('cr-activity-level').value = 'high';
         document.getElementById('cr-additional-calories').value = '';
