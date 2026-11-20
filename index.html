@@ -758,6 +758,19 @@
       return sorted[0].bmr ? parseFloat(sorted[0].bmr) : 1500;
     }
 
+    // 有酸素記録1件あたりの実効消費カロリー（入力cal - 運動時間分の基礎代謝[四捨五入整数]、下限0）
+    function getAdjustedCardioCal(w, bmr) {
+      if (!w || !w.isCardio || !w.cardio) return 0;
+      const rawCalStr = w.cardio.cal !== undefined && w.cardio.cal !== null ? String(w.cardio.cal).trim() : '';
+      if (rawCalStr === '') return 0;
+      const rawCal = parseFloat(rawCalStr);
+      if (isNaN(rawCal) || rawCal <= 0) return 0;
+
+      const minutes = parseFloat(w.cardio.time) || 0;
+      const bmrForMinutes = minutes > 0 ? Math.round(bmr * (minutes / 1440)) : 0;
+      return Math.max(0, rawCal - bmrForMinutes);
+    }
+
     function switchTab(tabId, el) {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -977,8 +990,8 @@
       else if (cRec.activityLevel === 'high') activityCal = 550;
 
       let cardioCal = 0;
-      workouts.filter(w => w.date === cRec.date && w.isCardio && w.cardio && w.cardio.cal).forEach(w => {
-        cardioCal += parseFloat(w.cardio.cal) || 0;
+      workouts.filter(w => w.date === cRec.date && w.isCardio && w.cardio).forEach(w => {
+        cardioCal += getAdjustedCardioCal(w, bmr);
       });
 
       const addCal = cRec.additionalCalories || 0;
@@ -1577,11 +1590,12 @@
       });
 
       const latestW = getLatestWeight() || 65;
+      const latestBmr = getLatestBmr();
       monthCalorieRecords.forEach(c => {
         const strengthCal = 4.5 * latestW * ((c.trainingMinutes || 0) / 60) * 1.05;
         let cardioCal = 0;
-        workouts.filter(w => w.date === c.date && w.isCardio && w.cardio && w.cardio.cal).forEach(w => {
-          cardioCal += parseFloat(w.cardio.cal) || 0;
+        workouts.filter(w => w.date === c.date && w.isCardio && w.cardio).forEach(w => {
+          cardioCal += getAdjustedCardioCal(w, latestBmr);
         });
         const exerciseSpent = strengthCal + cardioCal;
         totalSpentCalories += exerciseSpent;
